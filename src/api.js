@@ -8,7 +8,10 @@ If a value is genuinely unknown, use null.`;
 
 export async function callClaude(prompt, systemOverride) {
   const apiKey = import.meta.env.VITE_ANTHROPIC_API_KEY;
-  if (!apiKey) throw new Error('VITE_ANTHROPIC_API_KEY not set');
+
+  if (!apiKey) {
+    throw new Error('VITE_ANTHROPIC_API_KEY not set');
+  }
 
   const res = await fetch('https://api.anthropic.com/v1/messages', {
     method: 'POST',
@@ -19,16 +22,21 @@ export async function callClaude(prompt, systemOverride) {
       'anthropic-dangerous-direct-browser-calls': 'true',
     },
     body: JSON.stringify({
-      model: 'claude-sonnet-4-20250514',
+      model: 'claude-haiku-4-5-20251001',
       max_tokens: 2000,
       system: systemOverride || JSON_SYSTEM,
       messages: [{ role: 'user', content: prompt }],
     }),
   });
 
-  if (!res.ok) throw new Error(`API error ${res.status}`);
+  if (!res.ok) {
+    const errText = await res.text();
+    throw new Error(`API ${res.status}: ${errText}`);
+  }
+
   const data = await res.json();
   const text = data.content?.map(b => b.text || '').join('') || '';
+
   try {
     return JSON.parse(text.replace(/```json\n?|\n?```/g, '').trim());
   } catch {
