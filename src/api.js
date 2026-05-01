@@ -13,13 +13,11 @@ export async function callClaude(prompt, systemOverride) {
     throw new Error('VITE_ANTHROPIC_API_KEY not set');
   }
 
-  const res = await fetch('https://api.anthropic.com/v1/messages', {
+  const res = await fetch('/api/claude', {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
-      'x-api-key': apiKey,
       'anthropic-version': '2023-06-01',
-      'anthropic-dangerous-direct-browser-calls': 'true',
     },
     body: JSON.stringify({
       model: 'claude-haiku-4-5-20251001',
