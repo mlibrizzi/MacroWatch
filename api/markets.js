@@ -3,7 +3,8 @@ export default async function handler(req, res) {
   if (req.method !== 'GET') return res.status(405).json({ error: 'Method not allowed' });
 
   const apiKey = process.env.VITE_FINNHUB_API_KEY;
-  const base   = 'https://finnhub.io/api/v1';
+  const fredKey = process.env.VITE_FRED_API_KEY;
+  const base = 'https://finnhub.io/api/v1';
 
   const quote = async (symbol) => {
     const r = await fetch(`${base}/quote?symbol=${symbol}&token=${apiKey}`);
@@ -20,95 +21,60 @@ export default async function handler(req, res) {
     };
   };
 
-  // Finnhub forex quote — symbol format is OANDA:EUR_USD
-  const fxQuote = async (oandaSymbol, displaySymbol) => {
-    const r = await fetch(`${base}/quote?symbol=OANDA:${oandaSymbol}&token=${apiKey}`);
+  // Use exchangerate-api for FX (free, no key needed)
+  const fxRate = async () => {
+    const r = await fetch('https://open.er-api.com/v6/latest/USD');
     const d = await r.json();
-    return {
-      symbol:    displaySymbol,
-      price:     d.c  || null,
-      change:    d.d  != null ? +d.d.toFixed(4)  : null,
-      changePct: d.dp != null ? +d.dp.toFixed(2) : null,
-      high:      d.h  || null,
-      low:       d.l  || null,
-      delay:     'Real-time (Finnhub Forex)'
-    };
+    return d.rates || {};
   };
 
   try {
     const [
       aapl, msft, nvda, googl, amzn, meta, tsla,
       spy, qqq, dia,
-      wti, brent,
-      uvxy,
-      eurusd, jpyusd, gbpusd,
-      dxyQuote
+      uso, bno,
+      uvxy, uup,
+      rates
     ] = await Promise.all([
-      // Mag 7
       quote('AAPL'), quote('MSFT'), quote('NVDA'), quote('GOOGL'),
       quote('AMZN'), quote('META'), quote('TSLA'),
-      // Index ETFs
-      quote('SPY'), quote('QQQ'), quote('DIA'),
-      // Oil ETFs
-      quote('USO'), quote('BNO'),
-      // Volatility
-      quote('UVXY'),
-      // FX via OANDA format
-      fxQuote('EUR_USD', 'EUR/USD'),
-      fxQuote('USD_JPY', 'USD/JPY'),
-      fxQuote('GBP_USD', 'GBP/USD'),
-      // DXY via ETF
-      quote('UUP'),
+      quote('SPY'),  quote('QQQ'),  quote('DIA'),
+      quote('USO'),  quote('BNO'),
+      quote('UVXY'), quote('UUP'),
+      fxRate()
     ]);
 
-    // Scale ETF prices to approximate index levels
-    // SPY ≈ SPX/10, QQQ ≈ NDX/40, DIA ≈ DJI/100
-    const spxPrice  = spy.price  ? +(spy.price  * 10).toFixed(0)  : null;
-    const ndxPrice  = qqq.price  ? +(qqq.price  * 28).toFixed(0)  : null;
-    const djiPrice  = dia.price  ? +(dia.price  * 100).toFixed(0) : null;
-    const spxChange = spy.change ? +(spy.change * 10).toFixed(0)  : null;
-    const ndxChange = qqq.change ? +(qqq.change * 28).toFixed(0)  : null;
-    const djiChange = dia.change ? +(dia.change * 100).toFixed(0) : null;
+    const eur = rates.EUR ? +(1 / rates.EUR).toFixed(4) : null;
+    const jpy = rates.JPY ? +rates.JPY.toFixed(2)       : null;
+    const gbp = rates.GBP ? +(1 / rates.GBP).toFixed(4) : null;
 
     return res.status(200).json({
       mag7: [
-        { ...aapl,  name: 'Apple'    },
-        { ...msft,  name: 'Microsoft'},
-        { ...nvda,  name: 'Nvidia'   },
-        { ...googl, name: 'Alphabet' },
-        { ...amzn,  name: 'Amazon'   },
-        { ...meta,  name: 'Meta'     },
-        { ...tsla,  name: 'Tesla'    },
+        { ...aapl,  name: 'Apple'     },
+        { ...msft,  name: 'Microsoft' },
+        { ...nvda,  name: 'Nvidia'    },
+        { ...googl, name: 'Alphabet'  },
+        { ...amzn,  name: 'Amazon'    },
+        { ...meta,  name: 'Meta'      },
+        { ...tsla,  name: 'Tesla'     },
       ],
       indices: [
-        { symbol: 'SPX', name: 'S&P 500',    price: spxPrice, change: spxChange, changePct: spy.changePct, delay: 'Real-time via SPY ETF (Finnhub)' },
-        { symbol: 'NDX', name: 'Nasdaq 100', price: ndxPrice, change: ndxChange, changePct: qqq.changePct, delay: 'Real-time via QQQ ETF (Finnhub)' },
-        { symbol: 'DJI', name: 'Dow Jones',  price: djiPrice, change: djiChange, changePct: dia.changePct, delay: 'Real-time via DIA ETF (Finnhub)' },
+        { symbol: 'SPX', name: 'S&P 500',    price: spy.price ? +(spy.price * 10).toFixed(0)  : null, change: spy.change ? +(spy.change * 10).toFixed(0) : null, changePct: spy.changePct, delay: 'Real-time via SPY×10 (Finnhub)' },
+        { symbol: 'NDX', name: 'Nasdaq 100', price: qqq.price ? +(qqq.price * 28).toFixed(0)  : null, change: qqq.change ? +(qqq.change * 28).toFixed(0) : null, changePct: qqq.changePct, delay: 'Real-time via QQQ×28 (Finnhub)' },
+        { symbol: 'DJI', name: 'Dow Jones',  price: dia.price ? +(dia.price * 100).toFixed(0) : null, change: dia.change ? +(dia.change * 100).toFixed(0) : null, changePct: dia.changePct, delay: 'Real-time via DIA×100 (Finnhub)' },
       ],
       oil: {
-        wti:   { ...wti,   name: 'WTI Crude',   delay: 'Real-time via USO ETF (Finnhub)' },
-        brent: { ...brent, name: 'Brent Crude',  delay: 'Real-time via BNO ETF (Finnhub)' },
+        wti:   { ...uso, name: 'WTI Crude (USO)',   delay: 'Real-time via USO ETF (Finnhub)' },
+        brent: { ...bno, name: 'Brent Crude (BNO)', delay: 'Real-time via BNO ETF (Finnhub)' },
       },
       fx: {
-        eurusd: eurusd,
-        jpyusd: jpyusd,
-        gbpusd: gbpusd,
-        dxy:    { 
-          symbol: 'DXY', 
-          name: 'Dollar Index (UUP ETF)',
-          price: dxyQuote.price,
-          change: dxyQuote.change,
-          changePct: dxyQuote.changePct,
-          delay: 'Real-time via UUP ETF (Finnhub)'
-        },
+        eurusd: { symbol: 'EUR/USD', price: eur, change: null, changePct: null, delay: 'Hourly (open.er-api.com)' },
+        jpyusd: { symbol: 'USD/JPY', price: jpy, change: null, changePct: null, delay: 'Hourly (open.er-api.com)' },
+        gbpusd: { symbol: 'GBP/USD', price: gbp, change: null, changePct: null, delay: 'Hourly (open.er-api.com)' },
+        dxy:    { symbol: 'DXY', name: 'Dollar Index (UUP)', price: uup.price, change: uup.change, changePct: uup.changePct, delay: 'Real-time via UUP ETF (Finnhub)' },
       },
-      vix: { 
-        ...uvxy, 
-        symbol: 'VIX', 
-        name: 'Volatility (UVXY)',
-        delay: 'Real-time via UVXY ETF (Finnhub)'
-      },
-      delay: 'Real-time (Finnhub)',
+      vix: { ...uvxy, symbol: 'VIX', name: 'Volatility (UVXY)', delay: 'Real-time via UVXY ETF (Finnhub)' },
+      delay: 'Real-time (Finnhub) + Hourly FX (open.er-api.com)',
       timestamp: new Date().toISOString()
     });
 
