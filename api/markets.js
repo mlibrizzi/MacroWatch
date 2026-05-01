@@ -2,65 +2,92 @@ export default async function handler(req, res) {
   res.setHeader('Access-Control-Allow-Origin', '*');
   if (req.method !== 'GET') return res.status(405).json({ error: 'Method not allowed' });
 
-  try {
-    const quoteUrl = `https://query1.finance.yahoo.com/v7/finance/quote?symbols=AAPL,MSFT,NVDA,GOOGL,AMZN,META,TSLA,%5EGSPC,%5ENDX,%5EDJI,CL%3DF,BZ%3DF,EURUSD%3DX,JPY%3DX,DX-Y.NYB,%5EVIX`;
+  const apiKey = process.env.VITE_FINNHUB_API_KEY;
+  const base   = 'https://finnhub.io/api/v1';
 
-    const response = await fetch(quoteUrl, {
-      headers: {
-        'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36',
-        'Accept': 'application/json',
-        'Referer': 'https://finance.yahoo.com/',
-        'Origin': 'https://finance.yahoo.com'
-      }
-    });
-
-    if (!response.ok) throw new Error(`Yahoo Finance ${response.status}`);
-
-    const data = await response.json();
-    const quotes = data.quoteResponse?.result || [];
-
-    const find = (sym) => quotes.find(q => q.symbol === sym);
-
-    const fmt = (q) => !q ? null : {
-      symbol: q.symbol,
-      name: q.shortName || q.symbol,
-      price: q.regularMarketPrice,
-      change: +(q.regularMarketChange?.toFixed(2) || 0),
-      changePct: +(q.regularMarketChangePercent?.toFixed(2) || 0),
-      high: q.regularMarketDayHigh,
-      low: q.regularMarketDayLow,
-      delay: '15-min delayed (Yahoo Finance)'
+  const quote = async (symbol) => {
+    const r = await fetch(`${base}/quote?symbol=${symbol}&token=${apiKey}`);
+    const d = await r.json();
+    // Finnhub returns: c=current, d=change, dp=changePct, h=high, l=low, o=open, pc=prevClose
+    return {
+      symbol,
+      price:     d.c,
+      change:    d.d  != null ? +d.d.toFixed(2)  : null,
+      changePct: d.dp != null ? +d.dp.toFixed(2) : null,
+      high:      d.h,
+      low:       d.l,
+      prevClose: d.pc,
+      delay:     'Real-time (Finnhub)'
     };
+  };
+
+  try {
+    // Fetch all symbols in parallel
+    const [
+      aapl, msft, nvda, googl, amzn, meta, tsla,  // Mag 7
+      spx, ndx, dji,                                // Indices
+      wti, brent,                                   // Oil
+      eurusd, jpyusd, dxy,                          // FX
+      vix                                           // Volatility
+    ] = await Promise.all([
+      quote('AAPL'), quote('MSFT'), quote('NVDA'), quote('GOOGL'),
+      quote('AMZN'), quote('META'), quote('TSLA'),
+      quote('SPY'),  quote('QQQ'),  quote('DIA'),   // ETF proxies for indices
+      quote('USO'),  quote('BNO'),                  // Oil ETF proxies
+      quote('EURUSD'), quote('USDJPY'), quote('UUP'), // FX
+      quote('UVXY')                                 // VIX proxy
+    ]);
+
+    // Also get forex via Finnhub forex endpoint for accuracy
+    const [eurRes, jpyRes] = await Promise.all([
+      fetch(`${base}/forex/rates?base=USD&token=${apiKey}`),
+      fetch(`${base}/forex/rates?base=USD&token=${apiKey}`)
+    ]);
+    const forexData = await eurRes.json();
+    const rates = forexData.quote || {};
 
     return res.status(200).json({
-      mag7: ['AAPL','MSFT','NVDA','GOOGL','AMZN','META','TSLA'].map(s => fmt(find(s))).filter(Boolean),
+      mag7: [
+        { ...aapl,  symbol: 'AAPL', name: 'Apple'     },
+        { ...msft,  symbol: 'MSFT', name: 'Microsoft'  },
+        { ...nvda,  symbol: 'NVDA', name: 'Nvidia'     },
+        { ...googl, symbol: 'GOOGL',name: 'Alphabet'   },
+        { ...amzn,  symbol: 'AMZN', name: 'Amazon'     },
+        { ...meta,  symbol: 'META', name: 'Meta'       },
+        { ...tsla,  symbol: 'TSLA', name: 'Tesla'      },
+      ],
       indices: [
-        find('^GSPC') ? { ...fmt(find('^GSPC')), symbol: 'SPX', name: 'S&P 500' } : null,
-        find('^NDX')  ? { ...fmt(find('^NDX')),  symbol: 'NDX', name: 'Nasdaq 100' } : null,
-        find('^DJI')  ? { ...fmt(find('^DJI')),  symbol: 'DJI', name: 'Dow Jones' } : null,
-      ].filter(Boolean),
+        { ...spx, symbol: 'SPX', name: 'S&P 500 (SPY)',    delay: 'Real-time (Finnhub)' },
+        { ...ndx, symbol: 'NDX', name: 'Nasdaq 100 (QQQ)', delay: 'Real-time (Finnhub)' },
+        { ...dji, symbol: 'DJI', name: 'Dow Jones (DIA)',  delay: 'Real-time (Finnhub)' },
+      ],
       oil: {
-        wti:   fmt(find('CL=F')),
-        brent: fmt(find('BZ=F')),
+        wti:   { ...wti,   name: 'WTI Crude (USO)',   delay: 'Real-time (Finnhub)' },
+        brent: { ...brent, name: 'Brent Crude (BNO)', delay: 'Real-time (Finnhub)' },
       },
       fx: {
-        eurusd: fmt(find('EURUSD=X')),
-        jpyusd: fmt(find('JPY=X')),
-        dxy:    fmt(find('DX-Y.NYB')),
+        eurusd: rates.EUR ? {
+          symbol: 'EUR/USD', price: +(1/rates.EUR).toFixed(4),
+          change: null, changePct: null, delay: 'Real-time (Finnhub Forex)'
+        } : { ...eurusd, symbol: 'EUR/USD' },
+        jpyusd: rates.JPY ? {
+          symbol: 'USD/JPY', price: +rates.JPY.toFixed(2),
+          change: null, changePct: null, delay: 'Real-time (Finnhub Forex)'
+        } : { ...jpyusd, symbol: 'USD/JPY' },
+        dxy: { ...dxy, symbol: 'DXY', name: 'Dollar Index (UUP)', delay: 'Real-time (Finnhub)' },
       },
-      vix: fmt(find('^VIX')),
-      delay: '15-min delayed (Yahoo Finance)',
+      vix: { ...vix, symbol: 'VIX', name: 'Volatility (UVXY)', delay: 'Real-time (Finnhub)' },
+      delay: 'Real-time (Finnhub)',
       timestamp: new Date().toISOString()
     });
 
   } catch (err) {
-    return res.status(200).json({
+    return res.status(500).json({
       error: err.message,
       mag7: [], indices: [],
       oil: { wti: null, brent: null },
       fx: { eurusd: null, jpyusd: null, dxy: null },
       vix: null,
-      delay: '15-min delayed (Yahoo Finance)',
       timestamp: new Date().toISOString()
     });
   }
