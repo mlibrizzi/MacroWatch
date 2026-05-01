@@ -22,7 +22,7 @@ export async function callClaude(prompt, systemOverride) {
       'anthropic-dangerous-direct-browser-calls': 'true',
     },
     body: JSON.stringify({
-      model: 'claude-haiku-4-5',
+      model: 'claude-haiku-4-5-20251001',
       max_tokens: 2000,
       system: systemOverride || JSON_SYSTEM,
       messages: [{ role: 'user', content: prompt }],
