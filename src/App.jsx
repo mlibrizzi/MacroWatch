@@ -307,28 +307,70 @@ function DailyTab({ d }) {
 }
 
 /* ─── AUCTIONS TAB ────────────────────────────────────────────────────────── */
-const BTC_THRESHOLDS = { green: 2.5, yellow: 2.3 };
-const IND_THRESHOLDS = { green: 68, yellow: 62 };
-const DLR_THRESHOLDS = { green: 14, yellow: 18 };
-const TAIL_THRESHOLDS = { green: 0.5, yellow: 1.0 };
+const BTC_THRESHOLDS  = { green: 2.5,  yellow: 2.3  };
+const IND_THRESHOLDS  = { green: 68,   yellow: 62   };
+const DLR_THRESHOLDS  = { green: 14,   yellow: 18   };
+const TAIL_THRESHOLDS = { green: 0.5,  yellow: 1.0  };
+
+const METRIC_DEFS = {
+  'BID/CVR':  { full: 'Bid-to-Cover Ratio', desc: 'Total bids received ÷ amount sold. Measures demand.', green: '> 2.50x', yellow: '2.30–2.50x', red: '< 2.30x' },
+  'INDIRECT': { full: 'Indirect Bidders %', desc: 'Foreign central banks & institutions buying via dealers. Key foreign demand signal.', green: '> 68%', yellow: '62–68%', red: '< 62%' },
+  'DEALER':   { full: 'Primary Dealer %', desc: 'Amount dealers forced to absorb. Higher = weaker real demand.', green: '< 14%', yellow: '14–18%', red: '> 18%' },
+  'TAIL':     { full: 'Auction Tail (bp)', desc: 'Yield above pre-auction trading level. Wider = auction came weaker than expected.', green: '< 0.5bp', yellow: '0.5–1.0bp', red: '> 1.0bp' },
+};
 
 function zoneColor(val, { green, yellow }, invert = false) {
-  if (invert) { // lower is worse (dealer%)
+  if (invert) {
     if (val > yellow) return '#ff3e5a';
-    if (val > green) return '#ffd060';
+    if (val > green)  return '#ffd060';
     return '#00e5c0';
   }
-  if (val >= green) return '#00e5c0';
+  if (val >= green)  return '#00e5c0';
   if (val >= yellow) return '#ffd060';
   return '#ff3e5a';
 }
 
-function AuctionMini({ data, label, field, thresholds, invert, format }) {
+function MetricDef({ label }) {
+  const [open, setOpen] = React.useState(false);
+  const def = METRIC_DEFS[label];
+  if (!def) return null;
+  return (
+    <div style={{ marginBottom: 10 }}>
+      <div
+        style={{ display: 'flex', alignItems: 'center', gap: 6, cursor: 'pointer', padding: '6px 0' }}
+        onClick={() => setOpen(o => !o)}
+      >
+        <div style={{ fontFamily: 'var(--mono)', fontSize: 9, color: 'var(--t3)', letterSpacing: 1 }}>{label}</div>
+        <div style={{ fontFamily: 'var(--mono)', fontSize: 9, color: 'var(--acc2)' }}>{open ? '▲' : '▼ tap for definition'}</div>
+      </div>
+      {open && (
+        <div style={{ background: 'var(--s3)', borderRadius: 4, padding: '8px 10px', marginBottom: 6 }}>
+          <div style={{ fontSize: 11, fontWeight: 600, marginBottom: 4 }}>{def.full}</div>
+          <div style={{ fontSize: 11, color: 'var(--t2)', lineHeight: 1.5, marginBottom: 6 }}>{def.desc}</div>
+          <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+            <span style={{ fontFamily: 'var(--mono)', fontSize: 9, color: '#00e5c0' }}>🟢 {def.green}</span>
+            <span style={{ fontFamily: 'var(--mono)', fontSize: 9, color: '#ffd060' }}>🟡 {def.yellow}</span>
+            <span style={{ fontFamily: 'var(--mono)', fontSize: 9, color: '#ff3e5a' }}>🔴 {def.red}</span>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+function AuctionChart({ data, label, field, thresholds, invert, format }) {
   if (!data?.length) return null;
-  const pts = data.map(a => ({ name: a.term?.replace(/-Year.*|-Year.*/, 'Y').replace('Note','').replace('Bond','').trim(), val: a[field], date: a.date })).filter(p => p.val != null);
+  const pts = data
+    .map(a => ({
+      name: a.term?.replace('-Year Note','Y').replace('-Year Bond','Y').replace(' Note','').replace(' Bond','').trim(),
+      val: a[field],
+      date: a.date
+    }))
+    .filter(p => p.val != null);
+
   return (
     <div style={{ marginBottom: 16 }}>
-      <div className="sec-hdr"><div className="sec-ttl">{label}</div></div>
+      <MetricDef label={label} />
       <div style={{ height: 120 }}>
         <ResponsiveContainer width="100%" height="100%">
           <BarChart data={pts} margin={{ top: 4, right: 4, left: -20, bottom: 0 }}>
@@ -336,22 +378,20 @@ function AuctionMini({ data, label, field, thresholds, invert, format }) {
             <YAxis tick={{ fill: '#4a6080', fontSize: 9, fontFamily: 'IBM Plex Mono' }} />
             <Tooltip
               contentStyle={{ background: '#0b1018', border: '1px solid #1a2535', borderRadius: 4, fontFamily: 'IBM Plex Mono', fontSize: 10 }}
-              labelStyle={{ color: '#8aa0b8' }}
-              itemStyle={{ color: '#e8f0f8' }}
-              formatter={v => [format ? format(v) : fmt(v), label]}
+              formatter={v => [format ? format(v) : v, label]}
             />
-            {thresholds.green != null && <ReferenceLine y={thresholds.green} stroke="#00e5c0" strokeDasharray="4 2" strokeWidth={1} />}
+            {thresholds.green  != null && <ReferenceLine y={thresholds.green}  stroke="#00e5c0" strokeDasharray="4 2" strokeWidth={1} />}
             {thresholds.yellow != null && <ReferenceLine y={thresholds.yellow} stroke="#ffd060" strokeDasharray="4 2" strokeWidth={1} />}
-            <Bar dataKey="val" radius={[3, 3, 0, 0]}>
+            <Bar dataKey="val" radius={[3,3,0,0]}>
               {pts.map((p, i) => <Cell key={i} fill={zoneColor(p.val, thresholds, invert)} />)}
             </Bar>
           </BarChart>
         </ResponsiveContainer>
       </div>
-      <div className="zone-legend">
-        <div className="zl"><div className="zl-dot" style={{ background: '#00e5c0' }} /> <span style={{color:'#4a6080'}}>GREEN</span></div>
-        <div className="zl"><div className="zl-dot" style={{ background: '#ffd060' }} /> <span style={{color:'#4a6080'}}>YELLOW</span></div>
-        <div className="zl"><div className="zl-dot" style={{ background: '#ff3e5a' }} /> <span style={{color:'#4a6080'}}>RED</span></div>
+      <div style={{ display: 'flex', gap: 10, marginTop: 4 }}>
+        <span style={{ fontFamily: 'var(--mono)', fontSize: 8, color: '#00e5c0' }}>🟢 {METRIC_DEFS[label]?.green}</span>
+        <span style={{ fontFamily: 'var(--mono)', fontSize: 8, color: '#ffd060' }}>🟡 {METRIC_DEFS[label]?.yellow}</span>
+        <span style={{ fontFamily: 'var(--mono)', fontSize: 8, color: '#ff3e5a' }}>🔴 {METRIC_DEFS[label]?.red}</span>
       </div>
     </div>
   );
@@ -359,19 +399,37 @@ function AuctionMini({ data, label, field, thresholds, invert, format }) {
 
 function AuctionsTab({ d }) {
   if (!d) return <Loading text="LOADING AUCTIONS..." />;
-  const statusStyle = s => s === 'weak' ? { background: 'rgba(255,62,90,.12)', color: '#ff3e5a' } : s === 'ok' ? { background: 'rgba(0,229,192,.1)', color: '#00e5c0' } : { background: 'rgba(255,208,96,.1)', color: '#ffd060' };
+
+  const statusLabel = s => s === 'weak' ? 'WEAK' : s === 'ok' ? 'STRONG' : 'MIXED';
+  const statusStyle = s => s === 'weak'
+    ? { background: 'rgba(255,62,90,.12)', color: '#ff3e5a' }
+    : s === 'ok'
+    ? { background: 'rgba(0,229,192,.1)',  color: '#00e5c0' }
+    : { background: 'rgba(255,208,96,.1)', color: '#ffd060' };
 
   return (
     <div className="page">
-      {d.macro_note && <div className="card stress" style={{ marginBottom: 12, fontSize: 11, color: 'var(--amber)', lineHeight: 1.6 }}>⚠ {d.macro_note}</div>}
+      {d.delay && (
+        <div style={{ fontFamily: 'var(--mono)', fontSize: 8, color: 'var(--t3)', marginBottom: 10 }}>
+          📡 {d.delay}
+        </div>
+      )}
+
+      {d.macro_note && (
+        <div className="card stress" style={{ marginBottom: 12, fontSize: 11, color: 'var(--amber)', lineHeight: 1.6 }}>
+          ⚠ {d.macro_note}
+        </div>
+      )}
 
       {/* TREND CHARTS */}
       <div className="sec">
-        <div className="sec-hdr"><div className="sec-ttl">⬡ DEMAND TREND CHARTS</div></div>
-        <AuctionMini data={d.recent} label="BID-TO-COVER" field="bid_to_cover" thresholds={BTC_THRESHOLDS} format={v => `${fmt(v)}x`} />
-        <AuctionMini data={d.recent} label="INDIRECT BIDDERS %" field="indirect_pct" thresholds={IND_THRESHOLDS} format={v => `${fmt(v)}%`} />
-        <AuctionMini data={d.recent} label="DEALER ABSORPTION %" field="dealer_pct" thresholds={DLR_THRESHOLDS} invert format={v => `${fmt(v)}%`} />
-        <AuctionMini data={d.recent} label="AUCTION TAIL (bp)" field="tail_bp" thresholds={TAIL_THRESHOLDS} invert format={v => `${fmt(v)}bp`} />
+        <div className="sec-hdr">
+          <div className="sec-ttl">⬡ DEMAND TREND — TAP HEADING FOR DEFINITION</div>
+        </div>
+        <AuctionChart data={d.recent} label="BID/CVR"  field="bid_to_cover" thresholds={BTC_THRESHOLDS}  format={v => `${v?.toFixed(2)}x`} />
+        <AuctionChart data={d.recent} label="INDIRECT" field="indirect_pct" thresholds={IND_THRESHOLDS}  format={v => `${v?.toFixed(1)}%`} />
+        <AuctionChart data={d.recent} label="DEALER"   field="dealer_pct"   thresholds={DLR_THRESHOLDS}  invert format={v => `${v?.toFixed(1)}%`} />
+        <AuctionChart data={d.recent} label="TAIL"     field="tail_bp"      thresholds={TAIL_THRESHOLDS} invert format={v => `${v?.toFixed(1)}bp`} />
       </div>
 
       {/* RECENT DETAIL */}
@@ -380,23 +438,36 @@ function AuctionsTab({ d }) {
         {d.recent?.map((a, i) => (
           <div className="card" key={i}>
             <div className="row" style={{ marginBottom: 8 }}>
-              <div><div className="lbl">{a.term}</div><div className="sub">{a.date} · ${a.size_bn}B</div></div>
-              <div style={{ ...statusStyle(a.status), fontFamily: 'var(--mono)', fontSize: 9, fontWeight: 700, letterSpacing: 1, padding: '3px 8px', borderRadius: 3 }}>{a.status?.toUpperCase()}</div>
+              <div>
+                <div className="lbl">{a.term}</div>
+                <div className="sub">{a.date} · ${a.size_bn}B offering</div>
+              </div>
+              <div style={{
+                ...statusStyle(a.status),
+                fontFamily: 'var(--mono)', fontSize: 9, fontWeight: 700,
+                letterSpacing: 1, padding: '3px 8px', borderRadius: 3
+              }}>
+                {statusLabel(a.status)}
+              </div>
             </div>
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr 1fr', gap: 6 }}>
               {[
-                ['BID/CVR', `${fmt(a.bid_to_cover)}x`, zoneColor(a.bid_to_cover, BTC_THRESHOLDS)],
-                ['INDIRECT', `${fmt(a.indirect_pct)}%`, zoneColor(a.indirect_pct, IND_THRESHOLDS)],
-                ['DEALER', `${fmt(a.dealer_pct)}%`, zoneColor(a.dealer_pct, DLR_THRESHOLDS, true)],
-                ['TAIL', `${fmt(a.tail_bp)}bp`, zoneColor(a.tail_bp, TAIL_THRESHOLDS, true)],
-              ].map(([lbl, val, color]) => (
+                ['BID/CVR',  `${a.bid_to_cover?.toFixed(2)}x`, zoneColor(a.bid_to_cover, BTC_THRESHOLDS),        `avg ${a.btc_6mo_avg?.toFixed(2)}x`],
+                ['INDIRECT', `${a.indirect_pct?.toFixed(1)}%`, zoneColor(a.indirect_pct, IND_THRESHOLDS),        `avg ${a.indirect_avg?.toFixed(1)}%`],
+                ['DEALER',   `${a.dealer_pct?.toFixed(1)}%`,   zoneColor(a.dealer_pct,   DLR_THRESHOLDS,  true), `avg ${a.dealer_avg?.toFixed(1)}%`],
+                ['TAIL',     `${a.tail_bp?.toFixed(1)}bp`,     zoneColor(a.tail_bp,      TAIL_THRESHOLDS, true), `avg ${a.tail_avg_bp?.toFixed(1)}bp`],
+              ].map(([lbl, val, color, avg]) => (
                 <div key={lbl} style={{ textAlign: 'center', background: 'var(--s2)', borderRadius: 4, padding: '6px 4px' }}>
                   <div style={{ fontFamily: 'var(--mono)', fontSize: 7, color: 'var(--t3)', marginBottom: 3, letterSpacing: 1 }}>{lbl}</div>
                   <div style={{ fontFamily: 'var(--mono)', fontSize: 12, fontWeight: 700, color }}>{val}</div>
+                  <div style={{ fontFamily: 'var(--mono)', fontSize: 8, color: 'var(--t3)', marginTop: 2 }}>{avg}</div>
                 </div>
               ))}
             </div>
             {a.note && <div style={{ marginTop: 8, fontSize: 10, color: 'var(--t3)', lineHeight: 1.5 }}>{a.note}</div>}
+            <div style={{ marginTop: 6, fontFamily: 'var(--mono)', fontSize: 8, color: 'var(--t3)' }}>
+              High yield: {a.high_yield?.toFixed(3)}%
+            </div>
           </div>
         ))}
       </div>
@@ -404,7 +475,7 @@ function AuctionsTab({ d }) {
       {/* UPCOMING */}
       {d.upcoming?.length > 0 && (
         <div className="sec">
-          <div className="sec-hdr"><div className="sec-ttl">⬡ UPCOMING</div></div>
+          <div className="sec-hdr"><div className="sec-ttl">⬡ UPCOMING AUCTIONS</div></div>
           {d.upcoming.map((u, i) => (
             <div className="sbar" key={i}>
               <div className="sdot bl" />
