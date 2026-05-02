@@ -69,7 +69,7 @@ fetchSeries(‘DCOILBRENTEU’),
 fetchSeries(‘DTWEXBGS’),
 fetchSeries(‘WALCL’),
 fetchSeries(‘TREAST’),
-fetchSeries(‘WSHOMCB’),
+fetchSeries(‘WSHOMCB’, 8),
 fetchSeries(‘WRBWFRBL’),
 fetchSeries(‘WDTGAL’),
 fetchSeries(‘CES0500000003’), // Avg hourly earnings
