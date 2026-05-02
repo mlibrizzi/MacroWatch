@@ -1,522 +1,463 @@
-import { callClaude } from './api.js';
+import { callClaude } from ‘./api.js’;
 
-const TODAY = new Date().toISOString().split('T')[0];
+const TODAY = new Date().toISOString().split(‘T’)[0];
 
 async function fetchLive(path) {
-  const res = await fetch(path);
-  if (!res.ok) throw new Error(`Live data error ${res.status} from ${path}`);
-  return res.json();
+const res = await fetch(path);
+if (!res.ok) throw new Error(`Live data error ${res.status} from ${path}`);
+return res.json();
 }
 
 export async function fetchDaily() {
-  try {
-    const [metals, markets, fred] = await Promise.all([
-      fetchLive('/api/metals'),
-      fetchLive('/api/markets'),
-      fetchLive('/api/fred'),
-    ]);
+try {
+const [metals, markets, fred] = await Promise.all([
+fetchLive(’/api/metals’),
+fetchLive(’/api/markets’),
+fetchLive(’/api/fred’),
+]);
 
-    const t2y  = fred.yields?.t2y?.latest;
-    const t10y = fred.yields?.t10y?.latest;
-    const t30y = fred.yields?.t30y?.latest;
-    const dxy  = fred.commodities?.dxy?.price;
-    const spx  = markets.indices?.find(i => i.symbol === 'SPX')?.price;
-    const gold = metals.gold?.price;
+```
+const t2y  = fred.yields?.t2y?.latest;
+const t10y = fred.yields?.t10y?.latest;
+const t30y = fred.yields?.t30y?.latest;
+const dxy  = fred.commodities?.dxy?.price;
+const spx  = markets.indices?.find(i => i.symbol === 'SPX')?.price;
+const gold = metals.gold?.price;
 
-    const termPremium    = fred.yields?.termPremium;
-    const liquidityProxy = spx && dxy ? +(spx / dxy).toFixed(2) : null;
-    const goldYieldRatio = gold && t10y ? +(gold / t10y).toFixed(1) : null;
+const termPremium    = fred.yields?.termPremium;
+const liquidityProxy = spx && dxy ? +(spx / dxy).toFixed(2) : null;
+const goldYieldRatio = gold && t10y ? +(gold / t10y).toFixed(1) : null;
 
-    const lpSignal = liquidityProxy
-      ? (liquidityProxy > 50 ? 'expanding' : liquidityProxy > 40 ? 'neutral' : 'tightening')
-      : 'neutral';
+const lpSignal = liquidityProxy
+  ? (liquidityProxy > 50 ? 'expanding' : liquidityProxy > 40 ? 'neutral' : 'tightening')
+  : 'neutral';
 
-    const gySignal = goldYieldRatio
-      ? (goldYieldRatio > 800 ? 'distrust' : goldYieldRatio > 600 ? 'normal' : 'risk-on')
-      : 'normal';
+const gySignal = goldYieldRatio
+  ? (goldYieldRatio > 800 ? 'distrust' : goldYieldRatio > 600 ? 'normal' : 'risk-on')
+  : 'normal';
 
-    // VIX zone
-    const vixPrice = markets.vix?.price;
-    const vixZone = !vixPrice ? 'Unknown'
-      : vixPrice < 15 ? 'Complacent'
-      : vixPrice < 20 ? 'Normal'
-      : vixPrice < 30 ? 'Elevated'
-      : vixPrice < 40 ? 'Fear'
-      : 'Extreme Fear';
+// VIX zone
+const vixPrice = markets.vix?.price;
+const vixZone = !vixPrice ? 'Unknown'
+  : vixPrice < 15 ? 'Complacent'
+  : vixPrice < 20 ? 'Normal'
+  : vixPrice < 30 ? 'Elevated'
+  : vixPrice < 40 ? 'Fear'
+  : 'Extreme Fear';
 
-    return {
-      metals: {
-        gold:   { ...metals.gold,   delay: 'Real-time (gold-api.com)' },
-        silver: { ...metals.silver, delay: 'Real-time (gold-api.com)' },
-      },
-      oil: {
-        wti:   { ...fred.commodities?.wti   },
-        brent: { ...fred.commodities?.brent },
-      },
-      fx: {
-        eurusd: { ...markets.fx?.eurusd },
-        jpyusd: { ...markets.fx?.jpyusd },
-        gbpusd: { ...markets.fx?.gbpusd },
-        dxy:    { ...fred.commodities?.dxy },
-      },
-      vix: markets.vix ? {
-        ...markets.vix,
-        currentZone: vixZone,
-        fullName: 'CBOE Volatility Index — measures expected 30-day S&P 500 volatility',
-        scale: '<15 Complacent · 15-20 Normal · 20-30 Elevated · 30-40 Fear · >40 Extreme Fear',
-      } : null,
-      rates: {
-        t2y:  { yield: t2y,  change_bp: t2y  && fred.yields.t2y.prior  ? +((t2y  - fred.yields.t2y.prior)  * 100).toFixed(1) : null, date: fred.yields.t2y?.date  },
-        t10y: { yield: t10y, change_bp: t10y && fred.yields.t10y.prior ? +((t10y - fred.yields.t10y.prior) * 100).toFixed(1) : null, date: fred.yields.t10y?.date },
-        t30y: { yield: t30y, change_bp: t30y && fred.yields.t30y.prior ? +((t30y - fred.yields.t30y.prior) * 100).toFixed(1) : null, date: fred.yields.t30y?.date },
-        fed_funds:     fred.yields?.fedfunds?.latest,
-        fed_range:     fred.yields?.fedfunds?.targetRange,
-        tips_10y_real: fred.yields?.tips10y?.latest,
-        delay: 'Daily (FRED / US Treasury)',
-      },
-      indices: markets.indices,
-      mag7:   markets.mag7,
-      derived: {
-        term_premium:    { ...termPremium, delay: 'Daily (derived from FRED)' },
-        liquidity_proxy: {
-          value: liquidityProxy, label: 'SPX / DXY', signal: lpSignal,
-          note: `S&P ${spx?.toFixed(0)} / DXY ${dxy?.toFixed(2)}`,
-          delay: 'Real-time SPX (Finnhub) / Daily DXY (FRED)'
-        },
-        gold_vs_yield: {
-          gold, t10y, ratio: goldYieldRatio, signal: gySignal,
-          note: `Gold $${gold?.toFixed(0)} / 10Y ${t10y?.toFixed(2)}%`,
-          delay: 'Real-time gold / Daily yield (FRED)'
-        }
-      },
-      timestamp: new Date().toISOString()
-    };
-  } catch(err) {
-    console.error('fetchDaily error:', err);
-    throw err;
-  }
+return {
+  metals: {
+    gold:   { ...metals.gold,   delay: 'Real-time (gold-api.com)' },
+    silver: { ...metals.silver, delay: 'Real-time (gold-api.com)' },
+  },
+  oil: {
+    wti:   { ...fred.commodities?.wti   },
+    brent: { ...fred.commodities?.brent },
+  },
+  fx: {
+    eurusd: { ...markets.fx?.eurusd },
+    jpyusd: { ...markets.fx?.jpyusd },
+    gbpusd: { ...markets.fx?.gbpusd },
+    dxy:    { ...fred.commodities?.dxy },
+  },
+  vix: markets.vix ? {
+    ...markets.vix,
+    currentZone: vixZone,
+    fullName: 'CBOE Volatility Index — measures expected 30-day S&P 500 volatility',
+    scale: '<15 Complacent · 15-20 Normal · 20-30 Elevated · 30-40 Fear · >40 Extreme Fear',
+  } : null,
+  rates: {
+    t2y:  { yield: t2y,  change_bp: t2y  && fred.yields.t2y.prior  ? +((t2y  - fred.yields.t2y.prior)  * 100).toFixed(1) : null, date: fred.yields.t2y?.date  },
+    t10y: { yield: t10y, change_bp: t10y && fred.yields.t10y.prior ? +((t10y - fred.yields.t10y.prior) * 100).toFixed(1) : null, date: fred.yields.t10y?.date },
+    t30y: { yield: t30y, change_bp: t30y && fred.yields.t30y.prior ? +((t30y - fred.yields.t30y.prior) * 100).toFixed(1) : null, date: fred.yields.t30y?.date },
+    fed_funds:     fred.yields?.fedfunds?.latest,
+    fed_range:     fred.yields?.fedfunds?.targetRange,
+    tips_10y_real: fred.yields?.tips10y?.latest,
+    delay: 'Daily (FRED / US Treasury)',
+  },
+  indices: markets.indices,
+  mag7:   markets.mag7,
+  derived: {
+    term_premium:    { ...termPremium, delay: 'Daily (derived from FRED)' },
+    liquidity_proxy: {
+      value: liquidityProxy, label: 'SPX / DXY', signal: lpSignal,
+      note: `S&P ${spx?.toFixed(0)} / DXY ${dxy?.toFixed(2)}`,
+      delay: 'Real-time SPX (Finnhub) / Daily DXY (FRED)'
+    },
+    gold_vs_yield: {
+      gold, t10y, ratio: goldYieldRatio, signal: gySignal,
+      note: `Gold $${gold?.toFixed(0)} / 10Y ${t10y?.toFixed(2)}%`,
+      delay: 'Real-time gold / Daily yield (FRED)'
+    }
+  },
+  timestamp: new Date().toISOString()
+};
+```
+
+} catch(err) {
+console.error(‘fetchDaily error:’, err);
+throw err;
+}
 }
 
 export async function fetchWeekly() {
-  try {
-    const fred = await fetchLive('/api/fred');
-    const m = fred.macro;
+try {
+const fred = await fetchLive(’/api/fred’);
+const m = fred.macro;
 
-    const fmtNum = n => n != null ? n.toLocaleString('en-US') : '—';
+```
+const fmtNum = n => n != null ? n.toLocaleString('en-US') : '—';
 
-    const labor = [
-      {
-        name: 'Unemployment Rate',
-        fullName: 'US Unemployment Rate (U-3)',
-        value: m.unrate?.latest != null ? `${m.unrate.latest.toFixed(1)}%` : '—',
-        prior: m.unrate?.prior  != null ? `${m.unrate.prior.toFixed(1)}%`  : '—',
-        date: m.unrate?.date,
-        direction: (m.unrate?.latest||0) > (m.unrate?.prior||0) ? 'up' : 'down',
-        signal: (m.unrate?.latest||0) > 4.5 ? 'hot' : 'neutral',
-        delay: m.unrate?.delay, source: m.unrate?.source,
-      },
-      {
-        name: 'NFP',
-        fullName: 'Nonfarm Payrolls — Monthly Change',
-        value: m.nfp?.latest != null ? `${m.nfp.latest>=0?'+':''}${fmtNum(m.nfp.latest)}k` : '—',
-        prior: m.nfp?.prior  != null ? `${m.nfp.prior>=0?'+':''}${fmtNum(m.nfp.prior)}k`   : '—',
-        date: m.nfp?.date,
-        direction: (m.nfp?.latest||0) > (m.nfp?.prior||0) ? 'up' : 'down',
-        signal: (m.nfp?.latest||0) < 100 ? 'hot' : 'neutral',
-        delay: m.nfp?.delay, source: m.nfp?.source,
-        note: m.nfp?.note || 'Monthly change in total employed persons'
-      },
-      {
-        name: 'Initial Jobless Claims',
-        fullName: 'Initial Unemployment Insurance Claims (weekly)',
-        value: m.claims?.latest != null ? fmtNum(Math.round(m.claims.latest)) : '—',
-        prior: m.claims?.prior  != null ? fmtNum(Math.round(m.claims.prior))  : '—',
-        date: m.claims?.date,
-        direction: (m.claims?.latest||0) > (m.claims?.prior||0) ? 'up' : 'down',
-        signal: (m.claims?.latest||0) > 260000 ? 'hot' : (m.claims?.latest||0) < 200000 ? 'cool' : 'neutral',
-        delay: m.claims?.delay, source: m.claims?.source,
-        note: m.claims?.note || 'Number of new unemployment insurance filings per week'
-      },
-      {
-        name: 'Continuing Claims',
-        fullName: 'Continuing Unemployment Insurance Claims',
-        value: m.contClaims?.latest != null ? fmtNum(Math.round(m.contClaims.latest)) : '—',
-        prior: m.contClaims?.prior  != null ? fmtNum(Math.round(m.contClaims.prior))  : '—',
-        date: m.contClaims?.date,
-        direction: (m.contClaims?.latest||0) > (m.contClaims?.prior||0) ? 'up' : 'down',
-        signal: (m.contClaims?.latest||0) > 1900000 ? 'hot' : 'neutral',
-        delay: m.contClaims?.delay, source: m.contClaims?.source,
-        note: 'Total persons currently collecting unemployment benefits'
-      },
-      {
-        name: 'Avg Hourly Earnings',
-        fullName: 'Average Hourly Earnings — All Private Employees (YoY %)',
-        value: m.ahe?.yoyChange != null ? `${m.ahe.yoyChange>0?'+':''}${m.ahe.yoyChange}% YoY` : '—',
-        prior: m.ahe?.prior != null ? `$${m.ahe.prior.toFixed(2)}/hr` : '—',
-        date: m.ahe?.date,
-        direction: (m.ahe?.yoyChange||0) > 3.5 ? 'up' : 'down',
-        signal: (m.ahe?.yoyChange||0) > 4.0 ? 'hot' : (m.ahe?.yoyChange||0) < 3.0 ? 'cool' : 'neutral',
-        delay: m.ahe?.delay, source: m.ahe?.source,
-        note: m.ahe?.note || 'Key wage inflation input — Fed watches closely'
-      },
-    ];
+const labor = [
+  {
+    name: 'Unemployment Rate',
+    fullName: 'US Unemployment Rate (U-3)',
+    value: m.unrate?.latest != null ? `${m.unrate.latest.toFixed(1)}%` : '—',
+    prior: m.unrate?.prior  != null ? `${m.unrate.prior.toFixed(1)}%`  : '—',
+    date: m.unrate?.date,
+    direction: (m.unrate?.latest||0) > (m.unrate?.prior||0) ? 'up' : 'down',
+    signal: (m.unrate?.latest||0) > 4.5 ? 'hot' : 'neutral',
+    delay: m.unrate?.delay, source: m.unrate?.source,
+  },
+  {
+    name: 'NFP',
+    fullName: 'Nonfarm Payrolls — Monthly Change',
+    value: m.nfp?.latest != null ? `${m.nfp.latest>=0?'+':''}${fmtNum(m.nfp.latest)}k` : '—',
+    prior: m.nfp?.prior  != null ? `${m.nfp.prior>=0?'+':''}${fmtNum(m.nfp.prior)}k`   : '—',
+    date: m.nfp?.date,
+    direction: (m.nfp?.latest||0) > (m.nfp?.prior||0) ? 'up' : 'down',
+    signal: (m.nfp?.latest||0) < 100 ? 'hot' : 'neutral',
+    delay: m.nfp?.delay, source: m.nfp?.source,
+    note: m.nfp?.note || 'Monthly change in total employed persons'
+  },
+  {
+    name: 'Initial Jobless Claims',
+    fullName: 'Initial Unemployment Insurance Claims (weekly)',
+    value: m.claims?.latest != null ? fmtNum(Math.round(m.claims.latest)) : '—',
+    prior: m.claims?.prior  != null ? fmtNum(Math.round(m.claims.prior))  : '—',
+    date: m.claims?.date,
+    direction: (m.claims?.latest||0) > (m.claims?.prior||0) ? 'up' : 'down',
+    signal: (m.claims?.latest||0) > 260000 ? 'hot' : (m.claims?.latest||0) < 200000 ? 'cool' : 'neutral',
+    delay: m.claims?.delay, source: m.claims?.source,
+    note: m.claims?.note || 'Number of new unemployment insurance filings per week'
+  },
+  {
+    name: 'Continuing Claims',
+    fullName: 'Continuing Unemployment Insurance Claims',
+    value: m.contClaims?.latest != null ? fmtNum(Math.round(m.contClaims.latest)) : '—',
+    prior: m.contClaims?.prior  != null ? fmtNum(Math.round(m.contClaims.prior))  : '—',
+    date: m.contClaims?.date,
+    direction: (m.contClaims?.latest||0) > (m.contClaims?.prior||0) ? 'up' : 'down',
+    signal: (m.contClaims?.latest||0) > 1900000 ? 'hot' : 'neutral',
+    delay: m.contClaims?.delay, source: m.contClaims?.source,
+    note: 'Total persons currently collecting unemployment benefits'
+  },
+  {
+    name: 'Avg Hourly Earnings',
+    fullName: 'Average Hourly Earnings — All Private Employees (YoY %)',
+    value: m.ahe?.yoyChange != null ? `${m.ahe.yoyChange>0?'+':''}${m.ahe.yoyChange}% YoY` : '—',
+    prior: m.ahe?.prior != null ? `$${m.ahe.prior.toFixed(2)}/hr` : '—',
+    date: m.ahe?.date,
+    direction: (m.ahe?.yoyChange||0) > 3.5 ? 'up' : 'down',
+    signal: (m.ahe?.yoyChange||0) > 4.0 ? 'hot' : (m.ahe?.yoyChange||0) < 3.0 ? 'cool' : 'neutral',
+    delay: m.ahe?.delay, source: m.ahe?.source,
+    note: m.ahe?.note || 'Key wage inflation input — Fed watches closely'
+  },
+];
 
-    const inflation = [
-      {
-        name: 'CPI', fullName: 'Consumer Price Index',
-        value: m.cpi?.momChange != null ? `${m.cpi.momChange>0?'+':''}${m.cpi.momChange}% MoM` : '—',
-        yoy:   m.cpi?.yoyChange != null ? `${m.cpi.yoyChange}% YoY` : null,
-        prior: m.cpi?.prior?.toFixed(1), date: m.cpi?.date,
-        direction: (m.cpi?.momChange||0) > 0 ? 'up' : 'down',
-        signal: (m.cpi?.momChange||0) > 0.4 ? 'hot' : 'neutral',
-        delay: m.cpi?.delay, source: m.cpi?.source,
-      },
-      {
-        name: 'Core CPI', fullName: 'Core Consumer Price Index (ex Food & Energy)',
-        value: m.coreCpi?.momChange != null ? `${m.coreCpi.momChange>0?'+':''}${m.coreCpi.momChange}% MoM` : '—',
-        yoy:   m.coreCpi?.yoyChange != null ? `${m.coreCpi.yoyChange}% YoY` : null,
-        prior: m.coreCpi?.prior?.toFixed(1), date: m.coreCpi?.date,
-        direction: (m.coreCpi?.momChange||0) > 0 ? 'up' : 'down',
-        signal: (m.coreCpi?.momChange||0) > 0.3 ? 'hot' : 'neutral',
-        delay: m.coreCpi?.delay, source: m.coreCpi?.source,
-      },
-      {
-        name: 'PCE', fullName: 'Personal Consumption Expenditures Price Index',
-        value: m.pce?.momChange != null ? `${m.pce.momChange>0?'+':''}${m.pce.momChange}% MoM` : '—',
-        yoy:   m.pce?.yoyChange != null ? `${m.pce.yoyChange}% YoY` : null,
-        prior: m.pce?.prior?.toFixed(1), date: m.pce?.date,
-        direction: (m.pce?.momChange||0) > 0 ? 'up' : 'down',
-        signal: (m.pce?.momChange||0) > 0.3 ? 'hot' : 'neutral',
-        delay: m.pce?.delay, source: m.pce?.source,
-        note: "Fed's preferred inflation measure"
-      },
-      {
-        name: 'Core PCE', fullName: 'Core Personal Consumption Expenditures (ex Food & Energy)',
-        value: m.corePce?.momChange != null ? `${m.corePce.momChange>0?'+':''}${m.corePce.momChange}% MoM` : '—',
-        yoy:   m.corePce?.yoyChange != null ? `${m.corePce.yoyChange}% YoY` : null,
-        prior: m.corePce?.prior?.toFixed(1), date: m.corePce?.date,
-        direction: (m.corePce?.momChange||0) > 0 ? 'up' : 'down',
-        signal: (m.corePce?.momChange||0) > 0.3 ? 'hot' : 'neutral',
-        delay: m.corePce?.delay, source: m.corePce?.source,
-      },
-    ];
+const inflation = [
+  {
+    name: 'CPI', fullName: 'Consumer Price Index',
+    value: m.cpi?.momChange != null ? `${m.cpi.momChange>0?'+':''}${m.cpi.momChange}% MoM` : '—',
+    yoy:   m.cpi?.yoyChange != null ? `${m.cpi.yoyChange}% YoY` : null,
+    prior: m.cpi?.prior?.toFixed(1), date: m.cpi?.date,
+    direction: (m.cpi?.momChange||0) > 0 ? 'up' : 'down',
+    signal: (m.cpi?.momChange||0) > 0.4 ? 'hot' : 'neutral',
+    delay: m.cpi?.delay, source: m.cpi?.source,
+  },
+  {
+    name: 'Core CPI', fullName: 'Core Consumer Price Index (ex Food & Energy)',
+    value: m.coreCpi?.momChange != null ? `${m.coreCpi.momChange>0?'+':''}${m.coreCpi.momChange}% MoM` : '—',
+    yoy:   m.coreCpi?.yoyChange != null ? `${m.coreCpi.yoyChange}% YoY` : null,
+    prior: m.coreCpi?.prior?.toFixed(1), date: m.coreCpi?.date,
+    direction: (m.coreCpi?.momChange||0) > 0 ? 'up' : 'down',
+    signal: (m.coreCpi?.momChange||0) > 0.3 ? 'hot' : 'neutral',
+    delay: m.coreCpi?.delay, source: m.coreCpi?.source,
+  },
+  {
+    name: 'PCE', fullName: 'Personal Consumption Expenditures Price Index',
+    value: m.pce?.momChange != null ? `${m.pce.momChange>0?'+':''}${m.pce.momChange}% MoM` : '—',
+    yoy:   m.pce?.yoyChange != null ? `${m.pce.yoyChange}% YoY` : null,
+    prior: m.pce?.prior?.toFixed(1), date: m.pce?.date,
+    direction: (m.pce?.momChange||0) > 0 ? 'up' : 'down',
+    signal: (m.pce?.momChange||0) > 0.3 ? 'hot' : 'neutral',
+    delay: m.pce?.delay, source: m.pce?.source,
+    note: "Fed's preferred inflation measure"
+  },
+  {
+    name: 'Core PCE', fullName: 'Core Personal Consumption Expenditures (ex Food & Energy)',
+    value: m.corePce?.momChange != null ? `${m.corePce.momChange>0?'+':''}${m.corePce.momChange}% MoM` : '—',
+    yoy:   m.corePce?.yoyChange != null ? `${m.corePce.yoyChange}% YoY` : null,
+    prior: m.corePce?.prior?.toFixed(1), date: m.corePce?.date,
+    direction: (m.corePce?.momChange||0) > 0 ? 'up' : 'down',
+    signal: (m.corePce?.momChange||0) > 0.3 ? 'hot' : 'neutral',
+    delay: m.corePce?.delay, source: m.corePce?.source,
+  },
+];
 
-    const activity = [
-      {
-        name: 'GDP', fullName: 'Real Gross Domestic Product — QoQ Annualized % Change',
-        value: m.gdp?.latest != null ? `${m.gdp.latest>0?'+':''}${m.gdp.latest.toFixed(1)}%` : '—',
-        prior: m.gdp?.prior  != null ? `${m.gdp.prior>0?'+':''}${m.gdp.prior.toFixed(1)}%`   : '—',
-        date: m.gdp?.date,
-        direction: (m.gdp?.latest||0) > (m.gdp?.prior||0) ? 'up' : 'down',
-        signal: (m.gdp?.latest||0) < 0 ? 'hot' : 'neutral',
-        delay: m.gdp?.delay, source: m.gdp?.source,
-        note: m.gdp?.note || 'Quarterly advance estimate'
-      },
-      {
-        name: 'Retail Sales', fullName: 'Advance Retail Sales',
-        value: m.retail?.latest != null ? `$${m.retail.latest}B` : '—',
-        prior: m.retail?.prior  != null ? `$${m.retail.prior}B`  : '—',
-        date: m.retail?.date,
-        direction: (m.retail?.momChange||0) > 0 ? 'up' : 'down',
-        signal: (m.retail?.momChange||0) < -1 ? 'hot' : 'neutral',
-        delay: m.retail?.delay, source: m.retail?.source,
-        note: m.retail?.note || ''
-      },
-      {
-        name: '10Y TIPS Real Yield',
-        fullName: '10-Year Treasury Inflation-Protected Securities Real Yield',
-        value: fred.yields?.tips10y?.latest != null ? `${fred.yields.tips10y.latest.toFixed(2)}%` : '—',
-        prior: fred.yields?.tips10y?.prior  != null ? `${fred.yields.tips10y.prior.toFixed(2)}%`  : '—',
-        date: fred.yields?.tips10y?.date,
-        direction: (fred.yields?.tips10y?.latest||0) > (fred.yields?.tips10y?.prior||0) ? 'up' : 'down',
-        signal: (fred.yields?.tips10y?.latest||0) > 2.0 ? 'hot' : 'neutral',
-        delay: 'Daily (FRED / US Treasury)',
-        source: 'US Treasury via FRED',
-        note: 'Above 2% = restrictive real borrowing conditions'
-      },
-    ];
+const activity = [
+  {
+    name: 'GDP', fullName: 'Real Gross Domestic Product — QoQ Annualized % Change',
+    value: m.gdp?.latest != null ? `${m.gdp.latest>0?'+':''}${m.gdp.latest.toFixed(1)}%` : '—',
+    prior: m.gdp?.prior  != null ? `${m.gdp.prior>0?'+':''}${m.gdp.prior.toFixed(1)}%`   : '—',
+    date: m.gdp?.date,
+    direction: (m.gdp?.latest||0) > (m.gdp?.prior||0) ? 'up' : 'down',
+    signal: (m.gdp?.latest||0) < 0 ? 'hot' : 'neutral',
+    delay: m.gdp?.delay, source: m.gdp?.source,
+    note: m.gdp?.note || 'Quarterly advance estimate'
+  },
+  {
+    name: 'Retail Sales', fullName: 'Advance Retail Sales',
+    value: m.retail?.latest != null ? `$${m.retail.latest}B` : '—',
+    prior: m.retail?.prior  != null ? `$${m.retail.prior}B`  : '—',
+    date: m.retail?.date,
+    direction: (m.retail?.momChange||0) > 0 ? 'up' : 'down',
+    signal: (m.retail?.momChange||0) < -1 ? 'hot' : 'neutral',
+    delay: m.retail?.delay, source: m.retail?.source,
+    note: m.retail?.note || ''
+  },
+  {
+    name: '10Y TIPS Real Yield',
+    fullName: '10-Year Treasury Inflation-Protected Securities Real Yield',
+    value: fred.yields?.tips10y?.latest != null ? `${fred.yields.tips10y.latest.toFixed(2)}%` : '—',
+    prior: fred.yields?.tips10y?.prior  != null ? `${fred.yields.tips10y.prior.toFixed(2)}%`  : '—',
+    date: fred.yields?.tips10y?.date,
+    direction: (fred.yields?.tips10y?.latest||0) > (fred.yields?.tips10y?.prior||0) ? 'up' : 'down',
+    signal: (fred.yields?.tips10y?.latest||0) > 2.0 ? 'hot' : 'neutral',
+    delay: 'Daily (FRED / US Treasury)',
+    source: 'US Treasury via FRED',
+    note: 'Above 2% = restrictive real borrowing conditions'
+  },
+];
 
-    // Fed policy — use real FRED rate + Claude for narrative
-    const fedFunds     = fred.yields?.fedfunds?.latest;
-    const fedRange     = fred.yields?.fedfunds?.targetRange;
-    const fedFundsDate = fred.yields?.fedfunds?.date;
+// Fed policy — use real FRED rate + Claude for narrative
+const fedFunds     = fred.yields?.fedfunds?.latest;
+const fedRange     = fred.yields?.fedfunds?.targetRange;
+const fedFundsDate = fred.yields?.fedfunds?.date;
 
-    const fedNarrative = await callClaude(
-      `The actual Fed Funds Rate is ${fedRange || fedFunds+'%'} as of ${fedFundsDate}. 
+const fedNarrative = await callClaude(
+  `The actual Fed Funds Rate is ${fedRange || fedFunds+'%'} as of ${fedFundsDate}. 
+```
+
 The next FOMC meeting is June 16-17, 2026.
 The Fed held rates at its April 29 2026 meeting with 4 dissents — most since 1992.
 Return JSON:
 {
-  "market_cut_prob_jun_pct": number,
-  "dots_median_2026": number,
-  "powell_status": "1-2 sentence current status referencing the April 29 hold and 4 dissents",
-  "qt_status": "1-2 sentence balance sheet status — QT ended Dec 2025, reserve management purchases underway",
-  "fomc_dissents": 4,
-  "fomc_note": "Most dissents since October 1992 — signals significant internal disagreement"
+“market_cut_prob_jun_pct”: number,
+“dots_median_2026”: number,
+“powell_status”: “1-2 sentence current status referencing the April 29 hold and 4 dissents”,
+“qt_status”: “1-2 sentence balance sheet status — QT ended Dec 2025, reserve management purchases underway”,
+“fomc_dissents”: 4,
+“fomc_note”: “Most dissents since October 1992 — signals significant internal disagreement”
 }`,
-      'Return only raw JSON. No markdown. Start with {'
-    );
+‘Return only raw JSON. No markdown. Start with {’
+);
 
-    return {
-      fed_policy: {
-        current_rate:  fedRange || `${fedFunds}%`,
-        effr:          fedFunds,
-        next_meeting:  'June 16-17, 2026',
-        fomc_dissents: fedNarrative?.fomc_dissents || 4,
-        fomc_note:     fedNarrative?.fomc_note || 'Most dissents since October 1992',
-        market_cut_prob_jun_pct: fedNarrative?.market_cut_prob_jun_pct,
-        powell_status: fedNarrative?.powell_status,
-        qt_status:     fedNarrative?.qt_status,
-        delay: `Real EFFR: FRED (${fedFundsDate}) · Narrative: AI estimate`
-      },
-      labor,
-      inflation,
-      activity,
-      timestamp: new Date().toISOString()
-    };
-  } catch(err) {
-    console.error('fetchWeekly error:', err);
-    throw err;
-  }
+```
+return {
+  fed_policy: {
+    current_rate:  fedRange || `${fedFunds}%`,
+    effr:          fedFunds,
+    next_meeting:  'June 16-17, 2026',
+    fomc_dissents: fedNarrative?.fomc_dissents || 4,
+    fomc_note:     fedNarrative?.fomc_note || 'Most dissents since October 1992',
+    market_cut_prob_jun_pct: fedNarrative?.market_cut_prob_jun_pct,
+    powell_status: fedNarrative?.powell_status,
+    qt_status:     fedNarrative?.qt_status,
+    delay: `Real EFFR: FRED (${fedFundsDate}) · Narrative: AI estimate`
+  },
+  labor,
+  inflation,
+  activity,
+  timestamp: new Date().toISOString()
+};
+```
+
+} catch(err) {
+console.error(‘fetchWeekly error:’, err);
+throw err;
+}
 }
 
 export async function fetchAuctions() {
-  // Pass real yield context so Claude anchors correctly
-  let yieldContext = '';
-  try {
-    const fred = await fetchLive('/api/fred');
-    const t2y  = fred.yields?.t2y?.latest;
-    const t10y = fred.yields?.t10y?.latest;
-    const t30y = fred.yields?.t30y?.latest;
-    const rate = fred.yields?.fedfunds?.targetRange || fred.yields?.fedfunds?.latest + '%';
-    yieldContext = `Current market context: Fed Funds Rate ${rate}. 2Y yield ${t2y}%. 10Y yield ${t10y}%. 30Y yield ${t30y}%. Use these as anchors for auction yield estimates.`;
-  } catch(e) {}
+try {
+// Use real TreasuryDirect data
+const data = await fetchLive(’/api/auctions’);
+return data;
+} catch(err) {
+console.error(‘fetchAuctions error:’, err);
+// Fallback to Claude estimate with real yield context
+let yieldContext = ‘’;
+try {
+const fred = await fetchLive(’/api/fred’);
+const t2y  = fred.yields?.t2y?.latest;
+const t10y = fred.yields?.t10y?.latest;
+const t30y = fred.yields?.t30y?.latest;
+const rate = fred.yields?.fedfunds?.targetRange || fred.yields?.fedfunds?.latest + ‘%’;
+yieldContext = `Current market context: Fed Funds Rate ${rate}. 2Y yield ${t2y}%. 10Y yield ${t10y}%. 30Y yield ${t30y}%.`;
+} catch(e) {}
 
-  const data = await callClaude(
-    `${yieldContext}
-Return JSON with the 5 most recent US Treasury auction results across 2Y, 5Y, 7Y, 10Y and 30Y maturities as of ${TODAY}, and upcoming auctions.
-{
-  "recent": [
-    {
-      "term": "2-Year Note",
-      "date": "YYYY-MM-DD",
-      "size_bn": number,
-      "bid_to_cover": number,
-      "btc_6mo_avg": number,
-      "indirect_pct": number,
-      "indirect_avg": number,
-      "direct_pct": number,
-      "dealer_pct": number,
-      "dealer_avg": number,
-      "high_yield": number,
-      "tail_bp": number,
-      "tail_avg_bp": number,
-      "status": "weak|mixed|ok",
-      "note": "string"
-    }
-  ],
-  "upcoming": [
-    { "term": string, "date": "YYYY-MM-DD", "size_bn": number }
-  ],
-  "macro_note": "string"
+```
+const fallback = await callClaude(
+  `${yieldContext} Return JSON with recent Treasury auction results as of ${TODAY}.
+```
+
+{ “recent”: [{ “term”: string, “date”: “YYYY-MM-DD”, “size_bn”: number, “bid_to_cover”: number, “btc_6mo_avg”: number, “indirect_pct”: number, “indirect_avg”: number, “direct_pct”: number, “dealer_pct”: number, “dealer_avg”: number, “high_yield”: number, “tail_bp”: number, “tail_avg_bp”: number, “status”: “weak|mixed|ok”, “note”: string }],
+“upcoming”: [{ “term”: string, “date”: “YYYY-MM-DD”, “size_bn”: number }],
+“macro_note”: string }`,
+‘Return only raw JSON. No markdown. Start with {’
+);
+return { …fallback, delay: ‘⚠ AI estimate (TreasuryDirect unavailable) — verify at treasurydirect.gov’ };
 }
-Upcoming confirmed schedule: 10Y Note May 20 $76B, 7Y Note May 21 $65B, 5Y Note May 25 $70B, 2Y Note May 26 $69B.`,
-    'Return only raw JSON. No markdown. Start with {'
-  );
-
-  return {
-    ...data,
-    delay: '⚠ AI estimate anchored to real yields — verify same-day at treasurydirect.gov/auctions'
-  };
 }
 
 export async function fetchMonthly() {
-  // Get real Fed balance sheet from FRED
-  let fredBalance = null;
-  try {
-    const fred = await fetchLive('/api/fred');
-    fredBalance = fred.fedBalance;
-  } catch(e) {}
+// Get real Fed balance sheet from FRED
+let fredBalance = null;
+try {
+const fred = await fetchLive(’/api/fred’);
+fredBalance = fred.fedBalance;
+} catch(e) {}
 
-  const data = await callClaude(
-    `Return JSON with latest TIC foreign holdings and basis trade data as of ${TODAY}.
-{
-  "tic": {
-    "report_month": "YYYY-MM",
-    "total_foreign_bn": number,
-    "mom_change_bn": number,
-    "yoy_change_bn": number,
-    "foreign_share_pct": number,
-    "china_net_since_2021_bn": number,
-    "top_holders": [
-      { "country": string, "holdings_bn": number, "mom_bn": number, "trend": "buying|selling|flat", "note": string }
-    ]
-  },
-  "basis_trade": {
-    "estimated_size_tn": number,
-    "stress_level": "low|elevated|high",
-    "note": string,
-    "sofr_treasury_spread_bp": number
-  }
-}`,
-    'Return only raw JSON. No markdown. Start with {'
-  );
+const data = await callClaude(
+`Return JSON with latest TIC foreign holdings and basis trade data as of ${TODAY}. { "tic": { "report_month": "YYYY-MM", "total_foreign_bn": number, "mom_change_bn": number, "yoy_change_bn": number, "foreign_share_pct": number, "china_net_since_2021_bn": number, "top_holders": [ { "country": string, "holdings_bn": number, "mom_bn": number, "trend": "buying|selling|flat", "note": string } ] }, "basis_trade": { "estimated_size_tn": number, "stress_level": "low|elevated|high", "note": string, "sofr_treasury_spread_bp": number } }`,
+‘Return only raw JSON. No markdown. Start with {’
+);
 
-  // Merge real FRED balance sheet data with AI TIC data
-  return {
-    ...data,
-    // Override fed_balance with real FRED data
-    fed_balance: fredBalance ? {
-      report_date:    new Date().toISOString().split('T')[0],
-      total_assets_tn: fredBalance.totalAssets?.value,
-      treasuries_tn:   fredBalance.treasuries?.value,
-      mbs_tn:          fredBalance.mbs?.value,
-      reserves_tn:     fredBalance.reserves?.value,
-      tga_bn:          fredBalance.tga?.value,
-      weekly_change_bn: fredBalance.weeklyChange?.value,
-      reserve_mgmt_note: 'QT ended Dec 2025. Fed now in reserve management phase — buying T-bills to maintain adequate reserves. Balance sheet stabilizing.',
-      data_source: 'Real FRED data (H.4.1 weekly release)',
-    } : null,
-    tga: fredBalance?.tga ? {
-      current_bn:      fredBalance.tga.value,
-      prior_month_bn:  fredBalance.tga.prior,
-      date:            fredBalance.tga.date,
-      note:            'Treasury General Account — key liquidity indicator. High TGA = Treasury has cash buffer. Low TGA = X-date risk.',
-      delay:           fredBalance.tga.delay,
-      source:          'US Treasury via FRED (WDTGAL)'
-    } : null,
-    delay: 'Fed Balance Sheet: Real FRED H.4.1 weekly data | TIC: AI estimate — verify at treasury.gov/tic (6-week lag)'
-  };
+// Merge real FRED balance sheet data with AI TIC data
+return {
+…data,
+// Override fed_balance with real FRED data
+fed_balance: fredBalance ? {
+report_date:    new Date().toISOString().split(‘T’)[0],
+total_assets_tn: fredBalance.totalAssets?.value,
+treasuries_tn:   fredBalance.treasuries?.value,
+mbs_tn:          fredBalance.mbs?.value,
+reserves_tn:     fredBalance.reserves?.value,
+tga_bn:          fredBalance.tga?.value,
+weekly_change_bn: fredBalance.weeklyChange?.value,
+reserve_mgmt_note: ‘QT ended Dec 2025. Fed now in reserve management phase — buying T-bills to maintain adequate reserves. Balance sheet stabilizing.’,
+data_source: ‘Real FRED data (H.4.1 weekly release)’,
+} : null,
+tga: fredBalance?.tga ? {
+current_bn:      fredBalance.tga.value,
+prior_month_bn:  fredBalance.tga.prior,
+date:            fredBalance.tga.date,
+note:            ‘Treasury General Account — key liquidity indicator. High TGA = Treasury has cash buffer. Low TGA = X-date risk.’,
+delay:           fredBalance.tga.delay,
+source:          ‘US Treasury via FRED (WDTGAL)’
+} : null,
+delay: ‘Fed Balance Sheet: Real FRED H.4.1 weekly data | TIC: AI estimate — verify at treasury.gov/tic (6-week lag)’
+};
 }
 
 export async function fetchQuarterly() {
-  // Get real earnings from Finnhub
-  let realEarnings = [];
-  try {
-    const e = await fetchLive('/api/earnings');
-    realEarnings = e.earnings || [];
-  } catch(err) {}
+// Get real earnings from Finnhub
+let realEarnings = [];
+try {
+const e = await fetchLive(’/api/earnings’);
+realEarnings = e.earnings || [];
+} catch(err) {}
 
-  // Get gov reports via Claude with correct Fed rate context
-  const govData = await callClaude(
-    `As of ${TODAY}, the Fed Funds Rate is 3.50-3.75% (held at April 29 2026 FOMC meeting).
-GDP Q1 2026 advance estimate was +2.0% annualized (released April 30 2026).
-Return JSON with government reports and upcoming earnings:
-{
-  "gov_reports": [
-    { "report": string, "value": string, "prior": string, "revision": "up|down|none", "note": string, "source": string }
-  ],
-  "upcoming_earnings": [
-    { "company": string, "symbol": string, "date": "YYYY-MM-DD", "eps_est": number }
-  ]
-}
-Include: GDP Q1 2026, Federal Deficit FY2026 YTD, Debt-to-GDP, Federal Debt Outstanding, Trade Balance, TGA.
-Upcoming confirmed: AMZN May 6, GOOGL May 8, META May 12, NVDA May 20 (tentative), WMT May 15.`,
-    'Return only raw JSON. No markdown. Start with {'
-  );
+// Get gov reports via Claude with correct Fed rate context
+const govData = await callClaude(
+`As of ${TODAY}, the Fed Funds Rate is 3.50-3.75% (held at April 29 2026 FOMC meeting). GDP Q1 2026 advance estimate was +2.0% annualized (released April 30 2026). Return JSON with government reports and upcoming earnings: { "gov_reports": [ { "report": string, "value": string, "prior": string, "revision": "up|down|none", "note": string, "source": string } ], "upcoming_earnings": [ { "company": string, "symbol": string, "date": "YYYY-MM-DD", "eps_est": number } ] } Include: GDP Q1 2026, Federal Deficit FY2026 YTD, Debt-to-GDP, Federal Debt Outstanding, Trade Balance, TGA. Upcoming confirmed: AMZN May 6, GOOGL May 8, META May 12, NVDA May 20 (tentative), WMT May 15.`,
+‘Return only raw JSON. No markdown. Start with {’
+);
 
-  // Merge real earnings with gov report data
-  const companyMeta = {
-    AAPL:  { name: 'Apple',      sector: 'Technology'      },
-    MSFT:  { name: 'Microsoft',  sector: 'Technology'      },
-    NVDA:  { name: 'Nvidia',     sector: 'Technology'      },
-    GOOGL: { name: 'Alphabet',   sector: 'Technology'      },
-    AMZN:  { name: 'Amazon',     sector: 'Consumer/Cloud'  },
-    META:  { name: 'Meta',       sector: 'Technology'      },
-    TSLA:  { name: 'Tesla',      sector: 'Automotive'      },
-    JPM:   { name: 'JPMorgan',   sector: 'Financials'      },
-    XOM:   { name: 'ExxonMobil', sector: 'Energy'          },
-  };
+// Merge real earnings with gov report data
+const companyMeta = {
+AAPL:  { name: ‘Apple’,      sector: ‘Technology’      },
+MSFT:  { name: ‘Microsoft’,  sector: ‘Technology’      },
+NVDA:  { name: ‘Nvidia’,     sector: ‘Technology’      },
+GOOGL: { name: ‘Alphabet’,   sector: ‘Technology’      },
+AMZN:  { name: ‘Amazon’,     sector: ‘Consumer/Cloud’  },
+META:  { name: ‘Meta’,       sector: ‘Technology’      },
+TSLA:  { name: ‘Tesla’,      sector: ‘Automotive’      },
+JPM:   { name: ‘JPMorgan’,   sector: ‘Financials’      },
+XOM:   { name: ‘ExxonMobil’, sector: ‘Energy’          },
+};
 
-  const earnings = realEarnings.map(e => ({
-    company:    companyMeta[e.symbol]?.name || e.symbol,
-    symbol:     e.symbol,
-    sector:     companyMeta[e.symbol]?.sector,
-    quarter:    e.quarter,
-    report_date: e.reportDate,
-    eps_actual: e.epsActual,
-    eps_est:    e.epsEst,
-    beat_pct:   e.beatPct,
-    guidance:   null,
-    key_note:   `EPS ${e.epsActual != null ? (e.epsActual >= e.epsEst ? 'beat' : 'missed') + ` est by ${Math.abs(e.beatPct||0).toFixed(1)}%` : 'pending'}`,
-    delay:      e.delay,
-    source:     e.source
-  }));
+const earnings = realEarnings.map(e => ({
+company:    companyMeta[e.symbol]?.name || e.symbol,
+symbol:     e.symbol,
+sector:     companyMeta[e.symbol]?.sector,
+quarter:    e.quarter,
+report_date: e.reportDate,
+eps_actual: e.epsActual,
+eps_est:    e.epsEst,
+beat_pct:   e.beatPct,
+guidance:   null,
+key_note:   `EPS ${e.epsActual != null ? (e.epsActual >= e.epsEst ? 'beat' : 'missed') + ` est by ${Math.abs(e.beatPct||0).toFixed(1)}%` : 'pending'}`,
+delay:      e.delay,
+source:     e.source
+}));
 
-  return {
-    earnings,
-    gov_reports:       govData?.gov_reports || [],
-    upcoming_earnings: govData?.upcoming_earnings || [],
-    delay: 'Earnings: Real Finnhub/SEC data | Gov reports: AI estimate anchored to real GDP/Fed rate | Verify at bea.gov, treasury.gov'
-  };
+return {
+earnings,
+gov_reports:       govData?.gov_reports || [],
+upcoming_earnings: govData?.upcoming_earnings || [],
+delay: ‘Earnings: Real Finnhub/SEC data | Gov reports: AI estimate anchored to real GDP/Fed rate | Verify at bea.gov, treasury.gov’
+};
 }
 
 export async function fetchIntel(userQuestion) {
-  // Pull live data to ground Intel in real numbers
-  let liveContext = '';
-  try {
-    const [fred, metals, markets] = await Promise.all([
-      fetchLive('/api/fred'),
-      fetchLive('/api/metals'),
-      fetchLive('/api/markets'),
-    ]);
-    const gold   = metals.gold?.price;
-    const silver = metals.silver?.price;
-    const t10y   = fred.yields?.t10y?.latest;
-    const t2y    = fred.yields?.t2y?.latest;
-    const t30y   = fred.yields?.t30y?.latest;
-    const tips   = fred.yields?.tips10y?.latest;
-    const rate   = fred.yields?.fedfunds?.targetRange;
-    const spx    = markets.indices?.find(i=>i.symbol==='SPX')?.price;
-    const vix    = markets.vix?.price;
-    const wti    = fred.commodities?.wti?.price;
-    const dxy    = fred.commodities?.dxy?.price;
+// Pull live data to ground Intel in real numbers
+let liveContext = ‘’;
+try {
+const [fred, metals, markets] = await Promise.all([
+fetchLive(’/api/fred’),
+fetchLive(’/api/metals’),
+fetchLive(’/api/markets’),
+]);
+const gold   = metals.gold?.price;
+const silver = metals.silver?.price;
+const t10y   = fred.yields?.t10y?.latest;
+const t2y    = fred.yields?.t2y?.latest;
+const t30y   = fred.yields?.t30y?.latest;
+const tips   = fred.yields?.tips10y?.latest;
+const rate   = fred.yields?.fedfunds?.targetRange;
+const spx    = markets.indices?.find(i=>i.symbol===‘SPX’)?.price;
+const vix    = markets.vix?.price;
+const wti    = fred.commodities?.wti?.price;
+const dxy    = fred.commodities?.dxy?.price;
 
-    liveContext = `LIVE MARKET DATA as of ${TODAY} — use these exact figures in your analysis:
+```
+liveContext = `LIVE MARKET DATA as of ${TODAY} — use these exact figures in your analysis:
+```
+
 - Gold spot: $${gold?.toFixed(2)}/oz
-- Silver spot: $${silver?.toFixed(2)}/oz  
+- Silver spot: $${silver?.toFixed(2)}/oz
 - WTI Crude: $${wti?.toFixed(2)}/barrel
 - Fed Funds Rate: ${rate} (held at April 29 2026 FOMC — 4 dissents, most since 1992)
 - 2Y Treasury: ${t2y}%
 - 10Y Treasury: ${t10y}%
 - 30Y Treasury: ${t30y}%
 - 10Y TIPS Real Yield: ${tips}%
-- Term Premium (10Y-2Y): ${t10y && t2y ? (t10y-t2y).toFixed(2) : 'N/A'}%
+- Term Premium (10Y-2Y): ${t10y && t2y ? (t10y-t2y).toFixed(2) : ‘N/A’}%
 - S&P 500: ${spx?.toFixed(0)}
-- VIX: ${vix?.toFixed(2)} (${vix<20?'NORMAL':vix<30?'ELEVATED':vix<40?'FEAR':'EXTREME FEAR'} zone)
+- VIX: ${vix?.toFixed(2)} (${vix<20?‘NORMAL’:vix<30?‘ELEVATED’:vix<40?‘FEAR’:‘EXTREME FEAR’} zone)
 - US Dollar Broad Index: ${dxy?.toFixed(2)}
 - US Deficit: ~$2T+ annually, Debt/GDP: ~122%
 - GDP Q1 2026: +2.0% annualized (advance estimate)
-- CPI YoY: ~3.3%, Core PCE YoY: ~3.2%`;
-  } catch(e) {
-    liveContext = `Today is ${TODAY}. Fed Funds Rate is 3.50-3.75%. Use your best knowledge of current market conditions.`;
+- CPI YoY: ~3.3%, Core PCE YoY: ~3.2%`; } catch(e) { liveContext = `Today is ${TODAY}. Fed Funds Rate is 3.50-3.75%. Use your best knowledge of current market conditions.`;
   }
-
-  const base = `You are a macro intelligence analyst specializing in debt cycle analysis, Treasury markets, and global capital flows. 
-${liveContext}
-Return ONLY raw JSON. No markdown fences. No backticks. Start with {`;
-
+  
+  const base = `You are a macro intelligence analyst specializing in debt cycle analysis, Treasury markets, and global capital flows.  ${liveContext} Return ONLY raw JSON. No markdown fences. No backticks. Start with {`;
+  
   if (userQuestion) {
-    return callClaude(`User question: "${userQuestion}"
-Return JSON:
-{
-  "answer": "detailed 3-5 paragraph response referencing the live data provided",
-  "key_points": ["string"],
-  "related_indicators": ["string"],
-  "data_sources": ["where to verify"]
-}`, base);
+  return callClaude(`User question: "${userQuestion}" Return JSON: { "answer": "detailed 3-5 paragraph response referencing the live data provided", "key_points": ["string"], "related_indicators": ["string"], "data_sources": ["where to verify"] }`, base);
   }
-
-  return callClaude(`Generate macro intelligence briefing for ${TODAY} using the live data provided above.
-Return JSON:
-{
-  "thesis": "3-4 sentence thesis referencing specific live data points above",
-  "regime": "stagflation|reflation|deflation|goldilocks|crisis",
-  "regime_confidence": "high|medium|low",
-  "alerts": [{ "level": "critical|warning|watch", "title": string, "detail": "2-3 sentences with specific numbers from live data", "category": "DEBT|FED|GEOPOLITICS|MARKETS|FLOWS|INFLATION", "verify_at": string }],
-  "key_risks": [{ "risk": string, "probability": "high|medium|low", "horizon": "immediate|3mo|6mo|12mo" }],
-  "key_watches": [{ "indicator": string, "why": string, "threshold": string, "source": string }],
-  "dalio_lens": "2-3 sentence read through Dalio big debt cycle framework using current data",
-  "positioning": { "usd": "bearish|neutral|bullish", "gold": "bearish|neutral|bullish", "long_bonds": "bearish|neutral|bullish", "equities": "bearish|neutral|bullish", "rationale": string }
-}`, base);
-}
+  
+  return callClaude(`Generate macro intelligence briefing for ${TODAY} using the live data provided above. Return JSON: { "thesis": "3-4 sentence thesis referencing specific live data points above", "regime": "stagflation|reflation|deflation|goldilocks|crisis", "regime_confidence": "high|medium|low", "alerts": [{ "level": "critical|warning|watch", "title": string, "detail": "2-3 sentences with specific numbers from live data", "category": "DEBT|FED|GEOPOLITICS|MARKETS|FLOWS|INFLATION", "verify_at": string }], "key_risks": [{ "risk": string, "probability": "high|medium|low", "horizon": "immediate|3mo|6mo|12mo" }], "key_watches": [{ "indicator": string, "why": string, "threshold": string, "source": string }], "dalio_lens": "2-3 sentence read through Dalio big debt cycle framework using current data", "positioning": { "usd": "bearish|neutral|bullish", "gold": "bearish|neutral|bullish", "long_bonds": "bearish|neutral|bullish", "equities": "bearish|neutral|bullish", "rationale": string } }`, base);
+  }
