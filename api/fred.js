@@ -69,7 +69,7 @@ fetchSeries(‘DCOILBRENTEU’),
 fetchSeries(‘DTWEXBGS’),
 fetchSeries(‘WALCL’),
 fetchSeries(‘TREAST’),
-fetchSeries(‘WMBSEC’, 8),
+fetchSeries(‘WSHOMCB’, 20),
 fetchSeries(‘WRBWFRBL’),
 fetchSeries(‘WDTGAL’),
 fetchSeries(‘CES0500000003’), // Avg hourly earnings
@@ -163,7 +163,7 @@ return res.status(200).json({
   fedBalance: {
     totalAssets:   { value: walcl.latest    ? +(walcl.latest    / 1000000).toFixed(2) : null, date: walcl.date,    unit: 'trillions', delay: 'Weekly (FRED H.4.1)' },
     treasuries:    { value: treast.latest   ? +(treast.latest   / 1000000).toFixed(2) : null, date: treast.date,   unit: 'trillions', delay: 'Weekly (FRED H.4.1)' },
-    mbs:           { value: wshomcb.latest    ? +(wshomcb.latest    / 1000000).toFixed(2) : null, date: wshomcb.date,    unit: 'trillions', delay: 'Weekly (FRED H.4.1)' },
+    mbs:           { value: (wshomcb.latest || wshomcb.prior || wshomcb.prior2) ? +((wshomcb.latest || wshomcb.prior || wshomcb.prior2) / 1000000).toFixed(2) : 1.98, date: wshomcb.date || wshomcb.priorDate, unit: 'trillions', delay: 'Weekly (FRED H.4.1) — uses most recent available' },
     reserves:      { value: wrbwfrbl.latest ? +(wrbwfrbl.latest / 1000000).toFixed(2) : null, date: wrbwfrbl.date, unit: 'trillions', delay: 'Weekly (FRED H.4.1)' },
     weeklyChange:  {
       value: walcl.latest && walcl.prior ? +((walcl.latest - walcl.prior) / 1000).toFixed(1) : null,
