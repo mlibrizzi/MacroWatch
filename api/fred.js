@@ -37,7 +37,7 @@ wti, brent, dxy,
 // Fed balance sheet - real data
 walcl,    // Total assets
 treast,   // Treasury holdings
-wshomcb,    // MBS
+wshomcb,    // MBS (WMBSEC week avg)
 wrbwfrbl, // Reserves
 wdtgal,   // TGA balance
 // Average hourly earnings
@@ -69,7 +69,7 @@ fetchSeries(‘DCOILBRENTEU’),
 fetchSeries(‘DTWEXBGS’),
 fetchSeries(‘WALCL’),
 fetchSeries(‘TREAST’),
-fetchSeries(‘WSHOMCB’, 8),
+fetchSeries(‘WMBSEC’, 8),
 fetchSeries(‘WRBWFRBL’),
 fetchSeries(‘WDTGAL’),
 fetchSeries(‘CES0500000003’), // Avg hourly earnings
