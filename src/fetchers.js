@@ -419,13 +419,17 @@ delay: ‘Earnings: Real Finnhub/SEC data | Gov reports: AI estimate anchored to
 
 export async function fetchIntel(userQuestion) {
 // Pull live data to ground Intel in real numbers
+// Each fetch is independent - failure of one cannot crash Intel
 let liveContext = ‘’;
 try {
-const [fred, metals, markets] = await Promise.all([
+const [fredResult, metalsResult, marketsResult] = await Promise.allSettled([
 fetchLive(’/api/fred’),
 fetchLive(’/api/metals’),
 fetchLive(’/api/markets’),
 ]);
+const fred    = fredResult.status    === ‘fulfilled’ ? fredResult.value    : {};
+const metals  = metalsResult.status  === ‘fulfilled’ ? metalsResult.value  : {};
+const markets = marketsResult.status === ‘fulfilled’ ? marketsResult.value : {};
 const gold   = metals.gold?.price;
 const silver = metals.silver?.price;
 const t10y   = fred.yields?.t10y?.latest;
