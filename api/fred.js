@@ -112,9 +112,9 @@ export default async function handler(req, res) {
           change:    dxy.latest && dxy.prior ? +(dxy.latest - dxy.prior).toFixed(2) : null,
           changePct: momPct(dxy.latest, dxy.prior),
           date:      dxy.date,
-          name:      'US Dollar Index (Broad)',
+          name:      name: 'US Dollar Broad Index (Fed H.10 — base yr 2006=100, not DXY)',
           unit:      'index',
-          delay:     'Daily (Federal Reserve via FRED) — 1 trading day lag',
+          delay:     delay: 'Daily (Fed H.10 via FRED) — Note: trades at ~118 vs headline DXY ~99 due to different base year and currency basket',
           source:    'Federal Reserve Board H.10'
         }
       },
