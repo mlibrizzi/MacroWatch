@@ -326,8 +326,14 @@ export async function fetchMonthly() {
 let fredBalance = null;
 try {
 const fred = await fetchLive(’/api/fred’);
+if (fred && fred.fedBalance) {
 fredBalance = fred.fedBalance;
-} catch(e) {}
+} else {
+console.error(‘fetchMonthly: fedBalance missing from FRED response’, Object.keys(fred || {}));
+}
+} catch(e) {
+console.error(‘fetchMonthly: FRED fetch failed’, e.message);
+}
 
 const data = await callClaude(
 `Return JSON with latest TIC foreign holdings and basis trade data as of ${TODAY}. { "tic": { "report_month": "YYYY-MM", "total_foreign_bn": number, "mom_change_bn": number, "yoy_change_bn": number, "foreign_share_pct": number, "china_net_since_2021_bn": number, "top_holders": [ { "country": string, "holdings_bn": number, "mom_bn": number, "trend": "buying|selling|flat", "note": string } ] }, "basis_trade": { "estimated_size_tn": number, "stress_level": "low|elevated|high", "note": string, "sofr_treasury_spread_bp": number } }`,
