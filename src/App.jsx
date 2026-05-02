@@ -1,13 +1,13 @@
-import { useState, useEffect, useCallback, useRef } from 'react';
-import { BarChart, Bar, XAxis, YAxis, Tooltip, ReferenceLine, ResponsiveContainer, Cell } from 'recharts';
-import { fetchDaily, fetchAuctions, fetchWeekly, fetchMonthly, fetchQuarterly, fetchIntel } from './fetchers.js';
+import { useState, useEffect, useCallback, useRef } from ‘react’;
+import { BarChart, Bar, XAxis, YAxis, Tooltip, ReferenceLine, ResponsiveContainer, Cell } from ‘recharts’;
+import { fetchDaily, fetchAuctions, fetchWeekly, fetchMonthly, fetchQuarterly, fetchIntel } from ‘./fetchers.js’;
 
 const G = `@import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600;700&family=Outfit:wght@300;400;500;600&display=swap'); *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent} :root{ --bg:#06090d;--s1:#0b1018;--s2:#111820;--s3:#182030; --b1:#1a2535;--b2:#243040;--b3:#304050; --t1:#e8f0f8;--t2:#8aa0b8;--t3:#4a6080; --acc:#00e5c0;--acc2:#0096ff;--acc3:#ffd060; --up:#00e5c0;--dn:#ff3e5a;--warn:#ffd060;--neu:#8aa0b8; --red:#ff3e5a;--amber:#ffd060;--green:#00e5c0;--blue:#0096ff; --gold:#fbbf24; --mono:'IBM Plex Mono',monospace;--sans:'Outfit',sans-serif; --r:6px; } html,body,#root{height:100%;background:var(--bg)} body{font-family:var(--sans);color:var(--t1);overflow-x:hidden} .app{max-width:430px;margin:0 auto;min-height:100vh;padding-bottom:72px;position:relative} .hdr{background:var(--s1);border-bottom:1px solid var(--b1);padding:env(safe-area-inset-top,12px) 16px 0;position:sticky;top:0;z-index:200} .hdr-top{display:flex;align-items:center;justify-content:space-between;padding-bottom:10px} .logo{font-family:var(--mono);font-size:14px;font-weight:700;color:var(--acc);letter-spacing:3px} .logo em{color:var(--t3);font-style:normal;font-weight:400} .hdr-right{display:flex;align-items:center;gap:8px} .hdr-date{font-family:var(--mono);font-size:9px;color:var(--t3);letter-spacing:1px;text-align:right;line-height:1.5} .refbtn{background:none;border:1px solid var(--b2);color:var(--acc);padding:5px 10px;border-radius:var(--r);font-family:var(--mono);font-size:10px;cursor:pointer;transition:all .15s} .refbtn:hover{background:rgba(0,229,192,.08);border-color:var(--acc)} .refbtn:disabled{opacity:.35;cursor:not-allowed} .tabs{display:flex;overflow-x:auto;scrollbar-width:none;padding:0 16px} .tabs::-webkit-scrollbar{display:none} .tab{background:none;border:none;border-bottom:2px solid transparent;color:var(--t3);font-family:var(--mono);font-size:9px;letter-spacing:1.5px;padding:8px 12px;cursor:pointer;white-space:nowrap;transition:all .15s} .tab.on{color:var(--acc);border-bottom-color:var(--acc)} .tab:hover:not(.on){color:var(--t1)} .page{padding:12px 16px} .sec{margin-bottom:18px} .sec-hdr{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px} .sec-ttl{font-family:var(--mono);font-size:8px;letter-spacing:2.5px;color:var(--t3);text-transform:uppercase} .badge{font-family:var(--mono);font-size:7px;letter-spacing:1px;padding:2px 6px;border-radius:2px;background:rgba(0,229,192,.1);color:var(--acc)} .badge.red{background:rgba(255,62,90,.1);color:var(--red)} .badge.amb{background:rgba(255,208,96,.1);color:var(--amber)} .card{background:var(--s1);border:1px solid var(--b1);border-radius:var(--r);padding:12px;margin-bottom:7px} .card.stress{border-left:3px solid var(--amber)} .card.critical{border-left:3px solid var(--red)} .card.ok{border-left:3px solid var(--green)} .row{display:flex;align-items:center;justify-content:space-between} .col-l{flex:1} .col-r{text-align:right} .lbl{font-size:12px;font-weight:500;color:var(--t1)} .sub{font-family:var(--mono);font-size:9px;color:var(--t3);margin-top:1px} .val{font-family:var(--mono);font-size:14px;font-weight:700} .chg{font-family:var(--mono);font-size:10px;margin-top:1px} .up{color:var(--up)}.dn{color:var(--dn)}.neu{color:var(--neu)}.warn{color:var(--warn)}.gold{color:var(--gold)} .tgrid{display:grid;grid-template-columns:1fr 1fr;gap:6px} .tk{background:var(--s1);border:1px solid var(--b1);border-radius:var(--r);padding:10px} .tk-sym{font-family:var(--mono);font-size:10px;font-weight:700;color:var(--acc2);margin-bottom:3px} .tk-price{font-family:var(--mono);font-size:15px;font-weight:700} .tk-chg{font-family:var(--mono);font-size:10px;margin-top:2px} .sig-grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px} .sig-box{background:var(--s2);border:1px solid var(--b2);border-radius:var(--r);padding:10px;text-align:center} .sig-lbl{font-family:var(--mono);font-size:7px;color:var(--t3);letter-spacing:1px;margin-bottom:6px} .sig-val{font-family:var(--mono);font-size:13px;font-weight:700;margin-bottom:4px} .sig-status{font-family:var(--mono);font-size:7px;letter-spacing:1px;padding:2px 5px;border-radius:2px;display:inline-block} .sig-note{font-size:9px;color:var(--t3);margin-top:5px;line-height:1.4} .div{height:1px;background:var(--b1);margin:10px 0} .sbar{display:flex;align-items:flex-start;gap:8px;padding:8px 10px;background:var(--s1);border:1px solid var(--b1);border-radius:var(--r);margin-bottom:6px} .sdot{width:7px;height:7px;border-radius:50%;flex-shrink:0;margin-top:3px} .sdot.gr{background:var(--green);box-shadow:0 0 5px var(--green)} .sdot.rd{background:var(--red);box-shadow:0 0 5px var(--red)} .sdot.am{background:var(--amber);box-shadow:0 0 5px var(--amber)} .sdot.bl{background:var(--blue);box-shadow:0 0 5px var(--blue)} .stxt{flex:1;font-size:12px;color:var(--t1);line-height:1.4} .smeta{font-family:var(--mono);font-size:9px;color:var(--t3);white-space:nowrap} .load{display:flex;flex-direction:column;align-items:center;justify-content:center;padding:48px 20px;gap:14px} .spin{width:22px;height:22px;border:2px solid var(--b2);border-top-color:var(--acc);border-radius:50%;animation:spin .7s linear infinite} @keyframes spin{to{transform:rotate(360deg)}} .load-txt{font-family:var(--mono);font-size:10px;color:var(--t3);letter-spacing:2px;animation:pulse 1.5s ease-in-out infinite} @keyframes pulse{0%,100%{opacity:1}50%{opacity:.35}} .zone-legend{display:flex;gap:8px;margin-top:4px;flex-wrap:wrap} .thesis-box{background:var(--s2);border:1px solid var(--b2);border-left:3px solid var(--acc2);border-radius:var(--r);padding:14px;margin-bottom:10px} .thesis-ttl{font-family:var(--mono);font-size:8px;color:var(--acc2);letter-spacing:2px;margin-bottom:8px} .thesis-txt{font-size:12px;color:var(--t1);line-height:1.7} .regime-pill{display:inline-block;font-family:var(--mono);font-size:9px;font-weight:700;letter-spacing:2px;padding:3px 10px;border-radius:3px;margin-bottom:10px} .pos-grid{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:10px} .pos-box{background:var(--s2);border:1px solid var(--b2);border-radius:var(--r);padding:8px;text-align:center} .pos-asset{font-family:var(--mono);font-size:9px;color:var(--t3);margin-bottom:4px} .pos-signal{font-family:var(--mono);font-size:11px;font-weight:700} .intel-card{background:var(--s1);border:1px solid var(--b1);border-radius:var(--r);padding:12px;margin-bottom:8px} .intel-ttl{font-family:var(--mono);font-size:10px;font-weight:700;margin-bottom:5px} .intel-det{font-size:11px;color:var(--t2);line-height:1.6} .intel-meta{display:flex;gap:8px;margin-top:6px} .intel-badge{font-family:var(--mono);font-size:7px;padding:2px 5px;border-radius:2px;letter-spacing:1px} .qbox{display:flex;gap:8px;margin-bottom:16px} .qinput{flex:1;background:var(--s2);border:1px solid var(--b2);border-radius:var(--r);color:var(--t1);font-family:var(--sans);font-size:13px;padding:10px 12px;outline:none} .qinput:focus{border-color:var(--acc)} .qinput::placeholder{color:var(--t3)} .qbtn{background:var(--acc);color:var(--bg);font-family:var(--mono);font-size:10px;font-weight:700;border:none;border-radius:var(--r);padding:10px 14px;cursor:pointer;white-space:nowrap} .qbtn:disabled{opacity:.4;cursor:not-allowed} .ans-box{background:var(--s2);border:1px solid var(--b2);border-left:3px solid var(--acc);border-radius:var(--r);padding:14px;margin-bottom:12px} .ans-txt{font-size:12px;color:var(--t1);line-height:1.7;white-space:pre-wrap} .bnav{position:fixed;bottom:0;left:50%;transform:translateX(-50%);width:100%;max-width:430px;background:var(--s1);border-top:1px solid var(--b1);display:flex;padding:8px 0 max(12px,env(safe-area-inset-bottom,12px));z-index:200} .nbtn{flex:1;background:none;border:none;color:var(--t3);font-family:var(--mono);font-size:7px;letter-spacing:1px;cursor:pointer;padding:3px 2px;display:flex;flex-direction:column;align-items:center;gap:4px;transition:color .15s} .nbtn.on{color:var(--acc)} .nbtn svg{width:17px;height:17px;stroke-width:1.5} .rates-tbl{width:100%} .rates-tbl tr:not(:last-child) td{padding-bottom:8px} .rates-tbl td:last-child{text-align:right} .tic-row{display:flex;justify-content:space-between;align-items:center;padding:7px 0;border-bottom:1px solid var(--b1)} .tic-row:last-child{border-bottom:none} .macro-row{display:flex;justify-content:space-between;align-items:flex-start;padding:8px 0;border-bottom:1px solid var(--b1)} .macro-row:last-child{border-bottom:none}`;
 
-const fmt = (n, d = 2) => n == null ? ‘—’ : Number(n).toLocaleString(‘en-US’, { minimumFractionDigits: d, maximumFractionDigits: d });
-const fmtPct = n => n == null ? ‘—’ : `${n > 0 ? '+' : ''}${fmt(n)}%`;
+const fmt = (n, d = 2) => n == null ? ‘–’ : Number(n).toLocaleString(‘en-US’, { minimumFractionDigits: d, maximumFractionDigits: d });
+const fmtPct = n => n == null ? ‘–’ : `${n > 0 ? '+' : ''}${fmt(n)}%`;
 const signCls = n => n == null ? ‘neu’ : n > 0 ? ‘up’ : n < 0 ? ‘dn’ : ‘neu’;
-const arrow = n => n > 0 ? ‘▲’ : n < 0 ? ‘▼’ : ‘–’;
+const arrow = n => n > 0 ? ‘▲’ : n < 0 ? ‘▼’ : ‘-’;
 
 const SIGNAL_COLORS = { expanding:‘up’, tightening:‘dn’, neutral:‘neu’, steepening:‘warn’, flattening:‘neu’, inverted:‘dn’, distrust:‘dn’, normal:‘neu’, ‘risk-on’:‘up’ };
 const REGIME_STYLE = {
@@ -103,7 +103,7 @@ return (
     <div className="card">
       <table className="rates-tbl">
         <tbody>
-          {/* DXY — real FRED broad dollar index */}
+          {/* DXY -- real FRED broad dollar index */}
           {fx?.dxy?.price && (
             <tr>
               <td>
@@ -150,7 +150,7 @@ return (
                     {zone.label}
                   </div>
                   <div style={{fontFamily:'var(--mono)',fontSize:8,color:'var(--t3)',marginTop:2}}>
-                    {'<15 Normal · 20–30 Elevated · 30–40 Fear · >40 Extreme'}
+                    {'<15 Normal · 20-30 Elevated · 30-40 Fear · >40 Extreme'}
                   </div>
                   <div style={{fontFamily:'var(--mono)',fontSize:8,color:'var(--t3)',marginTop:1}}>📡 {vix.delay}</div>
                 </td>
@@ -247,10 +247,10 @@ const DLR_THRESHOLDS  = { green:14,   yellow:18   };
 const TAIL_THRESHOLDS = { green:0.5,  yellow:1.0  };
 
 const METRIC_DEFS = {
-‘BID/CVR’:  { full:‘Bid-to-Cover Ratio’,    desc:‘Total bids received ÷ amount sold. Measures overall demand for the auction.’,          green:’>2.50x’,   yellow:‘2.30–2.50x’, red:’<2.30x’  },
-‘INDIRECT’: { full:‘Indirect Bidders %’,    desc:‘Foreign central banks & institutions buying via primary dealers. Key foreign demand signal.’, green:’>68%’, yellow:‘62–68%’,   red:’<62%’    },
-‘DEALER’:   { full:‘Primary Dealer %’,      desc:‘Amount dealers were forced to absorb. Higher = weaker real demand. Dealers are buyer of last resort.’, green:’<14%’, yellow:‘14–18%’, red:’>18%’ },
-‘TAIL’:     { full:‘Auction Tail (bp)’,      desc:‘Yield above pre-auction market level. Wider tail = auction came in weaker than expected. 1bp = 0.01%.’, green:’<0.5bp’, yellow:‘0.5–1.0bp’, red:’>1.0bp’ },
+‘BID/CVR’:  { full:‘Bid-to-Cover Ratio’,    desc:‘Total bids received ÷ amount sold. Measures overall demand for the auction.’,          green:’>2.50x’,   yellow:‘2.30-2.50x’, red:’<2.30x’  },
+‘INDIRECT’: { full:‘Indirect Bidders %’,    desc:‘Foreign central banks & institutions buying via primary dealers. Key foreign demand signal.’, green:’>68%’, yellow:‘62-68%’,   red:’<62%’    },
+‘DEALER’:   { full:‘Primary Dealer %’,      desc:‘Amount dealers were forced to absorb. Higher = weaker real demand. Dealers are buyer of last resort.’, green:’<14%’, yellow:‘14-18%’, red:’>18%’ },
+‘TAIL’:     { full:‘Auction Tail (bp)’,      desc:‘Yield above pre-auction market level. Wider tail = auction came in weaker than expected. 1bp = 0.01%.’, green:’<0.5bp’, yellow:‘0.5-1.0bp’, red:’>1.0bp’ },
 };
 
 function zoneColor(val, { green, yellow }, invert=false) {
@@ -331,7 +331,7 @@ return (
 
 ```
   <div className="sec">
-    <div className="sec-hdr"><div className="sec-ttl">⬡ DEMAND TRENDS — TAP TO DEFINE</div></div>
+    <div className="sec-hdr"><div className="sec-ttl">⬡ DEMAND TRENDS -- TAP TO DEFINE</div></div>
     <AuctionChart data={d.recent} label="BID/CVR"  field="bid_to_cover" thresholds={BTC_THRESHOLDS}  format={v=>`${fmt(v)}x`}/>
     <AuctionChart data={d.recent} label="INDIRECT" field="indirect_pct" thresholds={IND_THRESHOLDS}  format={v=>`${fmt(v)}%`}/>
     <AuctionChart data={d.recent} label="DEALER"   field="dealer_pct"   thresholds={DLR_THRESHOLDS}  invert format={v=>`${fmt(v)}%`}/>
@@ -393,7 +393,7 @@ const dirCls = (dir, isInflation) => {
 if (isInflation) return dir===‘up’?‘dn’:dir===‘down’?‘up’:‘neu’;
 return dir===‘up’?‘up’:dir===‘down’?‘dn’:‘neu’;
 };
-const dirArrow = dir => dir===‘up’?‘▲’:dir===‘down’?‘▼’:’–’;
+const dirArrow = dir => dir===‘up’?‘▲’:dir===‘down’?‘▼’:’-’;
 
 const MacroRow = ({ ind, isInflation }) => (
 <div className="macro-row">
@@ -426,7 +426,7 @@ const fp = d.fed_policy;
 
 return (
 <div className="page">
-{/* FED POLICY — using real FRED rate */}
+{/* FED POLICY – using real FRED rate */}
 {fp && (
 <div className="sec">
 <div className="sec-hdr"><div className="sec-ttl">⬡ FEDERAL RESERVE POLICY</div><div className="badge">FOMC</div></div>
@@ -451,7 +451,7 @@ return (
 <div style={{fontSize:8,color:‘var(–t3)’,fontFamily:‘var(–mono)’}}>June meeting</div>
 </div>
 <div className={`val ${(fp.market_cut_prob_jun_pct||0)>50?'up':'neu'}`} style={{fontSize:13}}>
-{fp.market_cut_prob_jun_pct != null ? `${fp.market_cut_prob_jun_pct}%` : ‘—’}
+{fp.market_cut_prob_jun_pct != null ? `${fp.market_cut_prob_jun_pct}%` : ‘–’}
 </div>
 </div>
 
@@ -501,7 +501,7 @@ return (
 function MonthlyTab({ d }) {
 if (!d) return <Loading text="LOADING FLOWS DATA..."/>;
 const trendCls   = t => t===‘buying’?‘up’:t===‘selling’?‘dn’:‘neu’;
-const trendArrow = t => t===‘buying’?‘▲’:t===‘selling’?‘▼’:’–’;
+const trendArrow = t => t===‘buying’?‘▲’:t===‘selling’?‘▼’:’-’;
 
 return (
 <div className="page">
@@ -510,7 +510,7 @@ return (
 ```
   {d.tic && (
     <div className="sec">
-      <div className="sec-hdr"><div className="sec-ttl">⬡ TIC — FOREIGN UST HOLDINGS</div><div className="badge">{d.tic.report_month}</div></div>
+      <div className="sec-hdr"><div className="sec-ttl">⬡ TIC -- FOREIGN UST HOLDINGS</div><div className="badge">{d.tic.report_month}</div></div>
       <div className="card">
         <div className="row" style={{marginBottom:8}}>
           <div><div className="lbl">Total Foreign Holdings</div><div className="sub">Treasury International Capital</div></div>
@@ -613,7 +613,7 @@ return (
   {/* EARNINGS */}
   <div className="sec">
     <div className="sec-hdr">
-      <div className="sec-ttl">⬡ EARNINGS — LATEST REPORTED</div>
+      <div className="sec-ttl">⬡ EARNINGS -- LATEST REPORTED</div>
       <div className="badge">FINNHUB / SEC</div>
     </div>
     {d.earnings?.map((e,i) => {
@@ -788,7 +788,7 @@ Verify at: {answer.data_sources.join(’ · ’)}
             {[['USD',d.positioning.usd],['GOLD',d.positioning.gold],['LONG BONDS',d.positioning.long_bonds],['EQUITIES',d.positioning.equities]].map(([a,p])=>(
               <div className="pos-box" key={a}>
                 <div className="pos-asset">{a}</div>
-                <div className={`pos-signal ${posColor(p)}`}>{p?.toUpperCase()||'—'}</div>
+                <div className={`pos-signal ${posColor(p)}`}>{p?.toUpperCase()||'--'}</div>
               </div>
             ))}
           </div>
