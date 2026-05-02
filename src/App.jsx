@@ -799,51 +799,77 @@ Verify at: {answer.data_sources.join(’ · ’)}
       {d.alerts?.length > 0 && (
         <div className="sec">
           <div className="sec-hdr"><div className="sec-ttl">⬡ ACTIVE SIGNALS</div></div>
-          {d.alerts.map((a,i) => (
-            <div className="intel-card" style={{borderLeft:`3px solid ${a.level==='critical'?'var(--red)':a.level==='warning'?'var(--amber)':'var(--blue)'}`}} key={i}>
-              <div className="intel-ttl" style={{color:a.level==='critical'?'var(--red)':a.level==='warning'?'var(--amber)':'var(--acc2)'}}>{a.title}</div>
-              <div className="intel-det">{a.detail}</div>
-              <div className="intel-meta">
-                <span className="intel-badge" style={{background:'rgba(0,150,255,.1)',color:'var(--blue)'}}>{a.category}</span>
-                <span className="intel-badge" style={{background:a.level==='critical'?'rgba(255,62,90,.1)':'rgba(255,208,96,.1)',color:a.level==='critical'?'var(--red)':'var(--amber)'}}>{a.level?.toUpperCase()}</span>
+          {d.alerts.map((a,i) => {
+            const isStr = typeof a === 'string';
+            const title = isStr ? a : a.title;
+            const detail = isStr ? null : a.detail;
+            const level = isStr ? 'watch' : (a.level || 'watch');
+            const category = isStr ? null : a.category;
+            const borderColor = level==='critical'?'var(--red)':level==='warning'?'var(--amber)':'var(--blue)';
+            const titleColor = level==='critical'?'var(--red)':level==='warning'?'var(--amber)':'var(--acc2)';
+            return (
+              <div className="intel-card" style={{borderLeft:`3px solid ${borderColor}`}} key={i}>
+                <div className="intel-ttl" style={{color:titleColor}}>{title}</div>
+                {detail && <div className="intel-det">{detail}</div>}
+                <div className="intel-meta">
+                  {category && <span className="intel-badge" style={{background:'rgba(0,150,255,.1)',color:'var(--blue)'}}>{category}</span>}
+                  <span className="intel-badge" style={{background:level==='critical'?'rgba(255,62,90,.1)':'rgba(255,208,96,.1)',color:level==='critical'?'var(--red)':'var(--amber)'}}>{level.toUpperCase()}</span>
+                </div>
+                {!isStr && a.verify_at && <div style={{fontFamily:'var(--mono)',fontSize:8,color:'var(--t3)',marginTop:6}}>Verify: {a.verify_at}</div>}
               </div>
-              {a.verify_at && <div style={{fontFamily:'var(--mono)',fontSize:8,color:'var(--t3)',marginTop:6}}>Verify: {a.verify_at}</div>}
-            </div>
-          ))}
+            );
+          })}
         </div>
       )}
 
       {d.key_risks?.length > 0 && (
         <div className="sec">
           <div className="sec-hdr"><div className="sec-ttl">⬡ KEY RISKS</div></div>
-          {d.key_risks.map((r,i) => (
-            <div className="sbar" key={i}>
-              <div className="sdot rd"/>
-              <div className="stxt">
-                <div>{r.risk}</div>
-                <div style={{fontFamily:'var(--mono)',fontSize:9,color:'var(--t3)',marginTop:2}}>
-                  Prob: <span className={probCls(r.probability)}>{r.probability}</span> · {r.horizon}
+          {d.key_risks.map((r,i) => {
+            const isStr = typeof r === 'string';
+            const risk = isStr ? r : r.risk;
+            const prob = isStr ? null : r.probability;
+            const horizon = isStr ? null : r.horizon;
+            return (
+              <div className="sbar" key={i}>
+                <div className="sdot rd"/>
+                <div className="stxt">
+                  <div>{risk}</div>
+                  {(prob || horizon) && (
+                    <div style={{fontFamily:'var(--mono)',fontSize:9,color:'var(--t3)',marginTop:2}}>
+                      {prob && <>Prob: <span className={probCls(prob)}>{prob}</span></>}
+                      {prob && horizon && ' · '}
+                      {horizon}
+                    </div>
+                  )}
                 </div>
               </div>
-            </div>
-          ))}
+            );
+          })}
         </div>
       )}
 
       {d.key_watches?.length > 0 && (
         <div className="sec">
           <div className="sec-hdr"><div className="sec-ttl">⬡ WATCH LIST</div></div>
-          {d.key_watches.map((w,i) => (
-            <div className="sbar" key={i}>
-              <div className="sdot am"/>
-              <div className="stxt">
-                <div style={{fontWeight:600}}>{w.indicator}</div>
-                <div style={{fontSize:10,color:'var(--t3)',marginTop:1}}>{w.why}</div>
-                {w.threshold && <div style={{fontFamily:'var(--mono)',fontSize:9,color:'var(--amber)',marginTop:2}}>Threshold: {w.threshold}</div>}
-                {w.source && <div style={{fontFamily:'var(--mono)',fontSize:8,color:'var(--t3)',marginTop:1}}>📡 {w.source}</div>}
+          {d.key_watches.map((w,i) => {
+            const isStr = typeof w === 'string';
+            const indicator = isStr ? w : w.indicator;
+            const why = isStr ? null : w.why;
+            const threshold = isStr ? null : w.threshold;
+            const source = isStr ? null : w.source;
+            return (
+              <div className="sbar" key={i}>
+                <div className="sdot am"/>
+                <div className="stxt">
+                  <div style={{fontWeight:600}}>{indicator}</div>
+                  {why && <div style={{fontSize:10,color:'var(--t3)',marginTop:1}}>{why}</div>}
+                  {threshold && <div style={{fontFamily:'var(--mono)',fontSize:9,color:'var(--amber)',marginTop:2}}>Threshold: {threshold}</div>}
+                  {source && <div style={{fontFamily:'var(--mono)',fontSize:8,color:'var(--t3)',marginTop:1}}>📡 {source}</div>}
+                </div>
               </div>
-            </div>
-          ))}
+            );
+          })}
         </div>
       )}
 
