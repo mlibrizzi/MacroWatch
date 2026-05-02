@@ -492,66 +492,121 @@ function AuctionsTab({ d }) {
 /* ─── WEEKLY TAB ──────────────────────────────────────────────────────────── */
 function WeeklyTab({ d }) {
   if (!d) return <Loading text="LOADING MACRO DATA..." />;
-  const signalDot = s => s === 'hot' ? 'rd' : s === 'cooling' ? 'gr' : 'am';
-  const dirArrow = dir => dir === 'up' ? '▲' : dir === 'down' ? '▼' : '–';
-  const dirCls = (dir, field) => {
-    // for inflation: up = bad (red). For labor cooling claims: up = bad
-    if (['CPI YoY','Core CPI YoY','CPI MoM','PCE YoY','Core PCE YoY','PPI Final Demand','5Y Breakeven','10Y Breakeven','Initial Jobless Claims','Continuing Claims'].includes(field))
-      return dir === 'up' ? 'dn' : dir === 'down' ? 'up' : 'neu';
+
+  const signalDot = s => s === 'hot' ? 'rd' : s === 'cool' ? 'gr' : 'am';
+  const dirCls = (dir, isInflation) => {
+    if (isInflation) return dir === 'up' ? 'dn' : dir === 'down' ? 'up' : 'neu';
     return dir === 'up' ? 'up' : dir === 'down' ? 'dn' : 'neu';
   };
+  const dirArrow = dir => dir === 'up' ? '▲' : dir === 'down' ? '▼' : '–';
 
-  const Section = ({ title, items }) => (
-    <div className="sec">
-      <div className="sec-hdr"><div className="sec-ttl">{title}</div></div>
-      <div className="card">
-        {items?.map((ind, i) => (
-          <div className="macro-row" key={i}>
-            <div className="col-l">
-              <div className="macro-name">{ind.name}</div>
-              {ind.note && <div className="macro-note">{ind.note}</div>}
-            </div>
-            <div className="col-r">
-              <div className={`macro-val ${dirCls(ind.direction, ind.name)}`}>{dirArrow(ind.direction)} {ind.value}</div>
-              <div style={{ fontFamily: 'var(--mono)', fontSize: 9, color: 'var(--t3)', marginTop: 2 }}>prior {ind.prior}</div>
-              <div style={{ fontFamily: 'var(--mono)', fontSize: 8, color: 'var(--t3)' }}>{ind.date}</div>
-            </div>
+  const INFLATION_NAMES = ['CPI','Core CPI','PCE','Core PCE'];
+
+  const MacroRow = ({ ind, isInflation }) => (
+    <div className="macro-row">
+      <div className="col-l" style={{ flex: 1, paddingRight: 8 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+          <div className={`sdot ${signalDot(ind.signal)}`} style={{ width: 7, height: 7, borderRadius: '50%', flexShrink: 0 }} />
+          <div>
+            <div style={{ fontSize: 12, fontWeight: 600 }}>{ind.name}</div>
+            {ind.fullName && <div style={{ fontSize: 9, color: 'var(--t3)', marginTop: 1, lineHeight: 1.3 }}>{ind.fullName}</div>}
           </div>
-        ))}
+        </div>
+        {ind.note && <div style={{ fontSize: 9, color: 'var(--t3)', marginTop: 3, paddingLeft: 13 }}>{ind.note}</div>}
+        {ind.source && <div style={{ fontSize: 8, color: 'var(--t3)', marginTop: 2, paddingLeft: 13, fontFamily: 'var(--mono)' }}>📡 {ind.delay}</div>}
+      </div>
+      <div className="col-r" style={{ textAlign: 'right', minWidth: 90 }}>
+        <div className={`macro-val ${dirCls(ind.direction, isInflation)}`}>
+          {dirArrow(ind.direction)} {ind.value}
+        </div>
+        <div style={{ fontFamily: 'var(--mono)', fontSize: 9, color: 'var(--t3)', marginTop: 2 }}>
+          prior {ind.prior}
+        </div>
+        <div style={{ fontFamily: 'var(--mono)', fontSize: 8, color: 'var(--t3)' }}>{ind.date}</div>
       </div>
     </div>
   );
 
   return (
     <div className="page">
+      {/* FED POLICY */}
       {d.fed_policy && (
         <div className="sec">
-          <div className="sec-hdr"><div className="sec-ttl">⬡ FED POLICY</div><div className="badge">FOMC</div></div>
+          <div className="sec-hdr">
+            <div className="sec-ttl">⬡ FEDERAL RESERVE POLICY</div>
+            <div className="badge">FOMC</div>
+          </div>
           <div className="card">
             <div className="row" style={{ marginBottom: 8 }}>
-              <div className="lbl">Fed Funds Rate</div>
+              <div>
+                <div className="lbl">Fed Funds Rate</div>
+                <div style={{ fontSize: 9, color: 'var(--t3)' }}>Federal Funds Target Rate</div>
+              </div>
               <div className="val neu">{d.fed_policy.current_rate}</div>
             </div>
             <div className="row" style={{ marginBottom: 8 }}>
-              <div className="sub">Next Meeting</div><div className="sub">{d.fed_policy.next_meeting}</div>
+              <div className="sub">Next FOMC Meeting</div>
+              <div className="sub">{d.fed_policy.next_meeting}</div>
             </div>
             <div className="row" style={{ marginBottom: 8 }}>
-              <div className="sub">Mkt Cut Prob (Jun)</div>
-              <div className={`val ${d.fed_policy.market_cut_prob_jun_pct > 50 ? 'up' : 'dn'}`} style={{ fontSize: 12 }}>{d.fed_policy.market_cut_prob_jun_pct}%</div>
+              <div>
+                <div className="sub">Market Cut Probability</div>
+                <div style={{ fontSize: 8, color: 'var(--t3)', fontFamily: 'var(--mono)' }}>Next meeting</div>
+              </div>
+              <div className={`val ${d.fed_policy.market_cut_prob_jun_pct > 50 ? 'up' : 'neu'}`} style={{ fontSize: 13 }}>
+                {d.fed_policy.market_cut_prob_jun_pct}%
+              </div>
             </div>
             <div className="div" />
-            {d.fed_policy.powell_status && <div style={{ fontSize: 11, color: 'var(--amber)', lineHeight: 1.6 }}>{d.fed_policy.powell_status}</div>}
-            <div style={{ marginTop: 6, fontSize: 10, color: 'var(--t3)', lineHeight: 1.5 }}>{d.fed_policy.qt_status}</div>
+            {d.fed_policy.powell_status && (
+              <div style={{ fontSize: 11, color: 'var(--amber)', lineHeight: 1.6, marginBottom: 6 }}>
+                {d.fed_policy.powell_status}
+              </div>
+            )}
+            {d.fed_policy.qt_status && (
+              <div style={{ fontSize: 10, color: 'var(--t3)', lineHeight: 1.5 }}>
+                {d.fed_policy.qt_status}
+              </div>
+            )}
+            <div style={{ marginTop: 6, fontFamily: 'var(--mono)', fontSize: 8, color: 'var(--t3)' }}>
+              📡 AI estimate — verify at federalreserve.gov
+            </div>
           </div>
         </div>
       )}
-      <Section title="⬡ LABOR MARKET" items={d.labor} />
-      <Section title="⬡ INFLATION" items={d.inflation} />
-      <Section title="⬡ ECONOMIC ACTIVITY" items={d.activity} />
+
+      {/* LABOR */}
+      <div className="sec">
+        <div className="sec-hdr"><div className="sec-ttl">⬡ LABOR MARKET</div></div>
+        <div className="card">
+          {d.labor?.map((ind, i) => (
+            <MacroRow key={i} ind={ind} isInflation={false} />
+          ))}
+        </div>
+      </div>
+
+      {/* INFLATION */}
+      <div className="sec">
+        <div className="sec-hdr"><div className="sec-ttl">⬡ INFLATION</div></div>
+        <div className="card">
+          {d.inflation?.map((ind, i) => (
+            <MacroRow key={i} ind={ind} isInflation={true} />
+          ))}
+        </div>
+      </div>
+
+      {/* ACTIVITY */}
+      <div className="sec">
+        <div className="sec-hdr"><div className="sec-ttl">⬡ ECONOMIC ACTIVITY</div></div>
+        <div className="card">
+          {d.activity?.map((ind, i) => (
+            <MacroRow key={i} ind={ind} isInflation={false} />
+          ))}
+        </div>
+      </div>
     </div>
   );
 }
-
 /* ─── MONTHLY TAB ─────────────────────────────────────────────────────────── */
 function MonthlyTab({ d }) {
   if (!d) return <Loading text="LOADING FLOWS DATA..." />;
