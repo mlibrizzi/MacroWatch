@@ -302,11 +302,7 @@ yieldContext = `Current market context: Fed Funds Rate ${rate}. 2Y yield ${t2y}%
 } catch(e) {}
 
 const fallback = await callClaude(
-  `${yieldContext} Return JSON with recent Treasury auction results as of ${TODAY}.
-
-{ "recent": [{ "term": string, "date": "YYYY-MM-DD", "size_bn": number, "bid_to_cover": number, "btc_6mo_avg": number, "indirect_pct": number, "indirect_avg": number, "direct_pct": number, "dealer_pct": number, "dealer_avg": number, "high_yield": number, "tail_bp": number, "tail_avg_bp": number, "status": "weak|mixed|ok", "note": string }],
-"upcoming": [{ "term": string, "date": "YYYY-MM-DD", "size_bn": number }],
-"macro_note": string }`,
+  yieldContext + ' Return JSON with recent Treasury auction results as of ' + TODAY + '. Fields: recent array with term/date/size_bn/bid_to_cover/btc_6mo_avg/indirect_pct/indirect_avg/direct_pct/dealer_pct/dealer_avg/high_yield/tail_bp/tail_avg_bp/status/note. Upcoming array with term/date/size_bn. macro_note string.',
 'Return only raw JSON. No markdown. Start with {'
 );
 return { …fallback, delay: '⚠ AI estimate (TreasuryDirect unavailable) - verify at treasurydirect.gov' };
@@ -328,7 +324,7 @@ console.error('fetchMonthly: FRED fetch failed', e.message);
 }
 
 const data = await callClaude(
-`Return JSON with latest TIC foreign holdings and basis trade data as of ${TODAY}. { "tic": { "report_month": "YYYY-MM", "total_foreign_bn": number, "mom_change_bn": number, "yoy_change_bn": number, "foreign_share_pct": number, "china_net_since_2021_bn": number, "top_holders": [ { "country": string, "holdings_bn": number, "mom_bn": number, "trend": "buying|selling|flat", "note": string } ] }, "basis_trade": { "estimated_size_tn": number, "stress_level": "low|elevated|high", "note": string, "sofr_treasury_spread_bp": number } }`,
+'Return JSON with latest TIC foreign holdings and basis trade data as of ' + TODAY + '. Fields: tic object with report_month/total_foreign_bn/mom_change_bn/yoy_change_bn/foreign_share_pct/china_net_since_2021_bn/top_holders array. basis_trade object with estimated_size_tn/stress_level/note/sofr_treasury_spread_bp.'
 'Return only raw JSON. No markdown. Start with {'
 );
 
@@ -369,7 +365,7 @@ realEarnings = e.earnings || [];
 
 // Get gov reports via Claude with correct Fed rate context
 const govData = await callClaude(
-`As of ${TODAY}, the Fed Funds Rate is 3.50-3.75% (held at April 29 2026 FOMC meeting). GDP Q1 2026 advance estimate was +2.0% annualized (released April 30 2026). Return JSON with government reports and upcoming earnings: { "gov_reports": [ { "report": string, "value": string, "prior": string, "revision": "up|down|none", "note": string, "source": string } ], "upcoming_earnings": [ { "company": string, "symbol": string, "date": "YYYY-MM-DD", "eps_est": number } ] } Include: GDP Q1 2026, Federal Deficit FY2026 YTD, Debt-to-GDP, Federal Debt Outstanding, Trade Balance, TGA. Upcoming confirmed: AMZN May 6, GOOGL May 8, META May 12, NVDA May 20 (tentative), WMT May 15.`,
+'As of ' + TODAY + ', Fed Funds Rate is 3.50-3.75% held April 29 2026. GDP Q1 2026 advance estimate was +2.0% annualized released April 30 2026. Return JSON with gov_reports array (report/value/prior/revision/note/source fields) and upcoming_earnings array (company/symbol/date/eps_est fields). Include GDP Q1 2026, Federal Deficit FY2026, Debt-to-GDP, Federal Debt Outstanding, Trade Balance. Upcoming: AMZN May 6, GOOGL May 8, META May 12, NVDA May 20, WMT May 15.'
 'Return only raw JSON. No markdown. Start with {'
 );
 
