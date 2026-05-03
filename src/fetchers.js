@@ -424,5 +424,4 @@ if (userQuestion) {
 return callClaude(`User question: "${userQuestion}" Return JSON: { "answer": "detailed 3-5 paragraph response", "key_points": ["point 1", "point 2", "point 3"], "related_indicators": ["indicator 1", "indicator 2"], "data_sources": ["source 1", "source 2"] }`, base);
 }
 
-return callClaude(`Generate a current macro intelligence briefing. Return JSON: { "thesis": "3-4 sentence current macro thesis with specific data", "regime": "stagflation", "regime_confidence": "high", "alerts": [ { "level": "critical", "title": "Alert title", "detail": "2-3 sentence detail", "category": "DEBT", "verify_at": "source" } ], "key_risks": [ { "risk": "Risk description", "probability": "high", "horizon": "3mo" } ], "key_watches": [ { "indicator": "Indicator name", "why": "Why it matters", "threshold": "Level to watch", "source": "Data source" } ], "dalio_lens": "2-3 sentence Dalio big cycle analysis", "positioning": { "usd": "bearish", "gold": "bullish", "long_bonds": "bearish", "equities": "bearish", "rationale": "rationale string" } }`, base);
-}
+return callClaude("Macro briefing JSON. Fields: thesis, regime, regime_confidence, alerts array, key_risks array, key_watches array, dalio_lens, positioning object with usd/gold/long_bonds/equities/rationale.", "Return only raw JSON.  Start with {"); 
