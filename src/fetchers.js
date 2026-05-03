@@ -63,7 +63,7 @@ return {
   vix: markets.vix ? {
     ...markets.vix,
     currentZone: vixZone,
-    fullName: 'CBOE Volatility Index — measures expected 30-day S&P 500 volatility',
+    fullName: 'CBOE Volatility Index -- measures expected 30-day S&P 500 volatility',
     scale: '<15 Complacent · 15-20 Normal · 20-30 Elevated · 30-40 Fear · >40 Extreme Fear',
   } : null,
   rates: {
@@ -106,14 +106,14 @@ const fred = await fetchLive(’/api/fred’);
 const m = fred.macro;
 
 ```
-const fmtNum = n => n != null ? n.toLocaleString('en-US') : '—';
+const fmtNum = n => n != null ? n.toLocaleString('en-US') : '--';
 
 const labor = [
   {
     name: 'Unemployment Rate',
     fullName: 'US Unemployment Rate (U-3)',
-    value: m.unrate?.latest != null ? `${m.unrate.latest.toFixed(1)}%` : '—',
-    prior: m.unrate?.prior  != null ? `${m.unrate.prior.toFixed(1)}%`  : '—',
+    value: m.unrate?.latest != null ? `${m.unrate.latest.toFixed(1)}%` : '--',
+    prior: m.unrate?.prior  != null ? `${m.unrate.prior.toFixed(1)}%`  : '--',
     date: m.unrate?.date,
     direction: (m.unrate?.latest||0) > (m.unrate?.prior||0) ? 'up' : 'down',
     signal: (m.unrate?.latest||0) > 4.5 ? 'hot' : 'neutral',
@@ -121,9 +121,9 @@ const labor = [
   },
   {
     name: 'NFP',
-    fullName: 'Nonfarm Payrolls — Monthly Change',
-    value: m.nfp?.latest != null ? `${m.nfp.latest>=0?'+':''}${fmtNum(m.nfp.latest)}k` : '—',
-    prior: m.nfp?.prior  != null ? `${m.nfp.prior>=0?'+':''}${fmtNum(m.nfp.prior)}k`   : '—',
+    fullName: 'Nonfarm Payrolls -- Monthly Change',
+    value: m.nfp?.latest != null ? `${m.nfp.latest>=0?'+':''}${fmtNum(m.nfp.latest)}k` : '--',
+    prior: m.nfp?.prior  != null ? `${m.nfp.prior>=0?'+':''}${fmtNum(m.nfp.prior)}k`   : '--',
     date: m.nfp?.date,
     direction: (m.nfp?.latest||0) > (m.nfp?.prior||0) ? 'up' : 'down',
     signal: (m.nfp?.latest||0) < 100 ? 'hot' : 'neutral',
@@ -133,8 +133,8 @@ const labor = [
   {
     name: 'Initial Jobless Claims',
     fullName: 'Initial Unemployment Insurance Claims (weekly)',
-    value: m.claims?.latest != null ? fmtNum(Math.round(m.claims.latest)) : '—',
-    prior: m.claims?.prior  != null ? fmtNum(Math.round(m.claims.prior))  : '—',
+    value: m.claims?.latest != null ? fmtNum(Math.round(m.claims.latest)) : '--',
+    prior: m.claims?.prior  != null ? fmtNum(Math.round(m.claims.prior))  : '--',
     date: m.claims?.date,
     direction: (m.claims?.latest||0) > (m.claims?.prior||0) ? 'up' : 'down',
     signal: (m.claims?.latest||0) > 260000 ? 'hot' : (m.claims?.latest||0) < 200000 ? 'cool' : 'neutral',
@@ -144,8 +144,8 @@ const labor = [
   {
     name: 'Continuing Claims',
     fullName: 'Continuing Unemployment Insurance Claims',
-    value: m.contClaims?.latest != null ? fmtNum(Math.round(m.contClaims.latest)) : '—',
-    prior: m.contClaims?.prior  != null ? fmtNum(Math.round(m.contClaims.prior))  : '—',
+    value: m.contClaims?.latest != null ? fmtNum(Math.round(m.contClaims.latest)) : '--',
+    prior: m.contClaims?.prior  != null ? fmtNum(Math.round(m.contClaims.prior))  : '--',
     date: m.contClaims?.date,
     direction: (m.contClaims?.latest||0) > (m.contClaims?.prior||0) ? 'up' : 'down',
     signal: (m.contClaims?.latest||0) > 1900000 ? 'hot' : 'neutral',
@@ -154,21 +154,21 @@ const labor = [
   },
   {
     name: 'Avg Hourly Earnings',
-    fullName: 'Average Hourly Earnings — All Private Employees (YoY %)',
-    value: m.ahe?.yoyChange != null ? `${m.ahe.yoyChange>0?'+':''}${m.ahe.yoyChange}% YoY` : '—',
-    prior: m.ahe?.prior != null ? `$${m.ahe.prior.toFixed(2)}/hr` : '—',
+    fullName: 'Average Hourly Earnings -- All Private Employees (YoY %)',
+    value: m.ahe?.yoyChange != null ? `${m.ahe.yoyChange>0?'+':''}${m.ahe.yoyChange}% YoY` : '--',
+    prior: m.ahe?.prior != null ? `$${m.ahe.prior.toFixed(2)}/hr` : '--',
     date: m.ahe?.date,
     direction: (m.ahe?.yoyChange||0) > 3.5 ? 'up' : 'down',
     signal: (m.ahe?.yoyChange||0) > 4.0 ? 'hot' : (m.ahe?.yoyChange||0) < 3.0 ? 'cool' : 'neutral',
     delay: m.ahe?.delay, source: m.ahe?.source,
-    note: m.ahe?.note || 'Key wage inflation input — Fed watches closely'
+    note: m.ahe?.note || 'Key wage inflation input -- Fed watches closely'
   },
 ];
 
 const inflation = [
   {
     name: 'CPI', fullName: 'Consumer Price Index',
-    value: m.cpi?.momChange != null ? `${m.cpi.momChange>0?'+':''}${m.cpi.momChange}% MoM` : '—',
+    value: m.cpi?.momChange != null ? `${m.cpi.momChange>0?'+':''}${m.cpi.momChange}% MoM` : '--',
     yoy:   m.cpi?.yoyChange != null ? `${m.cpi.yoyChange}% YoY` : null,
     prior: m.cpi?.prior?.toFixed(1), date: m.cpi?.date,
     direction: (m.cpi?.momChange||0) > 0 ? 'up' : 'down',
@@ -177,7 +177,7 @@ const inflation = [
   },
   {
     name: 'Core CPI', fullName: 'Core Consumer Price Index (ex Food & Energy)',
-    value: m.coreCpi?.momChange != null ? `${m.coreCpi.momChange>0?'+':''}${m.coreCpi.momChange}% MoM` : '—',
+    value: m.coreCpi?.momChange != null ? `${m.coreCpi.momChange>0?'+':''}${m.coreCpi.momChange}% MoM` : '--',
     yoy:   m.coreCpi?.yoyChange != null ? `${m.coreCpi.yoyChange}% YoY` : null,
     prior: m.coreCpi?.prior?.toFixed(1), date: m.coreCpi?.date,
     direction: (m.coreCpi?.momChange||0) > 0 ? 'up' : 'down',
@@ -186,7 +186,7 @@ const inflation = [
   },
   {
     name: 'PCE', fullName: 'Personal Consumption Expenditures Price Index',
-    value: m.pce?.momChange != null ? `${m.pce.momChange>0?'+':''}${m.pce.momChange}% MoM` : '—',
+    value: m.pce?.momChange != null ? `${m.pce.momChange>0?'+':''}${m.pce.momChange}% MoM` : '--',
     yoy:   m.pce?.yoyChange != null ? `${m.pce.yoyChange}% YoY` : null,
     prior: m.pce?.prior?.toFixed(1), date: m.pce?.date,
     direction: (m.pce?.momChange||0) > 0 ? 'up' : 'down',
@@ -196,7 +196,7 @@ const inflation = [
   },
   {
     name: 'Core PCE', fullName: 'Core Personal Consumption Expenditures (ex Food & Energy)',
-    value: m.corePce?.momChange != null ? `${m.corePce.momChange>0?'+':''}${m.corePce.momChange}% MoM` : '—',
+    value: m.corePce?.momChange != null ? `${m.corePce.momChange>0?'+':''}${m.corePce.momChange}% MoM` : '--',
     yoy:   m.corePce?.yoyChange != null ? `${m.corePce.yoyChange}% YoY` : null,
     prior: m.corePce?.prior?.toFixed(1), date: m.corePce?.date,
     direction: (m.corePce?.momChange||0) > 0 ? 'up' : 'down',
@@ -207,9 +207,9 @@ const inflation = [
 
 const activity = [
   {
-    name: 'GDP', fullName: 'Real Gross Domestic Product — QoQ Annualized % Change',
-    value: m.gdp?.latest != null ? `${m.gdp.latest>0?'+':''}${m.gdp.latest.toFixed(1)}%` : '—',
-    prior: m.gdp?.prior  != null ? `${m.gdp.prior>0?'+':''}${m.gdp.prior.toFixed(1)}%`   : '—',
+    name: 'GDP', fullName: 'Real Gross Domestic Product -- QoQ Annualized % Change',
+    value: m.gdp?.latest != null ? `${m.gdp.latest>0?'+':''}${m.gdp.latest.toFixed(1)}%` : '--',
+    prior: m.gdp?.prior  != null ? `${m.gdp.prior>0?'+':''}${m.gdp.prior.toFixed(1)}%`   : '--',
     date: m.gdp?.date,
     direction: (m.gdp?.latest||0) > (m.gdp?.prior||0) ? 'up' : 'down',
     signal: (m.gdp?.latest||0) < 0 ? 'hot' : 'neutral',
@@ -218,8 +218,8 @@ const activity = [
   },
   {
     name: 'Retail Sales', fullName: 'Advance Retail Sales',
-    value: m.retail?.latest != null ? `$${m.retail.latest}B` : '—',
-    prior: m.retail?.prior  != null ? `$${m.retail.prior}B`  : '—',
+    value: m.retail?.latest != null ? `$${m.retail.latest}B` : '--',
+    prior: m.retail?.prior  != null ? `$${m.retail.prior}B`  : '--',
     date: m.retail?.date,
     direction: (m.retail?.momChange||0) > 0 ? 'up' : 'down',
     signal: (m.retail?.momChange||0) < -1 ? 'hot' : 'neutral',
@@ -229,8 +229,8 @@ const activity = [
   {
     name: '10Y TIPS Real Yield',
     fullName: '10-Year Treasury Inflation-Protected Securities Real Yield',
-    value: fred.yields?.tips10y?.latest != null ? `${fred.yields.tips10y.latest.toFixed(2)}%` : '—',
-    prior: fred.yields?.tips10y?.prior  != null ? `${fred.yields.tips10y.prior.toFixed(2)}%`  : '—',
+    value: fred.yields?.tips10y?.latest != null ? `${fred.yields.tips10y.latest.toFixed(2)}%` : '--',
+    prior: fred.yields?.tips10y?.prior  != null ? `${fred.yields.tips10y.prior.toFixed(2)}%`  : '--',
     date: fred.yields?.tips10y?.date,
     direction: (fred.yields?.tips10y?.latest||0) > (fred.yields?.tips10y?.prior||0) ? 'up' : 'down',
     signal: (fred.yields?.tips10y?.latest||0) > 2.0 ? 'hot' : 'neutral',
@@ -240,7 +240,7 @@ const activity = [
   },
 ];
 
-// Fed policy — use real FRED rate + Claude for narrative
+// Fed policy -- use real FRED rate + Claude for narrative
 const fedFunds     = fred.yields?.fedfunds?.latest;
 const fedRange     = fred.yields?.fedfunds?.targetRange;
 const fedFundsDate = fred.yields?.fedfunds?.date;
@@ -250,15 +250,15 @@ const fedNarrative = await callClaude(
 ```
 
 The next FOMC meeting is June 16-17, 2026.
-The Fed held rates at its April 29 2026 meeting with 4 dissents — most since 1992.
+The Fed held rates at its April 29 2026 meeting with 4 dissents – most since 1992.
 Return JSON:
 {
 “market_cut_prob_jun_pct”: number,
 “dots_median_2026”: number,
 “powell_status”: “1-2 sentence current status referencing the April 29 hold and 4 dissents”,
-“qt_status”: “1-2 sentence balance sheet status — QT ended Dec 2025, reserve management purchases underway”,
+“qt_status”: “1-2 sentence balance sheet status – QT ended Dec 2025, reserve management purchases underway”,
 “fomc_dissents”: 4,
-“fomc_note”: “Most dissents since October 1992 — signals significant internal disagreement”
+“fomc_note”: “Most dissents since October 1992 – signals significant internal disagreement”
 }`,
 ‘Return only raw JSON. No markdown. Start with {’
 );
@@ -317,7 +317,7 @@ const fallback = await callClaude(
 “macro_note”: string }`,
 ‘Return only raw JSON. No markdown. Start with {’
 );
-return { …fallback, delay: ‘⚠ AI estimate (TreasuryDirect unavailable) — verify at treasurydirect.gov’ };
+return { …fallback, delay: ‘⚠ AI estimate (TreasuryDirect unavailable) – verify at treasurydirect.gov’ };
 }
 }
 
@@ -352,18 +352,18 @@ mbs_tn:          fredBalance.mbs?.value,
 reserves_tn:     fredBalance.reserves?.value,
 tga_bn:          fredBalance.tga?.value,
 weekly_change_bn: fredBalance.weeklyChange?.value,
-reserve_mgmt_note: ‘QT ended Dec 2025. Fed now in reserve management phase — buying T-bills to maintain adequate reserves. Balance sheet stabilizing.’,
+reserve_mgmt_note: ‘QT ended Dec 2025. Fed now in reserve management phase – buying T-bills to maintain adequate reserves. Balance sheet stabilizing.’,
 data_source: ‘Real FRED data (H.4.1 weekly release)’,
 } : null,
 tga: fredBalance?.tga ? {
 current_bn:      fredBalance.tga.value,
 prior_month_bn:  fredBalance.tga.prior,
 date:            fredBalance.tga.date,
-note:            ‘Treasury General Account — key liquidity indicator. High TGA = Treasury has cash buffer. Low TGA = X-date risk.’,
+note:            ‘Treasury General Account – key liquidity indicator. High TGA = Treasury has cash buffer. Low TGA = X-date risk.’,
 delay:           fredBalance.tga.delay,
 source:          ‘US Treasury via FRED (WDTGAL)’
 } : null,
-delay: ‘Fed Balance Sheet: Real FRED H.4.1 weekly data | TIC: AI estimate — verify at treasury.gov/tic (6-week lag)’
+delay: ‘Fed Balance Sheet: Real FRED H.4.1 weekly data | TIC: AI estimate – verify at treasury.gov/tic (6-week lag)’
 };
 }
 
@@ -418,56 +418,11 @@ delay: ‘Earnings: Real Finnhub/SEC data | Gov reports: AI estimate anchored to
 }
 
 export async function fetchIntel(userQuestion) {
-// Pull live data to ground Intel in real numbers
-// Each fetch is independent - failure of one cannot crash Intel
-let liveContext = ‘’;
-try {
-const [fredResult, metalsResult, marketsResult] = await Promise.allSettled([
-fetchLive(’/api/fred’),
-fetchLive(’/api/metals’),
-fetchLive(’/api/markets’),
-]);
-const fred    = fredResult.status    === ‘fulfilled’ ? fredResult.value    : {};
-const metals  = metalsResult.status  === ‘fulfilled’ ? metalsResult.value  : {};
-const markets = marketsResult.status === ‘fulfilled’ ? marketsResult.value : {};
-const gold   = metals.gold?.price;
-const silver = metals.silver?.price;
-const t10y   = fred.yields?.t10y?.latest;
-const t2y    = fred.yields?.t2y?.latest;
-const t30y   = fred.yields?.t30y?.latest;
-const tips   = fred.yields?.tips10y?.latest;
-const rate   = fred.yields?.fedfunds?.targetRange;
-const spx    = markets.indices?.find(i=>i.symbol===‘SPX’)?.price;
-const vix    = markets.vix?.price;
-const wti    = fred.commodities?.wti?.price;
-const dxy    = fred.commodities?.dxy?.price;
+const base = `You are a macro intelligence analyst specializing in US debt cycle analysis, Treasury markets, and global capital flows. Today is ${TODAY}. Key current data: Fed Funds Rate 3.50-3.75% (held April 29 2026, 4 dissents). Gold ~$4615. VIX ~17 (NORMAL). S&P ~7200. 10Y yield ~4.38%. CPI YoY ~3.3%. GDP Q1 2026 +2.0%. Deficit ~$2T/yr. Debt/GDP ~122%. Return ONLY raw JSON. No markdown. No backticks. First character must be {`;
 
-```
-liveContext = `LIVE MARKET DATA as of ${TODAY} — use these exact figures in your analysis:
-```
+if (userQuestion) {
+return callClaude(`User question: "${userQuestion}" Return JSON: { "answer": "detailed 3-5 paragraph response", "key_points": ["point 1", "point 2", "point 3"], "related_indicators": ["indicator 1", "indicator 2"], "data_sources": ["source 1", "source 2"] }`, base);
+}
 
-- Gold spot: $${gold?.toFixed(2)}/oz
-- Silver spot: $${silver?.toFixed(2)}/oz
-- WTI Crude: $${wti?.toFixed(2)}/barrel
-- Fed Funds Rate: ${rate} (held at April 29 2026 FOMC — 4 dissents, most since 1992)
-- 2Y Treasury: ${t2y}%
-- 10Y Treasury: ${t10y}%
-- 30Y Treasury: ${t30y}%
-- 10Y TIPS Real Yield: ${tips}%
-- Term Premium (10Y-2Y): ${t10y && t2y ? (t10y-t2y).toFixed(2) : ‘N/A’}%
-- S&P 500: ${spx?.toFixed(0)}
-- VIX: ${vix?.toFixed(2)} (${vix<20?‘NORMAL’:vix<30?‘ELEVATED’:vix<40?‘FEAR’:‘EXTREME FEAR’} zone)
-- US Dollar Broad Index: ${dxy?.toFixed(2)}
-- US Deficit: ~$2T+ annually, Debt/GDP: ~122%
-- GDP Q1 2026: +2.0% annualized (advance estimate)
-- CPI YoY: ~3.3%, Core PCE YoY: ~3.2%`; } catch(e) { liveContext = `Today is ${TODAY}. Fed Funds Rate is 3.50-3.75%. Use your best knowledge of current market conditions.`;
-  }
-  
-  const base = `You are a macro intelligence analyst specializing in debt cycle analysis, Treasury markets, and global capital flows.  ${liveContext} Return ONLY raw JSON. No markdown fences. No backticks. Start with {`;
-  
-  if (userQuestion) {
-  return callClaude(`User question: "${userQuestion}" Return JSON: { "answer": "detailed 3-5 paragraph response referencing the live data provided", "key_points": ["string"], "related_indicators": ["string"], "data_sources": ["where to verify"] }`, base);
-  }
-  
-  return callClaude(`Generate macro intelligence briefing for ${TODAY} using the live data provided above. Return JSON: { "thesis": "3-4 sentence thesis referencing specific live data points above", "regime": "stagflation|reflation|deflation|goldilocks|crisis", "regime_confidence": "high|medium|low", "alerts": [{ "level": "critical|warning|watch", "title": string, "detail": "2-3 sentences with specific numbers from live data", "category": "DEBT|FED|GEOPOLITICS|MARKETS|FLOWS|INFLATION", "verify_at": string }], "key_risks": [{ "risk": string, "probability": "high|medium|low", "horizon": "immediate|3mo|6mo|12mo" }], "key_watches": [{ "indicator": string, "why": string, "threshold": string, "source": string }], "dalio_lens": "2-3 sentence read through Dalio big debt cycle framework using current data", "positioning": { "usd": "bearish|neutral|bullish", "gold": "bearish|neutral|bullish", "long_bonds": "bearish|neutral|bullish", "equities": "bearish|neutral|bullish", "rationale": string } }`, base);
-  }
+return callClaude(`Generate a current macro intelligence briefing. Return JSON: { "thesis": "3-4 sentence current macro thesis with specific data", "regime": "stagflation", "regime_confidence": "high", "alerts": [ { "level": "critical", "title": "Alert title", "detail": "2-3 sentence detail", "category": "DEBT", "verify_at": "source" } ], "key_risks": [ { "risk": "Risk description", "probability": "high", "horizon": "3mo" } ], "key_watches": [ { "indicator": "Indicator name", "why": "Why it matters", "threshold": "Level to watch", "source": "Data source" } ], "dalio_lens": "2-3 sentence Dalio big cycle analysis", "positioning": { "usd": "bearish", "gold": "bullish", "long_bonds": "bearish", "equities": "bearish", "rationale": "rationale string" } }`, base);
+}
