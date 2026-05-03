@@ -413,7 +413,7 @@ export async function fetchIntel(userQuestion) {
 const base = `You are a macro intelligence analyst specializing in US debt cycle analysis, Treasury markets, and global capital flows. Today is ${TODAY}. Key current data: Fed Funds Rate 3.50-3.75% (held April 29 2026, 4 dissents). Gold ~$4615. VIX ~17 (NORMAL). S&P ~7200. 10Y yield ~4.38%. CPI YoY ~3.3%. GDP Q1 2026 +2.0%. Deficit ~$2T/yr. Debt/GDP ~122%. Return ONLY raw JSON. No markdown. No backticks. First character must be {`;
 
 if (userQuestion) {
-return callClaude(`User question: "${userQuestion}" Return JSON: { "answer": "detailed 3-5 paragraph response", "key_points": ["point 1", "point 2", "point 3"], "related_indicators": ["indicator 1", "indicator 2"], "data_sources": ["source 1", "source 2"] }`, base);
+    return callClaude('Answer this question with JSON fields: answer, key_points, data_sources. Question: ' + userQuestion, sys);
 }
 
-return callClaude("Macro briefing JSON. Fields: thesis, regime, regime_confidence, alerts array, key_risks array, key_watches array, dalio_lens, positioning object with usd/gold/long_bonds/equities/rationale.", "Return only raw JSON.  Start with {"); 
+    return callClaude('Today ' + TODAY + '. Fed 3.50-3.75pct. Gold 4615. VIX 17. SP500 7200. 10Y 4.38pct. CPI 3.3pct. GDP Q1 2.0pct. Deficit 2T. Debt/GDP 122pct. 4 FOMC dissents April 29 2026. Return JSON with fields: thesis, regime, regime_confidence, alerts array with level/title/detail/category fields, key_risks array with risk/probability/horizon fields, key_watches array with indicator/why/threshold/source fields, dalio_lens string, positioning object with usd/gold/long_bonds/equities/rationale.', sys);
