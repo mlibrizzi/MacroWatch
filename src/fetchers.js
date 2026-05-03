@@ -1,6 +1,6 @@
-import { callClaude } from ‘./api.js’;
+import { callClaude } from './api.js';
 
-const TODAY = new Date().toISOString().split(‘T’)[0];
+const TODAY = new Date().toISOString().split('T')[0];
 
 async function fetchLive(path) {
 const res = await fetch(path);
@@ -11,9 +11,9 @@ return res.json();
 export async function fetchDaily() {
 try {
 const [metals, markets, fred] = await Promise.all([
-fetchLive(’/api/metals’),
-fetchLive(’/api/markets’),
-fetchLive(’/api/fred’),
+fetchLive('/api/metals'),
+fetchLive('/api/markets'),
+fetchLive('/api/fred'),
 ]);
 
 ```
@@ -95,14 +95,14 @@ return {
 ```
 
 } catch(err) {
-console.error(‘fetchDaily error:’, err);
+console.error('fetchDaily error:', err);
 throw err;
 }
 }
 
 export async function fetchWeekly() {
 try {
-const fred = await fetchLive(’/api/fred’);
+const fred = await fetchLive('/api/fred');
 const m = fred.macro;
 
 ```
@@ -250,17 +250,17 @@ const fedNarrative = await callClaude(
 ```
 
 The next FOMC meeting is June 16-17, 2026.
-The Fed held rates at its April 29 2026 meeting with 4 dissents – most since 1992.
+The Fed held rates at its April 29 2026 meeting with 4 dissents - most since 1992.
 Return JSON:
 {
-“market_cut_prob_jun_pct”: number,
-“dots_median_2026”: number,
-“powell_status”: “1-2 sentence current status referencing the April 29 hold and 4 dissents”,
-“qt_status”: “1-2 sentence balance sheet status – QT ended Dec 2025, reserve management purchases underway”,
-“fomc_dissents”: 4,
-“fomc_note”: “Most dissents since October 1992 – signals significant internal disagreement”
+"market_cut_prob_jun_pct": number,
+"dots_median_2026": number,
+"powell_status": "1-2 sentence current status referencing the April 29 hold and 4 dissents",
+"qt_status": "1-2 sentence balance sheet status - QT ended Dec 2025, reserve management purchases underway",
+"fomc_dissents": 4,
+"fomc_note": "Most dissents since October 1992 - signals significant internal disagreement"
 }`,
-‘Return only raw JSON. No markdown. Start with {’
+'Return only raw JSON. No markdown. Start with {'
 );
 
 ```
@@ -284,7 +284,7 @@ return {
 ```
 
 } catch(err) {
-console.error(‘fetchWeekly error:’, err);
+console.error('fetchWeekly error:', err);
 throw err;
 }
 }
@@ -292,18 +292,18 @@ throw err;
 export async function fetchAuctions() {
 try {
 // Use real TreasuryDirect data
-const data = await fetchLive(’/api/auctions’);
+const data = await fetchLive('/api/auctions');
 return data;
 } catch(err) {
-console.error(‘fetchAuctions error:’, err);
+console.error('fetchAuctions error:', err);
 // Fallback to Claude estimate with real yield context
-let yieldContext = ‘’;
+let yieldContext = '';
 try {
-const fred = await fetchLive(’/api/fred’);
+const fred = await fetchLive('/api/fred');
 const t2y  = fred.yields?.t2y?.latest;
 const t10y = fred.yields?.t10y?.latest;
 const t30y = fred.yields?.t30y?.latest;
-const rate = fred.yields?.fedfunds?.targetRange || fred.yields?.fedfunds?.latest + ‘%’;
+const rate = fred.yields?.fedfunds?.targetRange || fred.yields?.fedfunds?.latest + '%';
 yieldContext = `Current market context: Fed Funds Rate ${rate}. 2Y yield ${t2y}%. 10Y yield ${t10y}%. 30Y yield ${t30y}%.`;
 } catch(e) {}
 
@@ -312,12 +312,12 @@ const fallback = await callClaude(
   `${yieldContext} Return JSON with recent Treasury auction results as of ${TODAY}.
 ```
 
-{ “recent”: [{ “term”: string, “date”: “YYYY-MM-DD”, “size_bn”: number, “bid_to_cover”: number, “btc_6mo_avg”: number, “indirect_pct”: number, “indirect_avg”: number, “direct_pct”: number, “dealer_pct”: number, “dealer_avg”: number, “high_yield”: number, “tail_bp”: number, “tail_avg_bp”: number, “status”: “weak|mixed|ok”, “note”: string }],
-“upcoming”: [{ “term”: string, “date”: “YYYY-MM-DD”, “size_bn”: number }],
-“macro_note”: string }`,
-‘Return only raw JSON. No markdown. Start with {’
+{ "recent": [{ "term": string, "date": "YYYY-MM-DD", "size_bn": number, "bid_to_cover": number, "btc_6mo_avg": number, "indirect_pct": number, "indirect_avg": number, "direct_pct": number, "dealer_pct": number, "dealer_avg": number, "high_yield": number, "tail_bp": number, "tail_avg_bp": number, "status": "weak|mixed|ok", "note": string }],
+"upcoming": [{ "term": string, "date": "YYYY-MM-DD", "size_bn": number }],
+"macro_note": string }`,
+'Return only raw JSON. No markdown. Start with {'
 );
-return { …fallback, delay: ‘⚠ AI estimate (TreasuryDirect unavailable) – verify at treasurydirect.gov’ };
+return { …fallback, delay: '⚠ AI estimate (TreasuryDirect unavailable) - verify at treasurydirect.gov' };
 }
 }
 
@@ -325,19 +325,19 @@ export async function fetchMonthly() {
 // Get real Fed balance sheet from FRED
 let fredBalance = null;
 try {
-const fred = await fetchLive(’/api/fred’);
+const fred = await fetchLive('/api/fred');
 if (fred && fred.fedBalance) {
 fredBalance = fred.fedBalance;
 } else {
-console.error(‘fetchMonthly: fedBalance missing from FRED response’, Object.keys(fred || {}));
+console.error('fetchMonthly: fedBalance missing from FRED response', Object.keys(fred || {}));
 }
 } catch(e) {
-console.error(‘fetchMonthly: FRED fetch failed’, e.message);
+console.error('fetchMonthly: FRED fetch failed', e.message);
 }
 
 const data = await callClaude(
 `Return JSON with latest TIC foreign holdings and basis trade data as of ${TODAY}. { "tic": { "report_month": "YYYY-MM", "total_foreign_bn": number, "mom_change_bn": number, "yoy_change_bn": number, "foreign_share_pct": number, "china_net_since_2021_bn": number, "top_holders": [ { "country": string, "holdings_bn": number, "mom_bn": number, "trend": "buying|selling|flat", "note": string } ] }, "basis_trade": { "estimated_size_tn": number, "stress_level": "low|elevated|high", "note": string, "sofr_treasury_spread_bp": number } }`,
-‘Return only raw JSON. No markdown. Start with {’
+'Return only raw JSON. No markdown. Start with {'
 );
 
 // Merge real FRED balance sheet data with AI TIC data
@@ -345,25 +345,25 @@ return {
 …data,
 // Override fed_balance with real FRED data
 fed_balance: fredBalance ? {
-report_date:    new Date().toISOString().split(‘T’)[0],
+report_date:    new Date().toISOString().split('T')[0],
 total_assets_tn: fredBalance.totalAssets?.value,
 treasuries_tn:   fredBalance.treasuries?.value,
 mbs_tn:          fredBalance.mbs?.value,
 reserves_tn:     fredBalance.reserves?.value,
 tga_bn:          fredBalance.tga?.value,
 weekly_change_bn: fredBalance.weeklyChange?.value,
-reserve_mgmt_note: ‘QT ended Dec 2025. Fed now in reserve management phase – buying T-bills to maintain adequate reserves. Balance sheet stabilizing.’,
-data_source: ‘Real FRED data (H.4.1 weekly release)’,
+reserve_mgmt_note: 'QT ended Dec 2025. Fed now in reserve management phase - buying T-bills to maintain adequate reserves. Balance sheet stabilizing.',
+data_source: 'Real FRED data (H.4.1 weekly release)',
 } : null,
 tga: fredBalance?.tga ? {
 current_bn:      fredBalance.tga.value,
 prior_month_bn:  fredBalance.tga.prior,
 date:            fredBalance.tga.date,
-note:            ‘Treasury General Account – key liquidity indicator. High TGA = Treasury has cash buffer. Low TGA = X-date risk.’,
+note:            'Treasury General Account - key liquidity indicator. High TGA = Treasury has cash buffer. Low TGA = X-date risk.',
 delay:           fredBalance.tga.delay,
-source:          ‘US Treasury via FRED (WDTGAL)’
+source:          'US Treasury via FRED (WDTGAL)'
 } : null,
-delay: ‘Fed Balance Sheet: Real FRED H.4.1 weekly data | TIC: AI estimate – verify at treasury.gov/tic (6-week lag)’
+delay: 'Fed Balance Sheet: Real FRED H.4.1 weekly data | TIC: AI estimate - verify at treasury.gov/tic (6-week lag)'
 };
 }
 
@@ -371,27 +371,27 @@ export async function fetchQuarterly() {
 // Get real earnings from Finnhub
 let realEarnings = [];
 try {
-const e = await fetchLive(’/api/earnings’);
+const e = await fetchLive('/api/earnings');
 realEarnings = e.earnings || [];
 } catch(err) {}
 
 // Get gov reports via Claude with correct Fed rate context
 const govData = await callClaude(
 `As of ${TODAY}, the Fed Funds Rate is 3.50-3.75% (held at April 29 2026 FOMC meeting). GDP Q1 2026 advance estimate was +2.0% annualized (released April 30 2026). Return JSON with government reports and upcoming earnings: { "gov_reports": [ { "report": string, "value": string, "prior": string, "revision": "up|down|none", "note": string, "source": string } ], "upcoming_earnings": [ { "company": string, "symbol": string, "date": "YYYY-MM-DD", "eps_est": number } ] } Include: GDP Q1 2026, Federal Deficit FY2026 YTD, Debt-to-GDP, Federal Debt Outstanding, Trade Balance, TGA. Upcoming confirmed: AMZN May 6, GOOGL May 8, META May 12, NVDA May 20 (tentative), WMT May 15.`,
-‘Return only raw JSON. No markdown. Start with {’
+'Return only raw JSON. No markdown. Start with {'
 );
 
 // Merge real earnings with gov report data
 const companyMeta = {
-AAPL:  { name: ‘Apple’,      sector: ‘Technology’      },
-MSFT:  { name: ‘Microsoft’,  sector: ‘Technology’      },
-NVDA:  { name: ‘Nvidia’,     sector: ‘Technology’      },
-GOOGL: { name: ‘Alphabet’,   sector: ‘Technology’      },
-AMZN:  { name: ‘Amazon’,     sector: ‘Consumer/Cloud’  },
-META:  { name: ‘Meta’,       sector: ‘Technology’      },
-TSLA:  { name: ‘Tesla’,      sector: ‘Automotive’      },
-JPM:   { name: ‘JPMorgan’,   sector: ‘Financials’      },
-XOM:   { name: ‘ExxonMobil’, sector: ‘Energy’          },
+AAPL:  { name: 'Apple',      sector: 'Technology'      },
+MSFT:  { name: 'Microsoft',  sector: 'Technology'      },
+NVDA:  { name: 'Nvidia',     sector: 'Technology'      },
+GOOGL: { name: 'Alphabet',   sector: 'Technology'      },
+AMZN:  { name: 'Amazon',     sector: 'Consumer/Cloud'  },
+META:  { name: 'Meta',       sector: 'Technology'      },
+TSLA:  { name: 'Tesla',      sector: 'Automotive'      },
+JPM:   { name: 'JPMorgan',   sector: 'Financials'      },
+XOM:   { name: 'ExxonMobil', sector: 'Energy'          },
 };
 
 const earnings = realEarnings.map(e => ({
@@ -413,7 +413,7 @@ return {
 earnings,
 gov_reports:       govData?.gov_reports || [],
 upcoming_earnings: govData?.upcoming_earnings || [],
-delay: ‘Earnings: Real Finnhub/SEC data | Gov reports: AI estimate anchored to real GDP/Fed rate | Verify at bea.gov, treasury.gov’
+delay: 'Earnings: Real Finnhub/SEC data | Gov reports: AI estimate anchored to real GDP/Fed rate | Verify at bea.gov, treasury.gov'
 };
 }
 
