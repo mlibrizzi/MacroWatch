@@ -16,7 +16,6 @@ fetchLive('/api/markets'),
 fetchLive('/api/fred'),
 ]);
 
-```
 const t2y  = fred.yields?.t2y?.latest;
 const t10y = fred.yields?.t10y?.latest;
 const t30y = fred.yields?.t30y?.latest;
@@ -92,7 +91,6 @@ return {
   },
   timestamp: new Date().toISOString()
 };
-```
 
 } catch(err) {
 console.error('fetchDaily error:', err);
@@ -105,7 +103,6 @@ try {
 const fred = await fetchLive('/api/fred');
 const m = fred.macro;
 
-```
 const fmtNum = n => n != null ? n.toLocaleString('en-US') : '--';
 
 const labor = [
@@ -247,7 +244,6 @@ const fedFundsDate = fred.yields?.fedfunds?.date;
 
 const fedNarrative = await callClaude(
   `The actual Fed Funds Rate is ${fedRange || fedFunds+'%'} as of ${fedFundsDate}. 
-```
 
 The next FOMC meeting is June 16-17, 2026.
 The Fed held rates at its April 29 2026 meeting with 4 dissents - most since 1992.
@@ -263,7 +259,6 @@ Return JSON:
 'Return only raw JSON. No markdown. Start with {'
 );
 
-```
 return {
   fed_policy: {
     current_rate:  fedRange || `${fedFunds}%`,
@@ -281,7 +276,6 @@ return {
   activity,
   timestamp: new Date().toISOString()
 };
-```
 
 } catch(err) {
 console.error('fetchWeekly error:', err);
@@ -307,10 +301,8 @@ const rate = fred.yields?.fedfunds?.targetRange || fred.yields?.fedfunds?.latest
 yieldContext = `Current market context: Fed Funds Rate ${rate}. 2Y yield ${t2y}%. 10Y yield ${t10y}%. 30Y yield ${t30y}%.`;
 } catch(e) {}
 
-```
 const fallback = await callClaude(
   `${yieldContext} Return JSON with recent Treasury auction results as of ${TODAY}.
-```
 
 { "recent": [{ "term": string, "date": "YYYY-MM-DD", "size_bn": number, "bid_to_cover": number, "btc_6mo_avg": number, "indirect_pct": number, "indirect_avg": number, "direct_pct": number, "dealer_pct": number, "dealer_avg": number, "high_yield": number, "tail_bp": number, "tail_avg_bp": number, "status": "weak|mixed|ok", "note": string }],
 "upcoming": [{ "term": string, "date": "YYYY-MM-DD", "size_bn": number }],
