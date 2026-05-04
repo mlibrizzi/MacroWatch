@@ -4,7 +4,7 @@ export default async function handler(req, res) {
 
   try {
     const base = 'https://api.fiscaldata.treasury.gov/services/api/fiscal_service/v1/accounting/od/auctions_query';
-    const fields = 'security_type,security_term,auction_date,offering_amt,bid_to_cover_ratio,indirect_bidder_accepted,direct_bidder_accepted,primary_dealer_accepted,total_accepted,total_tendered,high_yield,reopening';
+    const fields = 'security_type,security_term,auction_date,offering_amt,bid_to_cover_ratio,indirect_bidder_accepted,direct_bidder_accepted,primary_dealer_accepted,total_accepted,total_tendered,high_yield,avg_med_yield,reopening';
     const filter = 'security_type:in:(Note,Bond),auction_date:gte:2026-01-01';
     const sort = '-auction_date';
     const url = base + '?fields=' + fields + '&filter=' + filter + '&sort=' + sort + '&page[size]=10';
@@ -61,10 +61,10 @@ export default async function handler(req, res) {
         dealer_pct: dealerPct,
         dealer_avg: null,
         high_yield: highYield,
-        tail_bp: null,
+        tail_bp: approxTail,
         tail_avg_bp: null,
         status,
-        note: 'Treasury Fiscal Data API. BTC: ' + (btc || 'N/A') + 'x | Indirect: ' + (indirectPct || 'N/A') + '% | Dealer: ' + (dealerPct || 'N/A') + '%',
+        note: 'Treasury Fiscal Data API. BTC: ' + (btc || 'N/A') + 'x | Indirect: ' + (indirectPct || 'N/A') + '% | Dealer: ' + (dealerPct || 'N/A') + '% | Approx Tail: ' + (approxTail != null ? approxTail + 'bp' : 'N/A') + ' (high minus median yield)',
         source: 'fiscaldata.treasury.gov (official, free)',
         delay: 'Official - published same day as auction'
       });
