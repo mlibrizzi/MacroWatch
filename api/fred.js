@@ -1,9 +1,9 @@
 export default async function handler(req, res) {
-res.setHeader(‘Access-Control-Allow-Origin’, ‘*’);
-if (req.method !== ‘GET’) return res.status(405).json({ error: ‘Method not allowed’ });
+res.setHeader('Access-Control-Allow-Origin', '*');
+if (req.method !== 'GET') return res.status(405).json({ error: 'Method not allowed' });
 
 const apiKey = process.env.VITE_FRED_API_KEY;
-const base = ‘https://api.stlouisfed.org/fred/series/observations’;
+const base = 'https://api.stlouisfed.org/fred/series/observations';
 const params = (id, limit = 4) =>
 `?series_id=${id}&api_key=${apiKey}&file_type=json&sort_order=desc&limit=${limit}`;
 
@@ -11,7 +11,7 @@ const fetchSeries = async (id, limit = 4) => {
 try {
 const r = await fetch(`${base}${params(id, limit)}`);
 const d = await r.json();
-const obs = d.observations?.filter(o => o.value !== ‘.’) || [];
+const obs = d.observations?.filter(o => o.value !== '.') || [];
 return {
 latest:    parseFloat(obs[0]?.value),
 prior:     parseFloat(obs[1]?.value),
@@ -43,36 +43,36 @@ wdtgal,   // TGA balance
 // Average hourly earnings
 ahe,
 ] = await Promise.all([
-fetchSeries(‘DGS2’),
-fetchSeries(‘DGS10’),
-fetchSeries(‘DGS30’),
-fetchSeries(‘DGS5’),
-fetchSeries(‘DFII10’),
-fetchSeries(‘FEDFUNDS’),
-fetchSeries(‘CPIAUCSL’),
-fetchSeries(‘CPILFESL’),
-fetchSeries(‘PCEPI’),
-fetchSeries(‘PCEPILFE’),
+fetchSeries('DGS2'),
+fetchSeries('DGS10'),
+fetchSeries('DGS30'),
+fetchSeries('DGS5'),
+fetchSeries('DFII10'),
+fetchSeries('FEDFUNDS'),
+fetchSeries('CPIAUCSL'),
+fetchSeries('CPILFESL'),
+fetchSeries('PCEPI'),
+fetchSeries('PCEPILFE'),
 // 13 observations to get 12 months ago for YoY
-fetchSeries(‘CPIAUCSL’, 13),
-fetchSeries(‘CPILFESL’, 13),
-fetchSeries(‘PCEPI’, 13),
-fetchSeries(‘PCEPILFE’, 13),
-fetchSeries(‘UNRATE’),
-fetchSeries(‘PAYEMS’),
-fetchSeries(‘ICSA’),
-fetchSeries(‘CCSA’),
-fetchSeries(‘A191RL1Q225SBEA’),
-fetchSeries(‘RSAFS’),
-fetchSeries(‘DCOILWTICO’),
-fetchSeries(‘DCOILBRENTEU’),
-fetchSeries(‘DTWEXBGS’),
-fetchSeries(‘WALCL’),
-fetchSeries(‘TREAST’),
-fetchSeries(‘WSHOMCB’, 20),
-fetchSeries(‘WRBWFRBL’),
-fetchSeries(‘WDTGAL’),
-fetchSeries(‘CES0500000003’), // Avg hourly earnings
+fetchSeries('CPIAUCSL', 13),
+fetchSeries('CPILFESL', 13),
+fetchSeries('PCEPI', 13),
+fetchSeries('PCEPILFE', 13),
+fetchSeries('UNRATE'),
+fetchSeries('PAYEMS'),
+fetchSeries('ICSA'),
+fetchSeries('CCSA'),
+fetchSeries('A191RL1Q225SBEA'),
+fetchSeries('RSAFS'),
+fetchSeries('DCOILWTICO'),
+fetchSeries('DCOILBRENTEU'),
+fetchSeries('DTWEXBGS'),
+fetchSeries('WALCL'),
+fetchSeries('TREAST'),
+fetchSeries('WSHOMCB', 20),
+fetchSeries('WRBWFRBL'),
+fetchSeries('WDTGAL'),
+fetchSeries('CES0500000003'), // Avg hourly earnings
 ]);
 
 ```
