@@ -360,6 +360,8 @@ function MetricDef({ label }) {
 
 function AuctionChart({ data, label, field, thresholds, invert, format }) {
   if (!data?.length) return null;
+  const hasData = data.some(a => a[field] != null);
+  if (!hasData) return null;
   const pts = data
     .map(a => ({
       name: a.term?.replace('-Year Note','Y').replace('-Year Bond','Y').replace(' Note','').replace(' Bond','').trim(),
