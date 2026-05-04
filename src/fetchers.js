@@ -1,104 +1,358 @@
 import { callClaude } from './api.js';
 
-var TODAY = new Date().toISOString().split('T')[0];
+const TODAY = new Date().toISOString().split('T')[0];
 
 async function fetchLive(path) {
-  var res = await fetch(path);
-  if (res.ok === false) throw new Error('err' + res.status);
+  const res = await fetch(path);
+  if (!res.ok) throw new Error(`Live data error ${res.status} from ${path}`);
   return res.json();
 }
 
 export async function fetchDaily() {
   try {
-    var rs = await Promise.allSettled([fetchLive('/api/metals'),fetchLive('/api/markets'),fetchLive('/api/fred')]);
-    var metals  = rs[0].status === 'fulfilled' ? rs[0].value : {};
-    var markets = rs[1].status === 'fulfilled' ? rs[1].value : {};
-    var fred    = rs[2].status === 'fulfilled' ? rs[2].value : {};
-    var t10y = fred.yields && fred.yields.t10y ? fred.yields.t10y.latest : null;
-    var dxy  = fred.commodities && fred.commodities.dxy ? fred.commodities.dxy.price : null;
-    var spxObj = markets.indices ? markets.indices.find(function(i){return i.symbol === 'SPX';}) : null;
-    var gold = metals.gold ? metals.gold.price : null;
-    var lp = spxObj && dxy ? +(spxObj.price/dxy).toFixed(2) : null;
-    var gr = gold && t10y ? +(gold/t10y).toFixed(1) : null;
-    var vp = markets.vix ? markets.vix.price : null;
-    var vz = vp < 15 ? 'Complacent' : vp < 20 ? 'Normal' : vp < 30 ? 'Elevated' : vp < 40 ? 'Fear' : 'Extreme Fear';
+    const [metals, markets, fred] = await Promise.all([
+      fetchLive('/api/metals'),
+      fetchLive('/api/markets'),
+      fetchLive('/api/fred'),
+    ]);
+
+    const t2y  = fred.yields?.t2y?.latest;
+    const t10y = fred.yields?.t10y?.latest;
+    const t30y = fred.yields?.t30y?.latest;
+    const dxy  = markets.fx?.dxy?.price;
+    const spx  = markets.indices?.find(i => i.symbol === 'SPX')?.price;
+    const gold = metals.gold?.price;
+
+    const termPremium = fred.yields?.termPremium;
+    const liquidityProxy = spx && dxy ? +(spx / dxy).toFixed(2) : null;
+    const goldYieldRatio = gold && t10y ? +(gold / t10y).toFixed(1) : null;
+
+    const lpSignal = liquidityProxy
+      ? (liquidityProxy > 50 ? 'expanding' : liquidityProxy > 40 ? 'neutral' : 'tightening')
+      : 'neutral';
+
+    const gySignal = goldYieldRatio
+      ? (goldYieldRatio > 800 ? 'distrust' : goldYieldRatio > 600 ? 'normal' : 'risk-on')
+      : 'normal';
+
     return {
-      metals:{gold:Object.assign({},metals.gold,{delay:'Real-time (gold-api.com)'}),silver:Object.assign({},metals.silver,{delay:'Real-time (gold-api.com)'})},
-      oil:{wti:fred.commodities?fred.commodities.wti:null,brent:fred.commodities?fred.commodities.brent:null},
-      fx:{eurusd:markets.fx?markets.fx.eurusd:null,jpyusd:markets.fx?markets.fx.jpyusd:null,gbpusd:markets.fx?markets.fx.gbpusd:null,dxy:fred.commodities?fred.commodities.dxy:null},
-      vix:markets.vix?Object.assign({},markets.vix,{currentZone:vz,scale:'Under 15 Normal | 20-30 Elevated | 30-40 Fear | Over 40 Extreme'}):null,
-      rates:{t2y:fred.yields?fred.yields.t2y:null,t10y:fred.yields?fred.yields.t10y:null,t30y:fred.yields?fred.yields.t30y:null,fed_funds:fred.yields&&fred.yields.fedfunds?fred.yields.fedfunds.latest:null,tips_10y_real:fred.yields&&fred.yields.tips10y?fred.yields.tips10y.latest:null,delay:'Daily FRED'},
-      indices:markets.indices||[],mag7:markets.mag7||[],
-      derived:{term_premium:fred.yields?fred.yields.termPremium:null,liquidity_proxy:{value:lp,signal:lp>50?'expanding':lp>40?'neutral':'tightening',label:'SPX/DXY'},gold_vs_yield:{ratio:gr,signal:gr>800?'distrust':'normal'}},
-      timestamp:new Date().toISOString()
+      metals: {
+        gold:   { ...metals.gold,   delay: 'Real-time (gold-api.com)' },
+        silver: { ...metals.silver, delay: 'Real-time (gold-api.com)' },
+      },
+      oil: {
+        wti:   { ...markets.oil?.wti,   delay: '15-min delayed (Yahoo Finance)' },
+        brent: { ...markets.oil?.brent, delay: '15-min delayed (Yahoo Finance)' },
+      },
+      fx: {
+        eurusd: { ...markets.fx?.eurusd, delay: 'Hourly (open.er-api.com)' },
+        jpyusd: { ...markets.fx?.jpyusd, delay: 'Hourly (open.er-api.com)' },
+        gbpusd: { ...markets.fx?.gbpusd, delay: 'Hourly (open.er-api.com)' },
+        dxy:    { ...markets.fx?.dxy,    delay: 'Real-time via UUP ETF (Finnhub)' },
+      },
+      vix: { ...markets.vix, delay: 'Real-time via UVXY ETF (Finnhub)' },
+      rates: {
+        t2y:  { yield: t2y,  change_bp: t2y  && fred.yields.t2y.prior  ? +((t2y  - fred.yields.t2y.prior)  * 100).toFixed(1) : null, date: fred.yields.t2y?.date  },
+        t10y: { yield: t10y, change_bp: t10y && fred.yields.t10y.prior ? +((t10y - fred.yields.t10y.prior) * 100).toFixed(1) : null, date: fred.yields.t10y?.date },
+        t30y: { yield: t30y, change_bp: t30y && fred.yields.t30y.prior ? +((t30y - fred.yields.t30y.prior) * 100).toFixed(1) : null, date: fred.yields.t30y?.date },
+        fed_funds: fred.yields?.fedfunds?.latest,
+        tips_10y_real: fred.yields?.tips10y?.latest,
+        delay: 'Daily (FRED / US Treasury)',
+      },
+      indices: markets.indices,
+      mag7:   markets.mag7,
+      derived: {
+        term_premium:   { ...termPremium, delay: 'Daily (derived from FRED)' },
+        liquidity_proxy: {
+          value: liquidityProxy, label: 'SPX / DXY', signal: lpSignal,
+          note: `S&P ${spx?.toFixed(0)} / DXY ${dxy?.toFixed(2)}`,
+          delay: 'Real-time (Finnhub)'
+        },
+        gold_vs_yield: {
+          gold, t10y, ratio: goldYieldRatio, signal: gySignal,
+          note: `Gold $${gold?.toFixed(0)} / 10Y ${t10y?.toFixed(2)}%`,
+          delay: 'Real-time gold / Daily yield'
+        }
+      },
+      timestamp: new Date().toISOString()
     };
-  } catch(e){throw e;}
+  } catch (err) {
+    console.error('fetchDaily error:', err);
+    throw err;
+  }
 }
 
 export async function fetchWeekly() {
   try {
-    var fred = await fetchLive('/api/fred');
-    var m = fred.macro || {};
-    var ff = fred.yields&&fred.yields.fedfunds?fred.yields.fedfunds.latest:null;
-    var fr = fred.yields&&fred.yields.fedfunds?fred.yields.fedfunds.targetRange:null;
-    var fd = fred.yields&&fred.yields.fedfunds?fred.yields.fedfunds.date:null;
-    var fn = await callClaude('Fed rate '+(fr||(ff+'%'))+' as of '+fd+'. Next FOMC June 16-17 2026. April 29 2026 held rates 4 dissents. Return JSON: market_cut_prob_jun_pct number, powell_status string, qt_status string, fomc_dissents number, fomc_note string.','Return only raw JSON. Start with {');
-    return {
-      fed_policy:{current_rate:fr||(ff+'%'),effr:ff,next_meeting:'June 16-17, 2026',fomc_dissents:fn?fn.fomc_dissents:4,fomc_note:fn?fn.fomc_note:'Most dissents since 1992',market_cut_prob_jun_pct:fn?fn.market_cut_prob_jun_pct:null,powell_status:fn?fn.powell_status:null,qt_status:fn?fn.qt_status:null,delay:'Real EFFR FRED | Narrative AI'},
-      labor:[
-        {name:'Unemployment Rate',fullName:'US Unemployment Rate U-3',value:m.unrate&&m.unrate.latest!=null?m.unrate.latest.toFixed(1)+'%':'N/A',prior:m.unrate&&m.unrate.prior!=null?m.unrate.prior.toFixed(1)+'%':'N/A',date:m.unrate?m.unrate.date:null,direction:m.unrate&&m.unrate.latest>m.unrate.prior?'up':'down',signal:m.unrate&&m.unrate.latest>4.5?'hot':'neutral',delay:'Monthly BLS via FRED'},
-        {name:'NFP',fullName:'Nonfarm Payrolls Monthly Change',value:m.nfp&&m.nfp.latest!=null?(m.nfp.latest>=0?'+':'')+m.nfp.latest.toLocaleString()+'k':'N/A',prior:m.nfp&&m.nfp.prior!=null?(m.nfp.prior>=0?'+':'')+m.nfp.prior.toLocaleString()+'k':'N/A',date:m.nfp?m.nfp.date:null,direction:'neutral',signal:'neutral',delay:'Monthly BLS via FRED'},
-        {name:'Initial Jobless Claims',fullName:'Initial Unemployment Insurance Claims',value:m.claims&&m.claims.latest!=null?Math.round(m.claims.latest).toLocaleString():'N/A',prior:m.claims&&m.claims.prior!=null?Math.round(m.claims.prior).toLocaleString():'N/A',date:m.claims?m.claims.date:null,direction:m.claims&&m.claims.latest>m.claims.prior?'up':'down',signal:m.claims&&m.claims.latest>260000?'hot':'neutral',delay:'Weekly Thursday DOL via FRED'},
-        {name:'Continuing Claims',fullName:'Continuing Unemployment Insurance Claims',value:m.contClaims&&m.contClaims.latest!=null?Math.round(m.contClaims.latest).toLocaleString():'N/A',prior:m.contClaims&&m.contClaims.prior!=null?Math.round(m.contClaims.prior).toLocaleString():'N/A',date:m.contClaims?m.contClaims.date:null,direction:m.contClaims&&m.contClaims.latest>m.contClaims.prior?'up':'down',signal:'neutral',delay:'Weekly DOL via FRED'},
-        {name:'Avg Hourly Earnings',fullName:'Average Hourly Earnings YoY',value:m.ahe&&m.ahe.yoyChange!=null?(m.ahe.yoyChange>0?'+':'')+m.ahe.yoyChange+'% YoY':'N/A',prior:m.ahe&&m.ahe.prior!=null?'$'+m.ahe.prior.toFixed(2)+'/hr':'N/A',date:m.ahe?m.ahe.date:null,direction:'neutral',signal:'neutral',delay:'Monthly BLS via FRED',note:'Key wage inflation input'},
-      ],
-      inflation:[
-        {name:'CPI',fullName:'Consumer Price Index',value:m.cpi&&m.cpi.momChange!=null?(m.cpi.momChange>0?'+':'')+m.cpi.momChange+'% MoM':'N/A',yoy:m.cpi&&m.cpi.yoyChange!=null?m.cpi.yoyChange+'% YoY':null,prior:m.cpi&&m.cpi.prior!=null?m.cpi.prior.toFixed(1):'N/A',date:m.cpi?m.cpi.date:null,direction:m.cpi&&m.cpi.momChange>0?'up':'down',signal:m.cpi&&m.cpi.momChange>0.4?'hot':'neutral',delay:'Monthly BLS via FRED'},
-        {name:'Core CPI',fullName:'Core CPI ex Food and Energy',value:m.coreCpi&&m.coreCpi.momChange!=null?(m.coreCpi.momChange>0?'+':'')+m.coreCpi.momChange+'% MoM':'N/A',yoy:m.coreCpi&&m.coreCpi.yoyChange!=null?m.coreCpi.yoyChange+'% YoY':null,prior:m.coreCpi&&m.coreCpi.prior!=null?m.coreCpi.prior.toFixed(1):'N/A',date:m.coreCpi?m.coreCpi.date:null,direction:m.coreCpi&&m.coreCpi.momChange>0?'up':'down',signal:m.coreCpi&&m.coreCpi.momChange>0.3?'hot':'neutral',delay:'Monthly BLS via FRED'},
-        {name:'PCE',fullName:'Personal Consumption Expenditures - Fed preferred',value:m.pce&&m.pce.momChange!=null?(m.pce.momChange>0?'+':'')+m.pce.momChange+'% MoM':'N/A',yoy:m.pce&&m.pce.yoyChange!=null?m.pce.yoyChange+'% YoY':null,prior:m.pce&&m.pce.prior!=null?m.pce.prior.toFixed(1):'N/A',date:m.pce?m.pce.date:null,direction:m.pce&&m.pce.momChange>0?'up':'down',signal:m.pce&&m.pce.momChange>0.3?'hot':'neutral',delay:'Monthly BEA via FRED'},
-        {name:'Core PCE',fullName:'Core PCE ex Food and Energy',value:m.corePce&&m.corePce.momChange!=null?(m.corePce.momChange>0?'+':'')+m.corePce.momChange+'% MoM':'N/A',yoy:m.corePce&&m.corePce.yoyChange!=null?m.corePce.yoyChange+'% YoY':null,prior:m.corePce&&m.corePce.prior!=null?m.corePce.prior.toFixed(1):'N/A',date:m.corePce?m.corePce.date:null,direction:m.corePce&&m.corePce.momChange>0?'up':'down',signal:m.corePce&&m.corePce.momChange>0.3?'hot':'neutral',delay:'Monthly BEA via FRED'},
-      ],
-      activity:[
-        {name:'GDP',fullName:'Real GDP QoQ Annualized',value:m.gdp&&m.gdp.latest!=null?(m.gdp.latest>0?'+':'')+m.gdp.latest.toFixed(1)+'%':'N/A',prior:m.gdp&&m.gdp.prior!=null?(m.gdp.prior>0?'+':'')+m.gdp.prior.toFixed(1)+'%':'N/A',date:m.gdp?m.gdp.date:null,direction:m.gdp&&m.gdp.latest>m.gdp.prior?'up':'down',signal:m.gdp&&m.gdp.latest<0?'hot':'neutral',delay:'Quarterly BEA via FRED'},
-        {name:'Retail Sales',fullName:'Advance Retail Sales',value:m.retail&&m.retail.latest!=null?'$'+m.retail.latest+'B':'N/A',prior:m.retail&&m.retail.prior!=null?'$'+m.retail.prior+'B':'N/A',date:m.retail?m.retail.date:null,direction:m.retail&&m.retail.momChange>0?'up':'down',signal:'neutral',delay:'Monthly Census via FRED'},
-        {name:'10Y TIPS Real Yield',fullName:'10-Year TIPS Real Yield',value:fred.yields&&fred.yields.tips10y&&fred.yields.tips10y.latest!=null?fred.yields.tips10y.latest.toFixed(2)+'%':'N/A',prior:fred.yields&&fred.yields.tips10y&&fred.yields.tips10y.prior!=null?fred.yields.tips10y.prior.toFixed(2)+'%':'N/A',date:fred.yields&&fred.yields.tips10y?fred.yields.tips10y.date:null,direction:'neutral',signal:fred.yields&&fred.yields.tips10y&&fred.yields.tips10y.latest>2?'hot':'neutral',delay:'Daily FRED',note:'Above 2% restrictive'},
-      ],
-      timestamp:new Date().toISOString()
-    };
-  } catch(e){throw e;}
-}
+    const fred = await fetchLive('/api/fred');
+    const m = fred.macro;
 
-export async function fetchAuctions() {
-  try { return await fetchLive('/api/auctions'); }
-  catch(e) {
-    var f = await callClaude('Return JSON with recent Treasury auction results as of '+TODAY+'. Fields: recent array, upcoming array, macro_note string.','Return only raw JSON. Start with {');
-    return Object.assign({},f,{delay:'AI estimate verify at treasurydirect.gov'});
+    const fmtNum = (n) => n != null ? n.toLocaleString('en-US') : '—';
+
+    const labor = [
+      {
+        name: m.unrate?.name,
+        fullName: m.unrate?.fullName,
+        value: `${m.unrate?.latest?.toFixed(1)}%`,
+        prior: `${m.unrate?.prior?.toFixed(1)}%`,
+        date: m.unrate?.date,
+        direction: m.unrate?.latest > m.unrate?.prior ? 'up' : 'down',
+        signal: m.unrate?.latest > 4.5 ? 'hot' : m.unrate?.latest < 3.8 ? 'cool' : 'neutral',
+        delay: m.unrate?.delay,
+        source: m.unrate?.source,
+      },
+      {
+        name: m.nfp?.name,
+        fullName: m.nfp?.fullName,
+        value: m.nfp?.latest != null
+          ? `${m.nfp.latest >= 0 ? '+' : ''}${fmtNum(m.nfp.latest)}k`
+          : '—',
+        prior: m.nfp?.prior != null
+          ? `${m.nfp.prior >= 0 ? '+' : ''}${fmtNum(m.nfp.prior)}k`
+          : '—',
+        date: m.nfp?.date,
+        direction: (m.nfp?.latest || 0) > (m.nfp?.prior || 0) ? 'up' : 'down',
+        signal: (m.nfp?.latest || 0) < 100 ? 'hot' : (m.nfp?.latest || 0) > 250 ? 'cool' : 'neutral',
+        delay: m.nfp?.delay,
+        source: m.nfp?.source,
+        note: 'Monthly change in employed persons'
+      },
+      {
+        name: m.claims?.name,
+        fullName: m.claims?.fullName,
+        value: m.claims?.latest != null ? fmtNum(Math.round(m.claims.latest)) : '—',
+        prior: m.claims?.prior != null ? fmtNum(Math.round(m.claims.prior)) : '—',
+        date: m.claims?.date,
+        direction: m.claims?.latest > m.claims?.prior ? 'up' : 'down',
+        signal: m.claims?.latest > 260000 ? 'hot' : m.claims?.latest < 200000 ? 'cool' : 'neutral',
+        delay: m.claims?.delay,
+        source: m.claims?.source,
+        note: 'Number of new unemployment filings per week'
+      },
+      {
+        name: m.contClaims?.name,
+        fullName: m.contClaims?.fullName,
+        value: m.contClaims?.latest != null ? fmtNum(Math.round(m.contClaims.latest)) : '—',
+        prior: m.contClaims?.prior != null ? fmtNum(Math.round(m.contClaims.prior)) : '—',
+        date: m.contClaims?.date,
+        direction: m.contClaims?.latest > m.contClaims?.prior ? 'up' : 'down',
+        signal: m.contClaims?.latest > 1900000 ? 'hot' : 'neutral',
+        delay: m.contClaims?.delay,
+        source: m.contClaims?.source,
+        note: 'Total persons currently collecting unemployment benefits'
+      },
+    ];
+
+    const inflation = [
+      {
+        name: m.cpi?.name,
+        fullName: m.cpi?.fullName,
+        value: m.cpi?.momChange != null ? `${m.cpi.momChange > 0 ? '+' : ''}${m.cpi.momChange}% MoM` : '—',
+        prior: m.cpi?.prior?.toFixed(1),
+        date: m.cpi?.date,
+        direction: (m.cpi?.momChange || 0) > 0 ? 'up' : 'down',
+        signal: (m.cpi?.momChange || 0) > 0.4 ? 'hot' : 'neutral',
+        delay: m.cpi?.delay,
+        source: m.cpi?.source,
+      },
+      {
+        name: m.coreCpi?.name,
+        fullName: m.coreCpi?.fullName,
+        value: m.coreCpi?.momChange != null ? `${m.coreCpi.momChange > 0 ? '+' : ''}${m.coreCpi.momChange}% MoM` : '—',
+        prior: m.coreCpi?.prior?.toFixed(1),
+        date: m.coreCpi?.date,
+        direction: (m.coreCpi?.momChange || 0) > 0 ? 'up' : 'down',
+        signal: (m.coreCpi?.momChange || 0) > 0.3 ? 'hot' : 'neutral',
+        delay: m.coreCpi?.delay,
+        source: m.coreCpi?.source,
+      },
+      {
+        name: m.pce?.name,
+        fullName: m.pce?.fullName,
+        value: m.pce?.momChange != null ? `${m.pce.momChange > 0 ? '+' : ''}${m.pce.momChange}% MoM` : '—',
+        prior: m.pce?.prior?.toFixed(1),
+        date: m.pce?.date,
+        direction: (m.pce?.momChange || 0) > 0 ? 'up' : 'down',
+        signal: (m.pce?.momChange || 0) > 0.3 ? 'hot' : 'neutral',
+        delay: m.pce?.delay,
+        source: m.pce?.source,
+        note: "Fed's preferred inflation measure"
+      },
+      {
+        name: m.corePce?.name,
+        fullName: m.corePce?.fullName,
+        value: m.corePce?.momChange != null ? `${m.corePce.momChange > 0 ? '+' : ''}${m.corePce.momChange}% MoM` : '—',
+        prior: m.corePce?.prior?.toFixed(1),
+        date: m.corePce?.date,
+        direction: (m.corePce?.momChange || 0) > 0 ? 'up' : 'down',
+        signal: (m.corePce?.momChange || 0) > 0.3 ? 'hot' : 'neutral',
+        delay: m.corePce?.delay,
+        source: m.corePce?.source,
+      },
+    ];
+
+    const activity = [
+      {
+        name: m.gdp?.name,
+        fullName: m.gdp?.fullName,
+        value: m.gdp?.latest != null ? `${m.gdp.latest > 0 ? '+' : ''}${m.gdp.latest.toFixed(1)}%` : '—',
+        prior: m.gdp?.prior != null ? `${m.gdp.prior > 0 ? '+' : ''}${m.gdp.prior.toFixed(1)}%` : '—',
+        date: m.gdp?.date,
+        direction: (m.gdp?.latest || 0) > (m.gdp?.prior || 0) ? 'up' : 'down',
+        signal: (m.gdp?.latest || 0) < 0 ? 'hot' : (m.gdp?.latest || 0) > 2.5 ? 'cool' : 'neutral',
+        delay: m.gdp?.delay,
+        source: m.gdp?.source,
+      },
+      {
+        name: m.retail?.name,
+        fullName: m.retail?.fullName,
+        value: m.retail?.latest != null ? `$${m.retail.latest}B` : '—',
+        prior: m.retail?.prior != null ? `$${m.retail.prior}B` : '—',
+        momChange: m.retail?.momChange,
+        date: m.retail?.date,
+        direction: (m.retail?.momChange || 0) > 0 ? 'up' : 'down',
+        signal: (m.retail?.momChange || 0) < -1 ? 'hot' : 'neutral',
+        delay: m.retail?.delay,
+        source: m.retail?.source,
+        note: m.retail?.momChange != null ? `${m.retail.momChange > 0 ? '+' : ''}${m.retail.momChange}% MoM` : ''
+      },
+      {
+        name: '10Y TIPS Real Yield',
+        fullName: '10-Year Treasury Inflation-Protected Securities Real Yield',
+        value: fred.yields?.tips10y?.latest != null ? `${fred.yields.tips10y.latest.toFixed(2)}%` : '—',
+        prior: fred.yields?.tips10y?.prior != null ? `${fred.yields.tips10y.prior.toFixed(2)}%` : '—',
+        date: fred.yields?.tips10y?.date,
+        direction: fred.yields?.tips10y?.latest > fred.yields?.tips10y?.prior ? 'up' : 'down',
+        signal: fred.yields?.tips10y?.latest > 2.0 ? 'hot' : 'neutral',
+        delay: 'Daily (FRED / US Treasury)',
+        source: 'US Treasury via FRED',
+        note: 'Above 2% = restrictive real borrowing conditions'
+      },
+    ];
+
+    const fedPolicy = await callClaude(`Return JSON with current Fed policy status as of ${TODAY}:
+{
+  "current_rate": "X.XX%-X.XX%",
+  "next_meeting": "YYYY-MM-DD",
+  "market_cut_prob_jun_pct": number,
+  "dots_median_2026": number,
+  "powell_status": "1-2 sentence current status",
+  "qt_status": "1-2 sentence balance sheet status"
+}`, 'Return only raw JSON. No markdown fences. No backticks. Start with {');
+
+    return {
+      fed_policy: { ...fedPolicy, delay: 'AI estimate — verify at federalreserve.gov' },
+      labor,
+      inflation,
+      activity,
+      timestamp: new Date().toISOString()
+    };
+  } catch (err) {
+    console.error('fetchWeekly error:', err);
+    throw err;
   }
 }
 
+export async function fetchAuctions() {
+  const data = await callClaude(`Return JSON with the 5 most recent US Treasury auction results across 2Y, 5Y, 7Y, 10Y and 30Y maturities, and upcoming auctions, as of ${TODAY}.
+{
+  "recent": [
+    {
+      "term": "2-Year Note",
+      "date": "YYYY-MM-DD",
+      "size_bn": number,
+      "bid_to_cover": number,
+      "btc_6mo_avg": number,
+      "indirect_pct": number,
+      "indirect_avg": number,
+      "direct_pct": number,
+      "dealer_pct": number,
+      "dealer_avg": number,
+      "high_yield": number,
+      "tail_bp": number,
+      "tail_avg_bp": number,
+      "status": "weak|mixed|ok",
+      "note": "string"
+    }
+  ],
+  "upcoming": [
+    { "term": string, "date": "YYYY-MM-DD", "size_bn": number }
+  ],
+  "macro_note": "string"
+}`, 'Return only raw JSON. No markdown fences. No backticks. Start with {');
+
+  return {
+    ...data,
+    delay: 'AI estimate — verify same-day at treasurydirect.gov/auctions'
+  };
+}
+
 export async function fetchMonthly() {
-  var fb = null;
-  try { var fred=await fetchLive('/api/fred'); if(fred&&fred.fedBalance)fb=fred.fedBalance; } catch(e){}
-  var data = await callClaude('Return JSON with TIC foreign holdings as of '+TODAY+'. Fields: tic object with report_month/total_foreign_bn/foreign_share_pct/china_net_since_2021_bn/top_holders array. basis_trade object with estimated_size_tn/stress_level/note/sofr_treasury_spread_bp.','Return only raw JSON. Start with {');
-  return Object.assign({},data,{
-    fed_balance:fb?{report_date:new Date().toISOString().split('T')[0],total_assets_tn:fb.totalAssets?fb.totalAssets.value:null,treasuries_tn:fb.treasuries?fb.treasuries.value:null,mbs_tn:fb.mbs?fb.mbs.value:1.98,reserves_tn:fb.reserves?fb.reserves.value:null,tga_bn:fb.tga?fb.tga.value:null,weekly_change_bn:fb.weeklyChange?fb.weeklyChange.value:null,reserve_mgmt_note:'QT ended Dec 2025. Reserve management phase.',data_source:'Real FRED H.4.1'}:null,
-    tga:fb&&fb.tga?{current_bn:fb.tga.value,prior_month_bn:fb.tga.prior,note:'Treasury General Account key liquidity indicator.',delay:'Weekly FRED'}:null,
-    delay:'Fed Balance Sheet Real FRED H.4.1 | TIC AI estimate'
-  });
+  const data = await callClaude(`Return JSON with latest TIC and Fed balance sheet data as of ${TODAY}.
+{
+  "tic": {
+    "report_month": "YYYY-MM",
+    "total_foreign_bn": number,
+    "mom_change_bn": number,
+    "yoy_change_bn": number,
+    "foreign_share_pct": number,
+    "china_net_since_2021_bn": number,
+    "top_holders": [
+      { "country": string, "holdings_bn": number, "mom_bn": number, "trend": "buying|selling|flat", "note": string }
+    ]
+  },
+  "fed_balance": {
+    "report_date": "YYYY-MM-DD",
+    "total_assets_tn": number,
+    "treasuries_tn": number,
+    "mbs_tn": number,
+    "reserves_tn": number,
+    "tga_bn": number,
+    "weekly_change_bn": number,
+    "reserve_mgmt_note": string,
+    "repo_sofr_pct": number,
+    "repo_stress": "low|elevated|high"
+  },
+  "tga": { "current_bn": number, "prior_month_bn": number, "note": string },
+  "basis_trade": { "estimated_size_tn": number, "stress_level": "low|elevated|high", "note": string, "sofr_treasury_spread_bp": number }
+}`, 'Return only raw JSON. No markdown fences. No backticks. Start with {');
+
+  return {
+    ...data,
+    delay: 'TIC: Monthly 6-week lag (treasury.gov/tic) | Fed H.4.1: Weekly (federalreserve.gov)'
+  };
 }
 
 export async function fetchQuarterly() {
-  var re = [];
-  try { var e=await fetchLive('/api/earnings'); re=e.earnings||[]; } catch(e){}
-  var gd = await callClaude('As of '+TODAY+' Fed 3.50-3.75%. GDP Q1 2026 +2.0%. Return JSON with gov_reports array and upcoming_earnings array. Upcoming: AMZN May 6, GOOGL May 8, META May 12, NVDA May 20, WMT May 15.','Return only raw JSON. Start with {');
-  var mt={AAPL:'Apple',MSFT:'Microsoft',NVDA:'Nvidia',GOOGL:'Alphabet',AMZN:'Amazon',META:'Meta',TSLA:'Tesla',JPM:'JPMorgan',XOM:'ExxonMobil'};
-  return {earnings:re.map(function(e){return {company:mt[e.symbol]||e.symbol,symbol:e.symbol,quarter:e.quarter,report_date:e.reportDate,eps_actual:e.epsActual,eps_est:e.epsEst,beat_pct:e.beatPct,source:e.source};}),gov_reports:gd?gd.gov_reports:[],upcoming_earnings:gd?gd.upcoming_earnings:[],delay:'Earnings Real Finnhub/SEC | Gov AI estimate'};
+  const data = await callClaude(`Return JSON with latest quarterly earnings and government reports as of ${TODAY}.
+{
+  "earnings": [
+    {
+      "company": string, "symbol": string, "quarter": string, "report_date": "YYYY-MM-DD",
+      "eps_actual": number|null, "eps_est": number, "beat_pct": number|null,
+      "revenue_bn": number|null, "yoy_rev_pct": number|null,
+      "guidance": "raised|lowered|maintained|none",
+      "key_note": string
+    }
+  ],
+  "gov_reports": [
+    { "report": string, "value": string, "prior": string, "revision": "up|down|none", "note": string }
+  ],
+  "upcoming_earnings": [
+    { "company": string, "symbol": string, "date": "YYYY-MM-DD" }
+  ]
+}`, 'Return only raw JSON. No markdown fences. No backticks. Start with {');
+
+  return {
+    ...data,
+    delay: 'AI estimate — verify at SEC EDGAR, company IR pages, bea.gov'
+  };
 }
 
 export async function fetchIntel(userQuestion) {
   var sys = 'Macro analyst. Return ONLY raw JSON. No markdown. Start with {';
   if (userQuestion) {
-    return callClaude('Answer this macro question with JSON: answer string, key_points array, data_sources array. Question: '+userQuestion, sys);
+    return callClaude('Answer with JSON: answer, key_points, data_sources. Question: '+userQuestion, sys);
   }
-  return callClaude('Today '+TODAY+'. Fed 3.50-3.75pct. Gold 4615. VIX 17. SP500 7200. 10Y 4.38pct. CPI 3.3pct. GDP Q1 2.0pct. Deficit 2T. Debt/GDP 122pct. 4 FOMC dissents April 29 2026. Return JSON: thesis string, regime string, regime_confidence string, alerts array with level/title/detail/category, key_risks array with risk/probability/horizon, key_watches array with indicator/why/threshold/source, dalio_lens string, positioning object with usd/gold/long_bonds/equities/rationale.', sys);
+  return callClaude('Today '+TODAY+'. Fed 3.50-3.75pct. Gold 4615. VIX 17. SP500 7200. 10Y 4.38pct. CPI 3.3pct. GDP Q1 2.0pct. Deficit 2T. Debt/GDP 122pct. 4 FOMC dissents April 29 2026. Return JSON: thesis, regime, regime_confidence, alerts array with level/title/detail/category, key_risks array with risk/probability/horizon, key_watches array with indicator/why/threshold/source, dalio_lens, positioning with usd/gold/long_bonds/equities/rationale.', sys);
 }
