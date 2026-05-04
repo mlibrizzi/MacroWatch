@@ -254,37 +254,11 @@ export async function fetchWeekly() {
 }
 
 export async function fetchAuctions() {
-  const data = await callClaude(`Return JSON with the 5 most recent US Treasury auction results across 2Y, 5Y, 7Y, 10Y and 30Y maturities, and upcoming auctions, as of ${TODAY}.
-{
-  "recent": [
-    {
-      "term": "2-Year Note",
-      "date": "YYYY-MM-DD",
-      "size_bn": number,
-      "bid_to_cover": number,
-      "btc_6mo_avg": number,
-      "indirect_pct": number,
-      "indirect_avg": number,
-      "direct_pct": number,
-      "dealer_pct": number,
-      "dealer_avg": number,
-      "high_yield": number,
-      "tail_bp": number,
-      "tail_avg_bp": number,
-      "status": "weak|mixed|ok",
-      "note": "string"
-    }
-  ],
-  "upcoming": [
-    { "term": string, "date": "YYYY-MM-DD", "size_bn": number }
-  ],
-  "macro_note": "string"
-}`, 'Return only raw JSON. No markdown fences. No backticks. Start with {');
-
-  return {
-    ...data,
-    delay: 'AI estimate — verify same-day at treasurydirect.gov/auctions'
-  };
+  const data = await callClaude(
+    'Return JSON with 5 recent US Treasury auction results as of ' + TODAY + '. Upcoming: 10Y May 20 76B, 7Y May 21 65B, 5Y May 25 70B, 2Y May 26 69B. Fields: recent array with term/date/size_bn/bid_to_cover/btc_6mo_avg/indirect_pct/indirect_avg/dealer_pct/dealer_avg/high_yield/tail_bp/tail_avg_bp/status/note. upcoming array. macro_note string.',
+    'Return only raw JSON. No markdown. Start with {'
+  );
+  return Object.assign({}, data, { delay: 'AI estimate - verify at treasurydirect.gov' });
 }
 
 export async function fetchMonthly() {
