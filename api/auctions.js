@@ -56,7 +56,7 @@ export default async function handler(req, res) {
         tail_bp:      tail,
         tail_avg_bp:  null,
         status,
-        note: `Official TreasuryDirect data. BTC: ${btc?.toFixed(2)}x | Indirect: ${indirect?.toFixed(1)}% | Dealer: ${dealer?.toFixed(1)}%`,
+        note: 'Official TreasuryDirect data. BTC: '+(btc?btc.toFixed(2):'N/A')+'x | Indirect: '+(indirect?indirect.toFixed(1):'N/A')+'% | Dealer: '+(dealer?dealer.toFixed(1):'N/A')+'%',
         source: 'TreasuryDirect.gov (official)',
         delay: 'Official — published same day as auction'
       };
