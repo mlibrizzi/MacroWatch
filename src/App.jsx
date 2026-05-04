@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useRef } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { LineChart, Line, BarChart, Bar, XAxis, YAxis, Tooltip, ReferenceLine, ResponsiveContainer, Cell } from 'recharts';
 import { fetchDaily, fetchAuctions, fetchWeekly, fetchMonthly, fetchQuarterly, fetchIntel } from './fetchers.js';
 
@@ -360,8 +360,6 @@ function MetricDef({ label }) {
 
 function AuctionChart({ data, label, field, thresholds, invert, format }) {
   if (!data?.length) return null;
-  const hasData = data.some(a => a[field] != null);
-  if (!hasData) return null;
   const pts = data
     .map(a => ({
       name: a.term?.replace('-Year Note','Y').replace('-Year Bond','Y').replace(' Note','').replace(' Bond','').trim(),
