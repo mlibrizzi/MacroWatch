@@ -453,9 +453,9 @@ function AuctionsTab({ d }) {
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr 1fr', gap: 6 }}>
               {[
                 ['BID/CVR',  a.bid_to_cover != null ? `${a.bid_to_cover.toFixed(2)}x` : 'N/A', zoneColor(a.bid_to_cover, BTC_THRESHOLDS),        a.btc_6mo_avg != null ? `avg ${a.btc_6mo_avg.toFixed(2)}x` : ''],
-                ['INDIRECT', `${a.indirect_pct?.toFixed(1)}%`, zoneColor(a.indirect_pct, IND_THRESHOLDS),        `avg ${a.indirect_avg?.toFixed(1)}%`],
-                ['DEALER',   `${a.dealer_pct?.toFixed(1)}%`,   zoneColor(a.dealer_pct,   DLR_THRESHOLDS,  true), `avg ${a.dealer_avg?.toFixed(1)}%`],
-                ['TAIL',     `${a.tail_bp?.toFixed(1)}bp`,     zoneColor(a.tail_bp,      TAIL_THRESHOLDS, true), `avg ${a.tail_avg_bp?.toFixed(1)}bp`],
+                ['INDIRECT', a.indirect_pct != null ? `${a.indirect_pct.toFixed(1)}%` : 'N/A', zoneColor(a.indirect_pct, IND_THRESHOLDS),        `avg ${a.indirect_avg?.toFixed(1)}%`],
+                ['DEALER',   a.dealer_pct != null ? `${a.dealer_pct.toFixed(1)}%` : 'N/A',   zoneColor(a.dealer_pct,   DLR_THRESHOLDS,  true), `avg ${a.dealer_avg?.toFixed(1)}%`],
+                ['TAIL',     a.tail_bp != null ? `${a.tail_bp.toFixed(1)}bp` : 'N/A',     zoneColor(a.tail_bp,      TAIL_THRESHOLDS, true), `avg ${a.tail_avg_bp?.toFixed(1)}bp`],
               ].map(([lbl, val, color, avg]) => (
                 <div key={lbl} style={{ textAlign: 'center', background: 'var(--s2)', borderRadius: 4, padding: '6px 4px' }}>
                   <div style={{ fontFamily: 'var(--mono)', fontSize: 7, color: 'var(--t3)', marginBottom: 3, letterSpacing: 1 }}>{lbl}</div>
