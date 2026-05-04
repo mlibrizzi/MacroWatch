@@ -75,7 +75,6 @@ fetchSeries('WDTGAL'),
 fetchSeries('CES0500000003'), // Avg hourly earnings
 ]);
 
-```
 const termPremium = t10y.latest && t2y.latest
   ? +(t10y.latest - t2y.latest).toFixed(3) : null;
 
@@ -274,7 +273,6 @@ return res.status(200).json({
   },
   timestamp: new Date().toISOString()
 });
-```
 
 } catch (err) {
 return res.status(500).json({ error: err.message });
