@@ -266,34 +266,10 @@ export async function fetchAuctions() {
 }
 
 export async function fetchMonthly() {
-  const data = await callClaude(`Return JSON with latest TIC and Fed balance sheet data as of ${TODAY}.
-{
-  "tic": {
-    "report_month": "YYYY-MM",
-    "total_foreign_bn": number,
-    "mom_change_bn": number,
-    "yoy_change_bn": number,
-    "foreign_share_pct": number,
-    "china_net_since_2021_bn": number,
-    "top_holders": [
-      { "country": string, "holdings_bn": number, "mom_bn": number, "trend": "buying|selling|flat", "note": string }
-    ]
-  },
-  "fed_balance": {
-    "report_date": "YYYY-MM-DD",
-    "total_assets_tn": number,
-    "treasuries_tn": number,
-    "mbs_tn": number,
-    "reserves_tn": number,
-    "tga_bn": number,
-    "weekly_change_bn": number,
-    "reserve_mgmt_note": string,
-    "repo_sofr_pct": number,
-    "repo_stress": "low|elevated|high"
-  },
-  "tga": { "current_bn": number, "prior_month_bn": number, "note": string },
-  "basis_trade": { "estimated_size_tn": number, "stress_level": "low|elevated|high", "note": string, "sofr_treasury_spread_bp": number }
-}`, 'Return only raw JSON. No markdown fences. No backticks. Start with {');
+  const data = await callClaude(
+    'Latest TIC data Feb 2026 (released April 2026): Total foreign holdings $9,490B (up from $9,290B prior month, +$200B MoM). Foreign share of US debt approximately 30%. Top holders: Japan $1,239B (largest, buying), China $693B (selling trend, down from peak $1,300B in 2013), UK $897B (financial center, rising), Luxembourg $447B, Canada $446B, Belgium $380B, Ireland $340B, Switzerland $290B. China net selling since 2021 approximately -$185B. Basis trade estimated size $0.8T, stress level low, SOFR-Treasury spread approximately 8bp. Return JSON with tic object (report_month/total_foreign_bn/mom_change_bn/foreign_share_pct/china_net_since_2021_bn/top_holders array with country/holdings_bn/trend/note) and basis_trade object (estimated_size_tn/stress_level/note/sofr_treasury_spread_bp).',
+    'Return only raw JSON. No markdown fences. No backticks. Start with {'
+  ));
 
   return {
     ...data,
