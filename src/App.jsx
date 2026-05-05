@@ -564,7 +564,6 @@ function MonthlyTab({ d }) {
       {d.tic && (
         <div className="sec">
           <div className="sec-hdr"><div className="sec-ttl">⬡ TIC — FOREIGN HOLDINGS</div><div className="badge">{d.tic.report_month}</div></div>
-          <div className="sub" style={{fontSize:10,color:'var(--t3)',marginTop:2,marginBottom:4}}>Changes shown are vs prior month (MoM)</div>
           <div className="card">
             <div className="row" style={{ marginBottom: 8 }}>
               <div className="lbl">Total Foreign Holdings</div>
@@ -603,7 +602,7 @@ function MonthlyTab({ d }) {
               ['Treasuries (SOMA)', `$${d.fed_balance.treasuries_tn?.toFixed(2)}T`],
               ['MBS', `$${d.fed_balance.mbs_tn?.toFixed(2)}T`],
               ['Bank Reserves', `$${d.fed_balance.reserves_tn?.toFixed(2)}T`],
-              ['Weekly Change', `${d.fed_balance.weekly_change_bn > 0 ? '+' : ''}$${d.fed_balance.weekly_change_bn}B`],
+              [`Weekly Change (w/e ${d.fed_balance.report_date})`, `${d.fed_balance.weekly_change_bn > 0 ? '+' : ''}$${d.fed_balance.weekly_change_bn}B`],
             ].map(([lbl, val]) => (
               <div className="row" style={{ marginBottom: 8 }} key={lbl}>
                 <div className="sub">{lbl}</div><div className="sub" style={{ color: 'var(--t1)' }}>{val}</div>
