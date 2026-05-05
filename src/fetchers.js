@@ -302,28 +302,28 @@ export async function fetchMonthly() {
 }
 
 export async function fetchQuarterly() {
-  const data = await callClaude(`Return JSON with latest quarterly earnings and government reports as of ${TODAY}.
-{
-  "earnings": [
-    {
-      "company": string, "symbol": string, "quarter": string, "report_date": "YYYY-MM-DD",
-      "eps_actual": number|null, "eps_est": number, "beat_pct": number|null,
-      "revenue_bn": number|null, "yoy_rev_pct": number|null,
-      "guidance": "raised|lowered|maintained|none",
-      "key_note": string
-    }
-  ],
-  "gov_reports": [
-    { "report": string, "value": string, "prior": string, "revision": "up|down|none", "note": string }
-  ],
-  "upcoming_earnings": [
-    { "company": string, "symbol": string, "date": "YYYY-MM-DD" }
-  ]
-}`, 'Return only raw JSON. No markdown fences. No backticks. Start with {');
+  // Get real earnings from Finnhub
+  const realEarnings = await fetchLive('/api/earnings').catch(() => ({ earnings: [] }));
+  const earnings = (realEarnings.earnings || []).map(e => ({
+    company: e.symbol, symbol: e.symbol, quarter: e.quarter,
+    report_date: e.reportDate, eps_actual: e.epsActual, eps_est: e.epsEst,
+    beat_pct: e.beatPct, revenue_bn: e.revenueBn || null,
+    guidance: e.guidance || 'none',
+    key_note: e.epsActual != null ? (e.epsActual >= e.epsEst ? 'Beat' : 'Missed') + ' est by ' + Math.abs(e.beatPct || 0).toFixed(1) + '%' : 'Pending',
+    delay: e.source || 'Finnhub/SEC'
+  }));
+
+  // Get government reports from Claude - only known released data
+  const govData = await callClaude(
+    'As of ' + TODAY + ' Fed rate is 3.50-3.75%. GDP Q1 2026 was +2.0% annualized (released April 30). Only include RELEASED data - no estimates for unreleased reports. Return JSON with gov_reports array (report/value/prior/revision/note fields) and upcoming_earnings array (company/symbol/date fields). Include: GDP Q1 2026, Federal Deficit FY2026 YTD, Debt-to-GDP, Trade Balance March 2026. Upcoming: AMZN May 7, GOOGL May 8, META May 9.',
+    'Return only raw JSON. No markdown. Start with {'
+  );
 
   return {
-    ...data,
-    delay: 'AI estimate — verify at SEC EDGAR, company IR pages, bea.gov'
+    earnings,
+    gov_reports: govData ? govData.gov_reports : [],
+    upcoming_earnings: govData ? govData.upcoming_earnings : [],
+    delay: 'Earnings: Real Finnhub/SEC data | Gov reports: AI estimate anchored to known data'
   };
 }
 
