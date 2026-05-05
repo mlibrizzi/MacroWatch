@@ -340,23 +340,11 @@ export async function fetchQuarterly() {
 }
 
 export async function fetchIntel(userQuestion) {
-  const fred = await fetchLive('/api/fred').catch(() => ({}));
-  const metals = await fetchLive('/api/metals').catch(() => ({}));
-  const markets = await fetchLive('/api/markets').catch(() => ({}));
-
-  const gold = metals.gold ? metals.gold.price : 4520;
-  const t10y = fred.yields && fred.yields.t10y ? fred.yields.t10y.latest : 4.39;
-  const t2y = fred.yields && fred.yields.t2y ? fred.yields.t2y.latest : 3.88;
-  const vix = fred.commodities && fred.commodities.vix ? fred.commodities.vix.price : 17;
-  const spxObj = markets.indices ? markets.indices.find(i => i.symbol === 'SPX') : null;
-  const spx = spxObj ? spxObj.price : 7200;
-
-  const live = 'Live data ' + TODAY + ': Gold $' + gold.toFixed(0) + '/oz, 10Y ' + t10y + '%, 2Y ' + t2y + '%, VIX ' + vix + ', SPX ' + spx + ', Fed 3.50-3.75%, CPI +0.87% MoM, Core PCE +0.29% MoM, GDP Q1 +2.0%, Unemployment 4.3%, Debt/GDP 122%, Deficit ~$2T/yr, 4 FOMC dissents April 29.';
   const sys = 'Macro analyst using Dalio big cycle framework. Return ONLY raw JSON. No markdown. Start with {';
 
   if (userQuestion) {
-    return callClaude(live + ' Question: ' + userQuestion + ' Return JSON: answer string, key_points array, related_indicators array, data_sources array.', sys);
+    return callClaude('Answer this macro question. Return JSON: answer string, key_points array, related_indicators array, data_sources array. Question: ' + userQuestion, sys);
   }
 
-  return callClaude(live + ' Generate briefing. Return JSON: thesis string, regime string, regime_confidence string, alerts array with level/title/detail/category, key_risks array with risk/probability/horizon, key_watches array with indicator/why/threshold/source, dalio_lens string, positioning object with usd/gold/long_bonds/equities/rationale.', sys);
+  return callClaude('Today ' + TODAY + '. Gold ~$4520, 10Y 4.39%, 2Y 3.88%, VIX 17, SPX 7200, Fed 3.50-3.75%, CPI +0.87% MoM, Core PCE +0.29% MoM, GDP Q1 +2.0%, Unemployment 4.3%, Debt/GDP 122%, Deficit ~$2T/yr. Generate briefing. Return JSON: thesis string, regime string, regime_confidence string, alerts array with level/title/detail/category, key_risks array with risk/probability/horizon, key_watches array with indicator/why/threshold/source, dalio_lens string, positioning object with usd/gold/long_bonds/equities/rationale.', sys);
 }
