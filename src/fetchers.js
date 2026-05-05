@@ -315,7 +315,7 @@ export async function fetchQuarterly() {
 
   // Get government reports from Claude - only known released data
   const govData = await callClaude(
-    'As of ' + TODAY + ' Fed rate is 3.50-3.75%. GDP Q1 2026 was +2.0% annualized (released April 30). Only include RELEASED data - no estimates for unreleased reports. Return JSON with gov_reports array (report/value/prior/revision/note fields) and upcoming_earnings array (company/symbol/date fields). Include: GDP Q1 2026, Federal Deficit FY2026 YTD, Debt-to-GDP, Trade Balance March 2026. Upcoming: AMZN May 7, GOOGL May 8, META May 9.',
+    'As of ' + TODAY + ' Fed rate is 3.50-3.75%. GDP Q1 2026 GDP was +2.0% annualized released April 30. Federal Deficit FY2026 YTD through March is $1.307T per Treasury Monthly Statement. Federal Debt Outstanding is $36.2T per Treasury. Debt-to-GDP is approximately 122%. Trade Balance March 2026 was -$162B per BEA released May 1. Fed rate 3.50-3.75%. Return JSON with gov_reports array (report/value/prior/revision/note/source fields) and upcoming_earnings array (company/symbol/date fields). Upcoming: AMZN May 7, GOOGL May 8, META May 9.',
     'Return only raw JSON. No markdown. Start with {'
   );
 
