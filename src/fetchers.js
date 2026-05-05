@@ -340,30 +340,23 @@ export async function fetchQuarterly() {
 }
 
 export async function fetchIntel(userQuestion) {
-  // Fetch live market data to anchor the briefing
-  const [fred, markets, metals] = await Promise.allSettled([
-    fetchLive('/api/fred'),
-    fetchLive('/api/markets'),
-    fetchLive('/api/metals')
-  ]);
-  const f = fred.status === 'fulfilled' ? fred.value : {};
-  const m = markets.status === 'fulfilled' ? markets.value : {};
-  const mt = metals.status === 'fulfilled' ? metals.value : {};
+  const fred = await fetchLive('/api/fred').catch(() => ({}));
+  const metals = await fetchLive('/api/metals').catch(() => ({}));
+  const markets = await fetchLive('/api/markets').catch(() => ({}));
 
-  const gold = mt.gold ? mt.gold.price : null;
-  const t10y = f.yields && f.yields.t10y ? f.yields.t10y.latest : null;
-  const t2y = f.yields && f.yields.t2y ? f.yields.t2y.latest : null;
-  const vix = f.commodities && f.commodities.vix ? f.commodities.vix.price : null;
-  const spx = m.indices ? (m.indices.find(i => i.symbol === 'SPX') || {}).price : null;
-  const fedRate = f.yields && f.yields.fedfunds ? (f.yields.fedfunds.targetRange || f.yields.fedfunds.latest + '%') : '3.50-3.75%';
+  const gold = metals.gold ? metals.gold.price : 4520;
+  const t10y = fred.yields && fred.yields.t10y ? fred.yields.t10y.latest : 4.39;
+  const t2y = fred.yields && fred.yields.t2y ? fred.yields.t2y.latest : 3.88;
+  const vix = fred.commodities && fred.commodities.vix ? fred.commodities.vix.price : 17;
+  const spxObj = markets.indices ? markets.indices.find(i => i.symbol === 'SPX') : null;
+  const spx = spxObj ? spxObj.price : 7200;
 
-  const liveData = 'LIVE MARKET DATA: Gold $' + (gold ? gold.toFixed(0) : '4520') + '/oz. 10Y yield ' + (t10y || 4.39) + '%. 2Y yield ' + (t2y || 3.88) + '%. VIX ' + (vix || 17) + '. SPX ' + (spx ? spx.toFixed(0) : '7200') + '. Fed rate ' + fedRate + '. CPI +0.87% MoM. Core PCE +0.29% MoM. GDP Q1 2026 +2.0%. Unemployment 4.3%. Fed Funds 3.50-3.75% held April 29 2026 with 4 dissents. US Debt/GDP 122%. Annual deficit ~$2T.';
-
-  const base = 'You are a macro intelligence analyst using Ray Dalio big debt cycle framework. Today: ' + TODAY + '. Return ONLY raw JSON. No markdown fences. No backticks. Start response with {';
+  const live = 'Live data ' + TODAY + ': Gold $' + gold.toFixed(0) + '/oz, 10Y ' + t10y + '%, 2Y ' + t2y + '%, VIX ' + vix + ', SPX ' + spx + ', Fed 3.50-3.75%, CPI +0.87% MoM, Core PCE +0.29% MoM, GDP Q1 +2.0%, Unemployment 4.3%, Debt/GDP 122%, Deficit ~$2T/yr, 4 FOMC dissents April 29.';
+  const sys = 'Macro analyst using Dalio big cycle framework. Return ONLY raw JSON. No markdown. Start with {';
 
   if (userQuestion) {
-    return callClaude(liveData + ' Answer this question: ' + userQuestion + ' Return JSON: answer string, key_points array, related_indicators array, data_sources array.', base);
+    return callClaude(live + ' Question: ' + userQuestion + ' Return JSON: answer string, key_points array, related_indicators array, data_sources array.', sys);
   }
 
-  return callClaude(liveData + ' Generate macro intelligence briefing. Return JSON: thesis string, regime string, regime_confidence string, alerts array with level/title/detail/category/verify_at, key_risks array with risk/probability/horizon, key_watches array with indicator/why/threshold/source, dalio_lens string, positioning object with usd/gold/long_bonds/equities/rationale.', base);
+  return callClaude(live + ' Generate briefing. Return JSON: thesis string, regime string, regime_confidence string, alerts array with level/title/detail/category, key_risks array with risk/probability/horizon, key_watches array with indicator/why/threshold/source, dalio_lens string, positioning object with usd/gold/long_bonds/equities/rationale.', sys);
 }
