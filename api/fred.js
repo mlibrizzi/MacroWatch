@@ -42,6 +42,8 @@ wrbwfrbl, // Reserves
 wdtgal,   // TGA balance
 // Average hourly earnings
 ahe,
+// VIX volatility index
+vix,
 ] = await Promise.all([
 fetchSeries('DGS2'),
 fetchSeries('DGS10'),
@@ -73,6 +75,7 @@ fetchSeries('WSHOMCB', 20),
 fetchSeries('WRBWFRBL'),
 fetchSeries('WDTGAL'),
 fetchSeries('CES0500000003'), // Avg hourly earnings
+    fetchSeries('VIXCLS'),       // VIX volatility index
 ]);
 
 const termPremium = t10y.latest && t2y.latest
@@ -131,6 +134,15 @@ return res.status(200).json({
     }
   },
   commodities: {
+    vix: {
+      price: vix.latest, prior: vix.prior,
+      change: vix.latest && vix.prior ? +(vix.latest - vix.prior).toFixed(2) : null,
+      changePct: momPct(vix.latest, vix.prior),
+      date: vix.date, name: 'CBOE Volatility Index', unit: 'index',
+      zone: vix.latest < 15 ? 'Complacent' : vix.latest < 20 ? 'Normal' : vix.latest < 30 ? 'Elevated' : vix.latest < 40 ? 'Fear' : 'Extreme Fear',
+      delay: 'Daily (CBOE via FRED) — 1 trading day lag',
+      source: 'CBOE via Federal Reserve FRED'
+    },
     wti: {
       price: wti.latest, prior: wti.prior,
       change: wti.latest && wti.prior ? +(wti.latest - wti.prior).toFixed(2) : null,
