@@ -41,9 +41,10 @@ export async function fetchDaily() {
         silver: { ...metals.silver, delay: 'Real-time (gold-api.com)' },
       },
       oil: {
-        wti:   { ...markets.oil?.wti,   delay: '15-min delayed (Yahoo Finance)' },
-        brent: { ...markets.oil?.brent, delay: '15-min delayed (Yahoo Finance)' },
+        wti:   fred.commodities && fred.commodities.wti ? { ...fred.commodities.wti, delay: 'Daily (EIA via FRED) — 1 week lag' } : null,
+        brent: fred.commodities && fred.commodities.brent ? { ...fred.commodities.brent, delay: 'Daily (EIA via FRED) — 1 week lag' } : null,
       },
+
       fx: {
         eurusd: { ...markets.fx?.eurusd, delay: 'Hourly (open.er-api.com)' },
         jpyusd: { ...markets.fx?.jpyusd, delay: 'Hourly (open.er-api.com)' },
