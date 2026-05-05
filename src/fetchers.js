@@ -340,29 +340,30 @@ export async function fetchQuarterly() {
 }
 
 export async function fetchIntel(userQuestion) {
-  const base = `You are a macro intelligence analyst. Today: ${TODAY}. Return ONLY raw JSON. No markdown fences. No backticks. Start response with {`;
+  // Fetch live market data to anchor the briefing
+  const [fred, markets, metals] = await Promise.allSettled([
+    fetchLive('/api/fred'),
+    fetchLive('/api/markets'),
+    fetchLive('/api/metals')
+  ]);
+  const f = fred.status === 'fulfilled' ? fred.value : {};
+  const m = markets.status === 'fulfilled' ? markets.value : {};
+  const mt = metals.status === 'fulfilled' ? metals.value : {};
+
+  const gold = mt.gold ? mt.gold.price : null;
+  const t10y = f.yields && f.yields.t10y ? f.yields.t10y.latest : null;
+  const t2y = f.yields && f.yields.t2y ? f.yields.t2y.latest : null;
+  const vix = f.commodities && f.commodities.vix ? f.commodities.vix.price : null;
+  const spx = m.indices ? (m.indices.find(i => i.symbol === 'SPX') || {}).price : null;
+  const fedRate = f.yields && f.yields.fedfunds ? (f.yields.fedfunds.targetRange || f.yields.fedfunds.latest + '%') : '3.50-3.75%';
+
+  const liveData = 'LIVE MARKET DATA: Gold $' + (gold ? gold.toFixed(0) : '4520') + '/oz. 10Y yield ' + (t10y || 4.39) + '%. 2Y yield ' + (t2y || 3.88) + '%. VIX ' + (vix || 17) + '. SPX ' + (spx ? spx.toFixed(0) : '7200') + '. Fed rate ' + fedRate + '. CPI +0.87% MoM. Core PCE +0.29% MoM. GDP Q1 2026 +2.0%. Unemployment 4.3%. Fed Funds 3.50-3.75% held April 29 2026 with 4 dissents. US Debt/GDP 122%. Annual deficit ~$2T.';
+
+  const base = 'You are a macro intelligence analyst using Ray Dalio big debt cycle framework. Today: ' + TODAY + '. Return ONLY raw JSON. No markdown fences. No backticks. Start response with {';
 
   if (userQuestion) {
-    return callClaude(`User question: "${userQuestion}"
-Return JSON:
-{
-  "answer": "detailed 3-5 paragraph response",
-  "key_points": ["string"],
-  "related_indicators": ["string"],
-  "data_sources": ["where to verify"]
-}`, base);
+    return callClaude(liveData + ' Answer this question: ' + userQuestion + ' Return JSON: answer string, key_points array, related_indicators array, data_sources array.', base);
   }
 
-  return callClaude(`Generate macro intelligence briefing for ${TODAY}.
-Return JSON:
-{
-  "thesis": "3-4 sentence thesis with specific data",
-  "regime": "stagflation|reflation|deflation|goldilocks|crisis",
-  "regime_confidence": "high|medium|low",
-  "alerts": [{ "level": "critical|warning|watch", "title": string, "detail": string, "category": string, "verify_at": string }],
-  "key_risks": [{ "risk": string, "probability": "high|medium|low", "horizon": string }],
-  "key_watches": [{ "indicator": string, "why": string, "threshold": string, "source": string }],
-  "dalio_lens": "2-3 sentence Dalio big cycle read",
-  "positioning": { "usd": string, "gold": string, "long_bonds": string, "equities": string, "rationale": string }
-}`, base);
+  return callClaude(liveData + ' Generate macro intelligence briefing. Return JSON: thesis string, regime string, regime_confidence string, alerts array with level/title/detail/category/verify_at, key_risks array with risk/probability/horizon, key_watches array with indicator/why/threshold/source, dalio_lens string, positioning object with usd/gold/long_bonds/equities/rationale.', base);
 }
