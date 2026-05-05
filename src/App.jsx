@@ -243,9 +243,9 @@ function DailyTab({ d }) {
         <div className="card">
           <table className="rates-tbl">
             <tbody>
-              {[['DXY Index','Dollar Index', fx?.dxy], ['EUR/USD','Euro', fx?.eurusd], ['USD/JPY','Yen', fx?.jpyusd]].map(([lbl,sub,v]) => v ? (
+              {[['Fed Broad USD','Dollar Index', fx?.dxy], ['EUR/USD','Euro', fx?.eurusd], ['USD/JPY','Yen', fx?.jpyusd]].map(([lbl,sub,v]) => v ? (
                 <tr key={lbl}><td><div className="lbl" style={{fontSize:12}}>{lbl}</div><div className="sub">{sub}</div></td>
-                <td><div className={`val ${signCls(v.change)} `} style={{fontSize:13}}>{fmt(v.price, lbl==='DXY Index'?2:4)}</div>
+                <td><div className={`val ${signCls(v.change)} `} style={{fontSize:13}}>{fmt(v.price, lbl==='Fed Broad USD'?2:4)}</div>
                 <div className={`chg ${signCls(v.change)}`}>{arrow(v.change)} {fmtPct(v.changePct)}</div></td></tr>
               ) : null)}
               {vix && <tr><td><div className="lbl" style={{fontSize:12}}>VIX</div><div className="sub">Fear Index</div></td>
