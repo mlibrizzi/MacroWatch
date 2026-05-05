@@ -291,7 +291,7 @@ export async function fetchMonthly() {
       delay: ticData.delay
     } : null,
     fed_balance: fb ? {
-      report_date: new Date().toISOString().split('T')[0],
+      report_date: fb.totalAssets && fb.totalAssets.date ? fb.totalAssets.date : new Date().toISOString().split('T')[0],
       total_assets_tn: fb.totalAssets ? fb.totalAssets.value : null,
       treasuries_tn: fb.treasuries ? fb.treasuries.value : null,
       mbs_tn: fb.mbs ? fb.mbs.value : null,
