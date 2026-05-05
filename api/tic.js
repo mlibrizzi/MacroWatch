@@ -27,7 +27,7 @@ export default async function handler(req, res) {
     const latestMonth = headerRow[1];
     const priorMonth = headerRow[2];
 
-    const skipCountries = ['Grand Total', 'All Other', 'Oil Exporters', 'Caribbean', 'OPEC'];
+    const skipCountries = ['Grand Total', 'All Other', 'Oil Exporters', 'Caribbean', 'OPEC', 'Of Which', 'T-Bonds', 'T-Bills', 'Treasury Bills', 'Treasury Bonds'];
 
     const countries = [];
     let grandTotal = null;
