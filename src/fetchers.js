@@ -50,7 +50,7 @@ export async function fetchDaily() {
         gbpusd: { ...markets.fx?.gbpusd, delay: 'Hourly (open.er-api.com)' },
         dxy:    { ...markets.fx?.dxy,    delay: 'Real-time via UUP ETF (Finnhub)' },
       },
-      vix: { ...markets.vix, delay: 'Real-time via UVXY ETF (Finnhub)' },
+      vix: fred.commodities && fred.commodities.vix ? { ...fred.commodities.vix, delay: 'Daily (CBOE via FRED)' } : null,
       rates: {
         t2y:  { yield: t2y,  change_bp: t2y  && fred.yields.t2y.prior  ? +((t2y  - fred.yields.t2y.prior)  * 100).toFixed(1) : null, date: fred.yields.t2y?.date  },
         t10y: { yield: t10y, change_bp: t10y && fred.yields.t10y.prior ? +((t10y - fred.yields.t10y.prior) * 100).toFixed(1) : null, date: fred.yields.t10y?.date },
