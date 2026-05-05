@@ -3,7 +3,7 @@ export default async function handler(req, res) {
   if (req.method !== 'GET') return res.status(405).json({ error: 'Method not allowed' });
 
   try {
-    const url = 'https://ticdata.treasury.gov/Publish/mfh.txt';
+    const url = 'https://ticdata.treasury.gov/resource-center/data-chart-center/tic/Documents/mfh.txt';
     const r = await fetch(url);
     const text = await r.text();
     const lines = text.split('\n');
