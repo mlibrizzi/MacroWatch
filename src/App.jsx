@@ -564,6 +564,7 @@ function MonthlyTab({ d }) {
       {d.tic && (
         <div className="sec">
           <div className="sec-hdr"><div className="sec-ttl">⬡ TIC — FOREIGN HOLDINGS</div><div className="badge">{d.tic.report_month}</div></div>
+          <div className="sub" style={{fontSize:10,color:'var(--t3)',marginTop:2,marginBottom:4}}>Changes shown are vs prior month (MoM)</div>
           <div className="card">
             <div className="row" style={{ marginBottom: 8 }}>
               <div className="lbl">Total Foreign Holdings</div>
