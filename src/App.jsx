@@ -243,12 +243,12 @@ function DailyTab({ d }) {
         <div className="card">
           <table className="rates-tbl">
             <tbody>
-              {[['Fed Broad USD','Dollar Index', fx?.dxy], ['EUR/USD','Euro', fx?.eurusd], ['USD/JPY','Yen', fx?.jpyusd]].map(([lbl,sub,v]) => v ? (
+              {[['Fed Broad USD','Broad USD vs 26 currencies (not ICE DXY)', fx?.dxy], ['EUR/USD','Euro', fx?.eurusd], ['USD/JPY','Yen', fx?.jpyusd]].map(([lbl,sub,v]) => v ? (
                 <tr key={lbl}><td><div className="lbl" style={{fontSize:12}}>{lbl}</div><div className="sub">{sub}</div></td>
                 <td><div className={`val ${signCls(v.change)} `} style={{fontSize:13}}>{fmt(v.price, lbl==='Fed Broad USD'?2:4)}</div>
                 <div className={`chg ${signCls(v.change)}`}>{arrow(v.change)} {fmtPct(v.changePct)}</div></td></tr>
               ) : null)}
-              {vix && <tr><td><div className="lbl" style={{fontSize:12}}>VIX</div><div className="sub">Fear Index</div></td>
+              {vix && <tr><td><div className="lbl" style={{fontSize:12}}>VIX</div><div className="sub">Fear Index</div><div className="sub" style={{fontSize:9,color:'#666',marginTop:2}}><span style={{color:vix.price<15?'#4caf50':vix.price<20?'#4caf50':vix.price<30?'#ff9800':vix.price<40?'#f44336':'#b71c1c'}}>{vix.price<15?'< 15 Complacent':vix.price<20?'15-20 Normal':vix.price<30?'20-30 Elevated':vix.price<40?'30-40 Fear':'>40 Extreme Fear'}</span></div></td>
                 <td><div className={`val ${vix.price > 30 ? 'dn' : vix.price > 20 ? 'warn' : 'up'}`} style={{fontSize:13}}>{fmt(vix.price)}</div>
                 <div className={`chg ${signCls(vix.change)}`}>{arrow(vix.change)} {fmtPct(vix.changePct)}</div></td></tr>}
             </tbody>
