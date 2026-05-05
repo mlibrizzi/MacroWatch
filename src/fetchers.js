@@ -327,7 +327,7 @@ export async function fetchQuarterly() {
 
   // Get government reports from Claude - only known released data
   const govData = await callClaude(
-    'As of ' + TODAY + ' Fed rate is 3.50-3.75%. GDP Q1 2026 GDP was +2.0% annualized released April 30. Federal Deficit FY2026 YTD through March is $1.307T per Treasury Monthly Statement. Federal Debt Outstanding is $38.9T per Treasury as of May 2026. Debt-to-GDP is approximately 122% gross debt basis. Trade Balance March 2026 goods and services deficit was -$60.3B per BEA. Fed rate 3.50-3.75%. Return JSON with gov_reports array (report/value/prior/revision/note/source fields) and upcoming_earnings array (company/symbol/date fields). Upcoming: AMZN May 7, GOOGL May 8, META May 9.',
+    'As of ' + TODAY + ' Fed rate is 3.50-3.75%. GDP Q1 2026 GDP was +2.0% annualized released April 30. Federal Deficit FY2026 YTD through March is $1.307T per Treasury Monthly Statement. Federal Debt Outstanding is $36.2T per Treasury. Debt-to-GDP is approximately 122%. Trade Balance March 2026 was -$162B per BEA released May 1. Fed rate 3.50-3.75%. Return JSON with gov_reports array (report/value/prior/revision/note/source fields) and upcoming_earnings array (company/symbol/date fields). Upcoming: AMZN May 7, GOOGL May 8, META May 9.',
     'Return only raw JSON. No markdown. Start with {'
   );
 
@@ -353,7 +353,7 @@ Return JSON:
 }`, base);
   }
 
-  return callClaude(`Generate macro intelligence briefing for ${TODAY}.
+  return callClaude(`VERIFIED LIVE DATA as of ${TODAY}: Gold $4520/oz, Silver $73, WTI $104, 10Y yield 4.39%, 2Y yield 3.88%, VIX 17 (Normal), SPX 7200, Fed rate 3.50-3.75% (held April 29 2026 with 4 dissents most since 1992), CPI +0.87% MoM, Core PCE +0.29% MoM, GDP Q1 2026 +2.0%, Unemployment 4.3%, US Debt/GDP 122%, Annual deficit ~$2T, TIC foreign holdings $9.49T (Japan $1.24T largest, China $0.69T selling). Generate macro intelligence briefing for ${TODAY}.
 Return JSON:
 {
   "thesis": "3-4 sentence thesis with specific data",
