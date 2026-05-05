@@ -230,15 +230,17 @@ export async function fetchWeekly() {
       },
     ];
 
-    const fedPolicy = await callClaude(`Return JSON with current Fed policy status as of ${TODAY}:
-{
-  "current_rate": "X.XX%-X.XX%",
-  "next_meeting": "YYYY-MM-DD",
-  "market_cut_prob_jun_pct": number,
-  "dots_median_2026": number,
-  "powell_status": "1-2 sentence current status",
-  "qt_status": "1-2 sentence balance sheet status"
-}`, 'Return only raw JSON. No markdown fences. No backticks. Start with {');
+    const fedNarrative = await callClaude('Fed held rates at 3.50-3.75% on April 29 2026 with 4 dissents most since 1992. Next FOMC June 16-17 2026. CME FedWatch shows ~6% probability of June cut. QT ended Dec 2025 now in reserve management. Return JSON: powell_status string, qt_status string, dots_median_2026 number.', 'Return only raw JSON. Start with {');
+    const fedPolicy = {
+      current_rate: '3.50%-3.75%',
+      next_meeting: '2026-06-16',
+      market_cut_prob_jun_pct: 6,
+      fomc_dissents: 4,
+      fomc_note: 'Most dissents since October 1992',
+      powell_status: fedNarrative ? fedNarrative.powell_status : null,
+      qt_status: fedNarrative ? fedNarrative.qt_status : null,
+      dots_median_2026: fedNarrative ? fedNarrative.dots_median_2026 : null
+    };
 
     return {
       fed_policy: { ...fedPolicy, delay: 'AI estimate — verify at federalreserve.gov' },
