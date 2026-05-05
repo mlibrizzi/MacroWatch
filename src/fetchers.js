@@ -266,38 +266,50 @@ export async function fetchAuctions() {
 }
 
 export async function fetchMonthly() {
-  const data = await callClaude(`Return JSON with latest TIC and Fed balance sheet data as of ${TODAY}.
-{
-  "tic": {
-    "report_month": "YYYY-MM",
-    "total_foreign_bn": number,
-    "mom_change_bn": number,
-    "yoy_change_bn": number,
-    "foreign_share_pct": number,
-    "china_net_since_2021_bn": number,
-    "top_holders": [
-      { "country": string, "holdings_bn": number, "mom_bn": number, "trend": "buying|selling|flat", "note": string }
-    ]
-  },
-  "fed_balance": {
-    "report_date": "YYYY-MM-DD",
-    "total_assets_tn": number,
-    "treasuries_tn": number,
-    "mbs_tn": number,
-    "reserves_tn": number,
-    "tga_bn": number,
-    "weekly_change_bn": number,
-    "reserve_mgmt_note": string,
-    "repo_sofr_pct": number,
-    "repo_stress": "low|elevated|high"
-  },
-  "tga": { "current_bn": number, "prior_month_bn": number, "note": string },
-  "basis_trade": { "estimated_size_tn": number, "stress_level": "low|elevated|high", "note": string, "sofr_treasury_spread_bp": number }
-}`, 'Return only raw JSON. No markdown fences. No backticks. Start with {');
+  // Get real TIC data from Treasury
+  const ticData = await fetchLive('/api/tic').catch(() => null);
+
+  // Get Fed balance sheet from FRED
+  const fred = await fetchLive('/api/fred').catch(() => null);
+  const fb = fred && fred.fedBalance ? fred.fedBalance : null;
+
+  // Get basis trade estimate from Claude - small prompt
+  const basisData = await callClaude(
+    'As of ' + TODAY + ' SOFR-Treasury spread is approximately 8bp. Basis trade estimated size $0.8T. Stress level low. Return JSON with basis_trade object containing estimated_size_tn, stress_level, note, sofr_treasury_spread_bp.',
+    'Return only raw JSON. No markdown. Start with {'
+  ).catch(() => null);
 
   return {
-    ...data,
-    delay: 'TIC: Monthly 6-week lag (treasury.gov/tic) | Fed H.4.1: Weekly (federalreserve.gov)'
+    tic: ticData ? {
+      report_month: ticData.report_month,
+      total_foreign_bn: ticData.total_foreign_bn,
+      mom_change_bn: ticData.mom_change_bn,
+      foreign_share_pct: ticData.foreign_share_pct,
+      china_net_since_2021_bn: ticData.china_net_since_2021_bn,
+      top_holders: ticData.top_holders,
+      source: ticData.source,
+      delay: ticData.delay
+    } : null,
+    fed_balance: fb ? {
+      report_date: new Date().toISOString().split('T')[0],
+      total_assets_tn: fb.totalAssets ? fb.totalAssets.value : null,
+      treasuries_tn: fb.treasuries ? fb.treasuries.value : null,
+      mbs_tn: fb.mbs ? fb.mbs.value : null,
+      reserves_tn: fb.reserves ? fb.reserves.value : null,
+      tga_bn: fb.tga ? fb.tga.value : null,
+      weekly_change_bn: fb.weeklyChange ? fb.weeklyChange.value : null,
+      reserve_mgmt_note: 'QT ended Dec 2025. Fed in reserve management phase.',
+      data_source: 'Real FRED H.4.1 weekly'
+    } : null,
+    tga: fb && fb.tga ? {
+      current_bn: fb.tga.value,
+      prior_month_bn: fb.tga.prior,
+      date: fb.tga.date,
+      note: 'Treasury General Account - key liquidity indicator.',
+      delay: 'Weekly FRED'
+    } : null,
+    basis_trade: basisData ? basisData.basis_trade : null,
+    delay: 'TIC: Real Treasury data (slt_table5.txt) | Fed Balance Sheet: Real FRED H.4.1'
   };
 }
 
