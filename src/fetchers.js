@@ -340,11 +340,29 @@ export async function fetchQuarterly() {
 }
 
 export async function fetchIntel(userQuestion) {
-  const sys = 'Macro analyst using Dalio big cycle framework. Return ONLY raw JSON. No markdown. Start with {';
+  const base = `You are a macro intelligence analyst. Today: ${TODAY}. Return ONLY raw JSON. No markdown fences. No backticks. Start response with {`;
 
   if (userQuestion) {
-    return callClaude('Answer this macro question. Return JSON: answer string, key_points array, related_indicators array, data_sources array. Question: ' + userQuestion, sys);
+    return callClaude(`User question: "${userQuestion}"
+Return JSON:
+{
+  "answer": "detailed 3-5 paragraph response",
+  "key_points": ["string"],
+  "related_indicators": ["string"],
+  "data_sources": ["where to verify"]
+}`, base);
   }
 
-  return callClaude('Today ' + TODAY + '. Gold ~$4520, 10Y 4.39%, 2Y 3.88%, VIX 17, SPX 7200, Fed 3.50-3.75%, CPI +0.87% MoM, Core PCE +0.29% MoM, GDP Q1 +2.0%, Unemployment 4.3%, Debt/GDP 122%, Deficit ~$2T/yr. Generate briefing. Return JSON: thesis string, regime string, regime_confidence string, alerts array with level/title/detail/category, key_risks array with risk/probability/horizon, key_watches array with indicator/why/threshold/source, dalio_lens string, positioning object with usd/gold/long_bonds/equities/rationale.', sys);
+  return callClaude(`Generate macro intelligence briefing for ${TODAY}.
+Return JSON:
+{
+  "thesis": "3-4 sentence thesis with specific data",
+  "regime": "stagflation|reflation|deflation|goldilocks|crisis",
+  "regime_confidence": "high|medium|low",
+  "alerts": [{ "level": "critical|warning|watch", "title": string, "detail": string, "category": string, "verify_at": string }],
+  "key_risks": [{ "risk": string, "probability": "high|medium|low", "horizon": string }],
+  "key_watches": [{ "indicator": string, "why": string, "threshold": string, "source": string }],
+  "dalio_lens": "2-3 sentence Dalio big cycle read",
+  "positioning": { "usd": string, "gold": string, "long_bonds": string, "equities": string, "rationale": string }
+}`, base);
 }
