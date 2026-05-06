@@ -773,9 +773,7 @@ function IntelTab({ d, onRefresh, loading }) {
 
       {loading && !d && <Loading text="GENERATING BRIEFING..." />}
 
-      {d && d.raw && <div className="card" style={{color:'var(--am)',padding:16}}>Briefing parse error. Hit REFRESH to retry.</div>}
-
-      {d && !d.raw && (
+      {d && (
         <>
           {/* REGIME */}
           {regime && (
