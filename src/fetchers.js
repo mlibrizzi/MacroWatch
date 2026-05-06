@@ -340,30 +340,18 @@ export async function fetchQuarterly() {
   };
 }
 
-export async function fetchIntel(userQuestion) {
-  const base = `You are a macro intelligence analyst. Today: ${TODAY}. Return ONLY raw JSON. No markdown fences. No backticks. Start response with {`;
-
+export async function fetchIntel(userQuestion, liveDaily) {
+  const gold = liveDaily && liveDaily.metals && liveDaily.metals.gold ? liveDaily.metals.gold.price : null;
+  const t10y = liveDaily && liveDaily.rates && liveDaily.rates.t10y ? liveDaily.rates.t10y.yield : null;
+  const t2y = liveDaily && liveDaily.rates && liveDaily.rates.t2y ? liveDaily.rates.t2y.yield : null;
+  const vix = liveDaily && liveDaily.vix ? liveDaily.vix.price : null;
+  const spxObj = liveDaily && liveDaily.indices ? liveDaily.indices.find(i => i.symbol === 'SPX') : null;
+  const spx = spxObj ? spxObj.price : null;
+  const wti = liveDaily && liveDaily.oil && liveDaily.oil.wti ? liveDaily.oil.wti.price : null;
+  const live = 'LIVE DATA ' + TODAY + ': ' + (gold ? 'Gold $' + gold.toFixed(0) + '/oz, ' : 'Gold ~$4520/oz, ') + (t10y ? '10Y ' + t10y + '%, ' : '10Y ~4.39%, ') + (t2y ? '2Y ' + t2y + '%, ' : '2Y ~3.88%, ') + (vix ? 'VIX ' + vix + ', ' : 'VIX ~17, ') + (spx ? 'SPX ' + spx.toFixed(0) + ', ' : 'SPX ~7200, ') + (wti ? 'WTI $' + wti.toFixed(0) + ', ' : 'WTI ~$104, ') + 'Fed 3.50-3.75%, CPI +0.87% MoM, Core PCE +0.29% MoM, GDP Q1 +2.0%, Unemployment 4.3%, Debt/GDP 122%, Deficit ~$2T/yr, 4 FOMC dissents April 29, TIC $9.49T Japan $1.24T China $0.69T selling.';
+  const sys = 'Macro analyst Dalio big cycle framework. Return ONLY raw JSON. No markdown. Start with {';
   if (userQuestion) {
-    return callClaude(`User question: "${userQuestion}"
-Return JSON:
-{
-  "answer": "detailed 3-5 paragraph response",
-  "key_points": ["string"],
-  "related_indicators": ["string"],
-  "data_sources": ["where to verify"]
-}`, base);
+    return callClaude(live + ' Question: ' + userQuestion + ' Return JSON: answer string, key_points array, related_indicators array, data_sources array.', sys);
   }
-
-  return callClaude(`VERIFIED LIVE DATA as of ${TODAY}: Gold $4520/oz, Silver $73, WTI $104, 10Y yield 4.39%, 2Y yield 3.88%, VIX 17 (Normal), SPX 7200, Fed rate 3.50-3.75% (held April 29 2026 with 4 dissents most since 1992), CPI +0.87% MoM, Core PCE +0.29% MoM, GDP Q1 2026 +2.0%, Unemployment 4.3%, US Debt/GDP 122%, Annual deficit ~$2T, TIC foreign holdings $9.49T (Japan $1.24T largest, China $0.69T selling). Generate macro intelligence briefing for ${TODAY}.
-Return JSON:
-{
-  "thesis": "3-4 sentence thesis with specific data",
-  "regime": "stagflation|reflation|deflation|goldilocks|crisis",
-  "regime_confidence": "high|medium|low",
-  "alerts": [{ "level": "critical|warning|watch", "title": string, "detail": string, "category": string, "verify_at": string }],
-  "key_risks": [{ "risk": string, "probability": "high|medium|low", "horizon": string }],
-  "key_watches": [{ "indicator": string, "why": string, "threshold": string, "source": string }],
-  "dalio_lens": "2-3 sentence Dalio big cycle read",
-  "positioning": { "usd": string, "gold": string, "long_bonds": string, "equities": string, "rationale": string }
-}`, base);
+  return callClaude(live + ' Generate briefing. Return JSON: thesis string, regime string, regime_confidence string, alerts array with level/title/detail/category, key_risks array with risk/probability/horizon, key_watches array with indicator/why/threshold/source, dalio_lens string, positioning object with usd/gold/long_bonds/equities/rationale.', sys);
 }
