@@ -341,10 +341,8 @@ export async function fetchQuarterly() {
 
 export async function fetchIntel(userQuestion) {
   const sys = 'Macro analyst Dalio big cycle framework. Return ONLY raw JSON. No markdown. Start with {';
-
   if (userQuestion) {
     return callClaude('Answer this macro question. Return JSON: answer string, key_points array, related_indicators array, data_sources array. Question: ' + userQuestion, sys);
   }
-
-  return callClaude('Today ' + TODAY + '. Gold $4647, 10Y 4.45%, 2Y 3.95%, VIX 18.29, SPX ~7238, WTI ~$100, Fed 3.50-3.75%, CPI +0.87% MoM, Core PCE +0.29% MoM, GDP Q1 +2.0%, Unemployment 4.3%, Debt/GDP 122%, Deficit ~$2T/yr, 4 FOMC dissents April 29, TIC $9.49T Japan $1.24T China $0.69T selling. Generate briefing. Return JSON: thesis string, regime string, regime_confidence string, alerts array with level/title/detail/category, key_risks array with risk/probability/horizon, key_watches array with indicator/why/threshold/source, dalio_lens string, positioning object with usd/gold/long_bonds/equities/rationale.', sys);
+  return callClaude('Today ' + TODAY + '. Gold $4647, 10Y 4.45%, 2Y 3.95%, VIX 18.29, SPX 7238, WTI $100, Fed 3.50-3.75%, CPI +0.87% MoM, Core PCE +0.29% MoM, GDP Q1 +2.0%, Unemployment 4.3%, Debt/GDP 122%, Deficit $2T/yr, 4 FOMC dissents April 29, TIC $9.49T Japan $1.24T China $0.69T selling. Generate briefing. Return JSON: thesis string, regime string, regime_confidence string, alerts array with level/title/detail/category, key_risks array with risk/probability/horizon, key_watches array with indicator/why/threshold/source, dalio_lens string, positioning object with usd/gold/long_bonds/equities/rationale.', sys);
 }
