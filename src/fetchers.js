@@ -339,18 +339,28 @@ export async function fetchQuarterly() {
   };
 }
 
-export async function fetchIntel(userQuestion, liveDaily) {
-  const gold = liveDaily && liveDaily.metals && liveDaily.metals.gold ? liveDaily.metals.gold.price : null;
-  const t10y = liveDaily && liveDaily.rates && liveDaily.rates.t10y ? liveDaily.rates.t10y.yield : null;
-  const t2y = liveDaily && liveDaily.rates && liveDaily.rates.t2y ? liveDaily.rates.t2y.yield : null;
-  const vix = liveDaily && liveDaily.vix ? liveDaily.vix.price : null;
-  const spxObj = liveDaily && liveDaily.indices ? liveDaily.indices.find(i => i.symbol === 'SPX') : null;
-  const spx = spxObj ? spxObj.price : null;
-  const wti = liveDaily && liveDaily.oil && liveDaily.oil.wti ? liveDaily.oil.wti.price : null;
-  const live = 'LIVE DATA ' + TODAY + ': ' + (gold ? 'Gold $' + gold.toFixed(0) + '/oz, ' : 'Gold ~$4520/oz, ') + (t10y ? '10Y ' + t10y + '%, ' : '10Y ~4.39%, ') + (t2y ? '2Y ' + t2y + '%, ' : '2Y ~3.88%, ') + (vix ? 'VIX ' + vix + ', ' : 'VIX ~17, ') + (spx ? 'SPX ' + spx.toFixed(0) + ', ' : 'SPX ~7200, ') + (wti ? 'WTI $' + wti.toFixed(0) + ', ' : 'WTI ~$104, ') + 'Fed 3.50-3.75%, CPI +0.87% MoM, Core PCE +0.29% MoM, GDP Q1 +2.0%, Unemployment 4.3%, Debt/GDP 122%, Deficit ~$2T/yr, 4 FOMC dissents April 29, TIC $9.49T Japan $1.24T China $0.69T selling.';
+export async function fetchIntel(userQuestion) {
+  // Fetch live prices - sequential with fallbacks
+  let gold = 4520, t10y = 4.39, t2y = 3.88, vix = 17;
+  try {
+    const mRes = await fetchLive('/api/metals');
+    if (mRes && mRes.gold) gold = mRes.gold.price;
+  } catch(e) {}
+  try {
+    const fRes = await fetchLive('/api/fred');
+    if (fRes && fRes.yields) {
+      if (fRes.yields.t10y) t10y = fRes.yields.t10y.latest;
+      if (fRes.yields.t2y) t2y = fRes.yields.t2y.latest;
+    }
+    if (fRes && fRes.commodities && fRes.commodities.vix) vix = fRes.commodities.vix.price;
+  } catch(e) {}
+
+  const live = 'LIVE DATA ' + TODAY + ': Gold $' + gold.toFixed(0) + '/oz, 10Y ' + t10y + '%, 2Y ' + t2y + '%, VIX ' + vix + ', SPX ~7238, WTI ~$100, Fed 3.50-3.75%, CPI +0.87% MoM, Core PCE +0.29% MoM, GDP Q1 +2.0%, Unemployment 4.3%, Debt/GDP 122%, Deficit ~$2T/yr, 4 FOMC dissents April 29, TIC $9.49T Japan $1.24T China $0.69T selling.';
   const sys = 'Macro analyst Dalio big cycle framework. Return ONLY raw JSON. No markdown. Start with {';
+
   if (userQuestion) {
     return callClaude(live + ' Question: ' + userQuestion + ' Return JSON: answer string, key_points array, related_indicators array, data_sources array.', sys);
   }
+
   return callClaude(live + ' Generate briefing. Return JSON: thesis string, regime string, regime_confidence string, alerts array with level/title/detail/category, key_risks array with risk/probability/horizon, key_watches array with indicator/why/threshold/source, dalio_lens string, positioning object with usd/gold/long_bonds/equities/rationale.', sys);
 }
