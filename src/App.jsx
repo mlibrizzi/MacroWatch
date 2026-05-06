@@ -894,7 +894,7 @@ const TABS = [
   { id: 'weekly', label: 'WEEKLY', loader: fetchWeekly },
   { id: 'monthly', label: 'MONTHLY', loader: fetchMonthly },
   { id: 'quarterly', label: 'QTR', loader: fetchQuarterly },
-  { id: 'intel', label: 'INTEL', loader: () => fetchIntel(null, data.daily), autoRefresh: true },
+  { id: 'intel', label: 'INTEL', loader: fetchIntel, autoRefresh: true },
 ];
 
 /* ─── APP ─────────────────────────────────────────────────────────────────── */
