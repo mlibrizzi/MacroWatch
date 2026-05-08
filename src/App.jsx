@@ -466,7 +466,7 @@ function AuctionsTab({ d }) {
             </div>
             {a.note && <div style={{ marginTop: 8, fontSize: 10, color: 'var(--t3)', lineHeight: 1.5 }}>{a.note}</div>}
             <div style={{ marginTop: 6, fontFamily: 'var(--mono)', fontSize: 8, color: 'var(--t3)' }}>
-              High yield: {a.high_yield?.toFixed(3)}%
+              {a.high_yield ? `High yield: ${a.high_yield.toFixed(3)}%` : ''}
             </div>
           </div>
         ))}
