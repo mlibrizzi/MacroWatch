@@ -3,7 +3,9 @@ import { callClaude } from './api.js';
 const TODAY = new Date().toISOString().split('T')[0];
 
 async function fetchLive(path) {
-  const res = await fetch(path);
+  const sep = path.includes('?') ? '&' : '?';
+  const url = path + sep + '_=' + Date.now();
+  const res = await fetch(url, { cache: 'no-store' });
   if (!res.ok) throw new Error(`Live data error ${res.status} from ${path}`);
   return res.json();
 }
