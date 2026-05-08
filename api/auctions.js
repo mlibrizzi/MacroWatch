@@ -82,6 +82,14 @@ export default async function handler(req, res) {
       { term: '2-Year Note',  date: '2026-05-26', size_bn: 69 },
     ];
 
+    // Sort by maturity descending: 30Y -> 10Y -> 7Y -> 5Y -> 3Y -> 2Y
+    const maturityOrder = { '30': 1, '20': 2, '10': 3, '7': 4, '5': 5, '3': 6, '2': 7, '1': 8 };
+    recent.sort((a, b) => {
+      const aKey = Object.keys(maturityOrder).find(k => a.term.startsWith(k)) || '9';
+      const bKey = Object.keys(maturityOrder).find(k => b.term.startsWith(k)) || '9';
+      return (maturityOrder[aKey] || 9) - (maturityOrder[bKey] || 9);
+    });
+
     return res.status(200).json({
       recent,
       upcoming,
