@@ -400,8 +400,8 @@ function AuctionChart({ data, label, field, thresholds, invert, format }) {
 function AuctionsTab({ d }) {
   if (!d) return <Loading text="LOADING AUCTIONS..." />;
 
-  const statusLabel = s => s === 'weak' ? 'WEAK' : s === 'ok' ? 'STRONG' : 'MIXED';
-  const statusStyle = s => s === 'weak'
+  const statusLabel = s => s === 'weak' ? 'WEAK' : s === 'ok' ? 'STRONG' : s === 'pending' ? 'PENDING' : 'MIXED';
+  const statusStyle = s => s === 'pending' ? { background: 'rgba(100,100,100,.12)', color: 'var(--t3)', border: '1px solid var(--b2)' } : s === 'weak'
     ? { background: 'rgba(255,62,90,.12)', color: '#ff3e5a' }
     : s === 'ok'
     ? { background: 'rgba(0,229,192,.1)',  color: '#00e5c0' }
