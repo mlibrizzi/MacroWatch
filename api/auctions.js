@@ -39,7 +39,7 @@ export default async function handler(req, res) {
       const dealerPct = pct(a.primary_dealer_accepted, a.total_accepted);
       const directPct = pct(a.direct_bidder_accepted, a.total_accepted);
 
-      let status = 'ok';
+      let status = btc ? 'ok' : 'pending';
       if (btc && btc < 2.3) status = 'weak';
       else if (dealerPct && dealerPct > 18) status = 'weak';
       else if (btc && btc < 2.5) status = 'mixed';
