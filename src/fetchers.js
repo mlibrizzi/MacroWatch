@@ -12,11 +12,10 @@ async function fetchLive(path) {
 
 export async function fetchDaily() {
   try {
-    const [metals, markets, fred, oilLive] = await Promise.all([
+    const [metals, markets, fred] = await Promise.all([
       fetchLive('/api/metals'),
       fetchLive('/api/markets'),
       fetchLive('/api/fred'),
-      fetchLive('/api/oil'),
     ]);
 
     const t2y  = fred.yields?.t2y?.latest;
@@ -44,10 +43,7 @@ export async function fetchDaily() {
         silver: { ...metals.silver, delay: 'Real-time (gold-api.com)' },
       },
       oil: {
-        wti:   fred.commodities && wti:   oilLive.wti   ? { ...oilLive.wti,   delay: 'Near real-time (OilPriceAPI.com)' } : null,
-brent: oilLive.brent ? { ...oilLive.brent, delay: 'Near real-time (OilPriceAPI.com)' } : null,
-fred.commodities.wti ? { ...fred.commodities.wti, delay: 
-'Daily (EIA via FRED) — 1 week lag' } : null,
+        wti:   fred.commodities && fred.commodities.wti ? { ...fred.commodities.wti, delay: 'Daily (EIA via FRED) — 1 week lag' } : null,
         brent: fred.commodities && fred.commodities.brent ? { ...fred.commodities.brent, delay: 'Daily (EIA via FRED) — 1 week lag' } : null,
       },
 
