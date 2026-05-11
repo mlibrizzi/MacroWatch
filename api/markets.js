@@ -107,7 +107,7 @@ export default async function handler(req, res) {
       ].filter(Boolean),
       indices: [
         idx(spy, 10,  'SPX', 'S&P 500'),
-        idx(qqq, 28,  'NDX', 'Nasdaq 100'),
+        idx(qqq, 61,  'NDX', 'Nasdaq 100'),
         idx(dia, 100, 'DJI', 'Dow Jones'),
       ].filter(Boolean),
       oil: {
