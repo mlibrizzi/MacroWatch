@@ -4,10 +4,10 @@ export default async function handler(req, res) {
 
   try {
     const base = 'https://api.fiscaldata.treasury.gov/services/api/fiscal_service/v1/accounting/od/auctions_query';
-    const fields = 'security_type,security_term,auction_date,offering_amt,bid_to_cover_ratio,indirect_bidder_accepted,direct_bidder_accepted,primary_dealer_accepted,total_accepted,total_tendered,high_yield,reopening';
+    const fields = 'security_type,security_term,auction_date,offering_amt,bid_to_cover_ratio,indirect_bidder_accepted,direct_bidder_accepted,primary_dealer_accepted,total_accepted,total_tendered,high_yield,avg_med_yield,low_yield,reopening,announcemt_date';
     const filter = 'security_type:in:(Note,Bond),auction_date:gte:2026-01-01';
     const sort = '-auction_date';
-    const url = base + '?fields=' + fields + '&filter=' + filter + '&sort=' + sort + '&page[size]=10';
+    const url = `${base}?fields=${fields}&filter=${filter}&sort=${sort}&page%5Bsize%5D=30`;
 
     const r = await fetch(url);
     const d = await r.json();
@@ -18,32 +18,56 @@ export default async function handler(req, res) {
       return +((parseFloat(part) / parseFloat(total)) * 100).toFixed(1);
     };
 
-    const fmt = (v) => v && v !== 'null' ? parseFloat(v) : null;
+    const fmt = (v) => (v && v !== 'null') ? parseFloat(v) : null;
 
-    const seen = new Set();
-    const recent = [];
-    for (const a of auctions) {
+    const today = new Date().toISOString().split('T')[0];
+
+    const completedAuctions = auctions.filter(a =>
+      a.bid_to_cover_ratio && a.bid_to_cover_ratio !== 'null'
+    );
+
+    const upcomingAuctions = auctions.filter(a =>
+      (!a.bid_to_cover_ratio || a.bid_to_cover_ratio === 'null') &&
+      a.auction_date >= today
+    );
+
+    const termMap = new Map();
+    for (const a of completedAuctions) {
       const term = a.security_term;
-      if (seen.has(term)) continue;
-      seen.add(term);
+      const existing = termMap.get(term);
+      const offeringAmt = fmt(a.offering_amt) || 0;
+      const existingAmt = existing ? (fmt(existing.offering_amt) || 0) : 0;
+      if (!existing || offeringAmt > existingAmt) {
+        termMap.set(term, a);
+      }
+    }
 
+    const recent = [];
+    for (const [, a] of termMap) {
       const totalAcc = fmt(a.total_accepted);
       const indirectAcc = fmt(a.indirect_bidder_accepted);
       const dealerAcc = fmt(a.primary_dealer_accepted);
       const directAcc = fmt(a.direct_bidder_accepted);
       const btc = fmt(a.bid_to_cover_ratio);
       const highYield = fmt(a.high_yield);
+      const avgMedYield = fmt(a.avg_med_yield);
       const offeringAmt = fmt(a.offering_amt);
 
       const indirectPct = pct(a.indirect_bidder_accepted, a.total_accepted);
       const dealerPct = pct(a.primary_dealer_accepted, a.total_accepted);
       const directPct = pct(a.direct_bidder_accepted, a.total_accepted);
 
+      const tailBp = (highYield && avgMedYield)
+        ? +((highYield - avgMedYield) * 100).toFixed(1)
+        : null;
+
       let status = btc ? 'ok' : 'pending';
       if (btc && btc < 2.3) status = 'weak';
       else if (dealerPct && dealerPct > 18) status = 'weak';
       else if (btc && btc < 2.5) status = 'mixed';
       else if (dealerPct && dealerPct > 14) status = 'mixed';
+      else if (tailBp && tailBp > 3.0) status = 'mixed';
+      else if (tailBp && tailBp > 5.0) status = 'weak';
 
       const label = a.security_type === 'Bond'
         ? a.security_term + ' Bond'
@@ -61,10 +85,11 @@ export default async function handler(req, res) {
         dealer_pct: dealerPct,
         dealer_avg: null,
         high_yield: highYield,
-        tail_bp: null,
+        avg_med_yield: avgMedYield,
+        tail_bp: tailBp,
         tail_avg_bp: null,
         status,
-        note: 'Treasury Fiscal Data API. BTC: ' + (btc || 'N/A') + 'x | Indirect: ' + (indirectPct || 'N/A') + '% | Dealer: ' + (dealerPct || 'N/A') + '%',
+        note: `BTC: ${btc || 'N/A'}x | Indirect: ${indirectPct || 'N/A'}% | Dealer: ${dealerPct || 'N/A'}% | Tail: ${tailBp !== null ? tailBp + 'bp' : 'N/A'}`,
         source: 'fiscaldata.treasury.gov (official, free)',
         delay: 'Official - published same day as auction'
       });
@@ -72,17 +97,6 @@ export default async function handler(req, res) {
       if (recent.length >= 6) break;
     }
 
-    const avgBTC = recent.filter(a => a.bid_to_cover).reduce((s, a) => s + a.bid_to_cover, 0) / recent.filter(a => a.bid_to_cover).length;
-    const macroNote = 'Real Treasury Fiscal Data. Average BTC: ' + (avgBTC ? avgBTC.toFixed(2) : 'N/A') + 'x across recent auctions. Demand conditions broadly stable.';
-
-    const upcoming = [
-      { term: '10-Year Note', date: '2026-05-20', size_bn: 76 },
-      { term: '7-Year Note',  date: '2026-05-21', size_bn: 65 },
-      { term: '5-Year Note',  date: '2026-05-25', size_bn: 70 },
-      { term: '2-Year Note',  date: '2026-05-26', size_bn: 69 },
-    ];
-
-    // Sort by maturity descending: 30Y -> 20Y -> 10Y -> 7Y -> 5Y -> 3Y -> 2Y -> bills
     const getMaturityRank = (term) => {
       if (term.includes('30')) return 1;
       if (term.includes('20')) return 2;
@@ -95,6 +109,28 @@ export default async function handler(req, res) {
       return 9;
     };
     recent.sort((a, b) => getMaturityRank(a.term) - getMaturityRank(b.term));
+
+    const upcoming = upcomingAuctions
+      .sort((a, b) => a.auction_date.localeCompare(b.auction_date))
+      .slice(0, 6)
+      .map(a => {
+        const offeringAmt = fmt(a.offering_amt);
+        const label = a.security_type === 'Bond'
+          ? a.security_term + ' Bond'
+          : a.security_term + ' Note';
+        return {
+          term: label,
+          date: a.auction_date,
+          size_bn: offeringAmt ? +(offeringAmt / 1e9).toFixed(1) : null,
+          announced: a.announcemt_date || null
+        };
+      });
+
+    const avgBTC = recent
+      .filter(a => a.bid_to_cover)
+      .reduce((s, a, _, arr) => s + a.bid_to_cover / arr.length, 0);
+
+    const macroNote = `Real Treasury Fiscal Data. Average BTC: ${avgBTC ? avgBTC.toFixed(2) : 'N/A'}x across recent auctions. Tail calculated as high yield minus median yield.`;
 
     return res.status(200).json({
       recent,
