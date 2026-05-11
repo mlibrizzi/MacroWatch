@@ -909,7 +909,7 @@ export default function App() {
     if (!tab) return;
     setLoading(p => ({ ...p, [tabId]: true }));
     try {
-      const res = await tab.loader(tabId === 'intel' ? { dailyData: data.daily } : undefined);
+      const res = await tab.loader(tabId === 'intel' ? null : undefined, tabId === 'intel' ? data.daily : undefined);
       setData(p => ({ ...p, [tabId]: res }));
       refreshed.current[tabId] = new Date();
     } catch (e) { console.error('Load error:', e); }

@@ -343,7 +343,7 @@ export async function fetchQuarterly() {
   };
 }
 
-export async function fetchIntel(userQuestion, { dailyData } = {}) {
+export async function fetchIntel(userQuestion, dailyData) {
   const base = `You are a macro intelligence analyst. Today: ${TODAY}. Return ONLY raw JSON. No markdown fences. No backticks. Start response with {`;
 
   if (userQuestion) {
