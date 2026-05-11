@@ -719,7 +719,7 @@ function QuarterlyTab({ d }) {
 }
 
 /* ─── INTEL TAB ───────────────────────────────────────────────────────────── */
-function IntelTab({ d, onRefresh, loading }) {
+function IntelTab({ d, dailyData, onRefresh, loading }) {
   const [question, setQuestion] = useState('');
   const [answer, setAnswer] = useState(null);
   const [asking, setAsking] = useState(false);
@@ -909,12 +909,17 @@ export default function App() {
     if (!tab) return;
     setLoading(p => ({ ...p, [tabId]: true }));
     try {
-      const res = await tab.loader();
+      const res = await tab.loader(tabId === 'intel' ? { dailyData: data.daily } : undefined);
       setData(p => ({ ...p, [tabId]: res }));
       refreshed.current[tabId] = new Date();
     } catch (e) { console.error('Load error:', e); }
     setLoading(p => ({ ...p, [tabId]: false }));
   }, []);
+
+  // Always preload Daily data on startup for Intel tab live prices
+  useEffect(() => {
+    if (!refreshed.current['daily']) load('daily');
+  }, [load]);
 
   useEffect(() => {
     if (!refreshed.current[active]) load(active);
@@ -952,7 +957,7 @@ export default function App() {
         {active === 'weekly'    && <WeeklyTab    d={data.weekly} />}
         {active === 'monthly'   && <MonthlyTab   d={data.monthly} />}
         {active === 'quarterly' && <QuarterlyTab d={data.quarterly} />}
-        {active === 'intel'     && <IntelTab     d={data.intel} loading={loading.intel} onRefresh={() => load('intel')} />}
+        {active === 'intel'     && <IntelTab     d={data.intel} dailyData={data.daily} loading={loading.intel} onRefresh={() => load('intel')} />}
 
         <div className="bnav">
           {TABS.map(t => (

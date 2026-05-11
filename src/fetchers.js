@@ -343,7 +343,7 @@ export async function fetchQuarterly() {
   };
 }
 
-export async function fetchIntel(userQuestion) {
+export async function fetchIntel(userQuestion, { dailyData } = {}) {
   const base = `You are a macro intelligence analyst. Today: ${TODAY}. Return ONLY raw JSON. No markdown fences. No backticks. Start response with {`;
 
   if (userQuestion) {
@@ -357,7 +357,15 @@ Return JSON:
 }`, base);
   }
 
-  return callClaude(`VERIFIED LIVE DATA as of ${TODAY}: Gold $4520/oz, Silver $73, WTI $104, 10Y yield 4.39%, 2Y yield 3.88%, VIX 17 (Normal), SPX 7200, Fed rate 3.50-3.75% (held April 29 2026 with 4 dissents most since 1992), CPI +0.87% MoM, Core PCE +0.29% MoM, GDP Q1 2026 +2.0%, Unemployment 4.3%, US Debt/GDP 122%, Annual deficit ~$2T, TIC foreign holdings $9.49T (Japan $1.24T largest, China $0.69T selling). Generate macro intelligence briefing for ${TODAY}.
+  const gold = dailyData?.metals?.gold?.price ? `$${dailyData.metals.gold.price.toFixed(0)}` : '$4,520';
+  const silver = dailyData?.metals?.silver?.price ? `$${dailyData.metals.silver.price.toFixed(0)}` : '$73';
+  const wti = dailyData?.oil?.wti?.price ? `$${dailyData.oil.wti.price.toFixed(0)}` : '$95';
+  const t10y = dailyData?.rates?.t10y?.yield ? `${dailyData.rates.t10y.yield.toFixed(2)}%` : '4.39%';
+  const t2y = dailyData?.rates?.t2y?.yield ? `${dailyData.rates.t2y.yield.toFixed(2)}%` : '3.88%';
+  const vix = dailyData?.vix?.price ? `${dailyData.vix.price.toFixed(1)}` : '17';
+  const spx = dailyData?.indices?.find(i => i.symbol === 'SPX')?.price ? `${dailyData.indices.find(i => i.symbol === 'SPX').price.toFixed(0)}` : '7200';
+
+  return callClaude(`VERIFIED LIVE DATA as of ${TODAY}: Gold ${gold}/oz, Silver ${silver}, WTI ${wti}, 10Y yield ${t10y}, 2Y yield ${t2y}, VIX ${vix} (Normal), SPX ${spx}, Fed rate 3.50-3.75% (held April 29 2026 with 4 dissents most since 1992), CPI +0.87% MoM, Core PCE +0.29% MoM, GDP Q1 2026 +2.0%, Unemployment 4.3%, US Debt/GDP 122%, Annual deficit ~$2T, TIC foreign holdings $9.49T (Japan $1.24T largest, China $0.69T selling). Generate macro intelligence briefing for ${TODAY}.
 Return JSON:
 {
   "thesis": "3-4 sentence thesis with specific data",
