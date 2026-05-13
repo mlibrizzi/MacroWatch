@@ -370,7 +370,7 @@ Return JSON:
   const vix = liveDaily?.vix?.price ? `${liveDaily.vix.price.toFixed(1)}` : '17';
   const spx = liveDaily?.indices?.find(i => i.symbol === 'SPX')?.price ? `${liveDaily.indices.find(i => i.symbol === 'SPX').price.toFixed(0)}` : '7200';
 
-  return callClaude(`VERIFIED LIVE DATA as of ${TODAY}: Gold ${gold}/oz, Silver ${silver}, WTI ${wti}, 10Y yield ${t10y}, 2Y yield ${t2y}, VIX ${vix} (Normal), SPX ${spx}, Fed rate 3.50-3.75% (held April 29 2026 with 4 dissents most since 1992), CPI +0.87% MoM, Core PCE +0.29% MoM, GDP Q1 2026 +2.0%, Unemployment 4.3%, US Debt/GDP 122%, Annual deficit ~$2T, TIC foreign holdings $9.49T (Japan $1.24T largest, China $0.69T selling). Generate macro intelligence briefing for ${TODAY}.
+  return callClaude(`MANDATORY LIVE DATA - USE EXACTLY AS PROVIDED for ${TODAY}. Gold=${gold}, Silver=${silver}, WTI=${wti}, SPX=${spx}, 10Y=${t10y}, 2Y=${t2y}, VIX=${vix}, Fed=3.50-3.75% (4 dissents April 29 2026), CPI=+0.87% MoM, CorePCE=+0.29% MoM, GDP=+2.0% Q1, Unemployment=4.3%, Debt/GDP=122%, Deficit=$2T/yr, TIC=$9.49T (Japan $1.24T, China $0.69T selling). You MUST use these exact numbers in your response. Generate macro briefing for ${TODAY}.
 Return JSON:
 {
   "thesis": "3-4 sentence thesis with specific data",
