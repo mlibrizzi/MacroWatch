@@ -922,8 +922,13 @@ export default function App() {
   }, [load]);
 
   useEffect(() => {
-    if (!refreshed.current[active]) load(active);
-  }, [active, load]);
+    // If active is intel, wait for daily data to be available first
+    if (active === 'intel') {
+      if (data.daily && !refreshed.current['intel']) load('intel');
+    } else {
+      if (!refreshed.current[active]) load(active);
+    }
+  }, [active, load, data.daily]);
 
   const now = new Date();
   const dateStr = now.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' });
