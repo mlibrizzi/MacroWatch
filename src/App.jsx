@@ -664,7 +664,7 @@ function QuarterlyTab({ d }) {
           return (
             <div className="card" key={i}>
               <div className="row" style={{ marginBottom: 6 }}>
-                <div><div className="lbl">{e.company}</div><div className="sub">{e.symbol} · {e.quarter} · {e.report_date}</div></div>
+                <div><div className="lbl">{e.company}</div><div className="sub">{e.symbol} · {e.report_date}</div></div>
                 {pending
                   ? <div style={{ fontFamily: 'var(--mono)', fontSize: 9, padding: '3px 8px', borderRadius: 3, background: 'rgba(0,150,255,.1)', color: 'var(--blue)' }}>PENDING</div>
                   : <div style={{ fontFamily: 'var(--mono)', fontSize: 9, padding: '3px 8px', borderRadius: 3, background: beat ? 'rgba(0,229,192,.1)' : 'rgba(255,62,90,.1)', color: beat ? 'var(--green)' : 'var(--red)' }}>
