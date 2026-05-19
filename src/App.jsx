@@ -279,7 +279,15 @@ function DailyTab({ d }) {
       <div className="sec">
         <div className="sec-hdr"><div className="sec-ttl">⬡ INDICES</div></div>
         <div className="tgrid">
-          {indices?.map(i => (
+          {(!indices || indices.length === 0)
+            ? ['SPX','NDX','DJI'].map(s => (
+                <div className="tk" key={s}>
+                  <div className="tk-sym">{s}</div>
+                  <div className="tk-price" style={{color:'#4b5563'}}>—</div>
+                  <div className="tk-chg neu">loading</div>
+                </div>
+              ))
+            : indices.map(i => (
             <div className="tk" key={i.symbol}>
               <div className="tk-sym">{i.symbol}</div>
               <div className="tk-price">{i.price?.toLocaleString('en-US', {maximumFractionDigits:0})}</div>
@@ -293,7 +301,15 @@ function DailyTab({ d }) {
       <div className="sec">
         <div className="sec-hdr"><div className="sec-ttl">⬡ MAG 7</div></div>
         <div className="tgrid">
-          {mag7?.map(s => (
+          {(!mag7 || mag7.length === 0)
+            ? ['AAPL','MSFT','NVDA','GOOGL','AMZN','META','TSLA'].map(s => (
+                <div className="tk" key={s}>
+                  <div className="tk-sym">{s}</div>
+                  <div className="tk-price" style={{color:'#4b5563'}}>—</div>
+                  <div className="tk-chg neu">loading</div>
+                </div>
+              ))
+            : mag7.map(s => (
             <div className="tk" key={s.symbol}>
               <div className="tk-sym">{s.symbol}</div>
               <div className="tk-price">${fmt(s.price)}</div>
