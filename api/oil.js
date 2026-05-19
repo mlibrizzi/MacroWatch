@@ -57,8 +57,11 @@ export default async function handler(req, res) {
       timestamp: new Date().toISOString()
     };
 
-    cachedData = result;
-    cacheTime = Date.now();
+    // Only cache if we got valid prices
+    if (result.wti || result.brent) {
+      cachedData = result;
+      cacheTime = Date.now();
+    }
     return res.status(200).json(result);
 
   } catch(err) {
