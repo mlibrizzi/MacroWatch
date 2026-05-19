@@ -1,7 +1,7 @@
 // In-memory cache — 4 hour TTL
 let cachedData = null;
 let cacheTime = 0;
-const CACHE_TTL = 4 * 60 * 60 * 1000; // 4 hours in ms
+const CACHE_TTL = 4 * 60 * 60 * 1000;
 
 export default async function handler(req, res) {
   res.setHeader('Access-Control-Allow-Origin', '*');
@@ -10,7 +10,6 @@ export default async function handler(req, res) {
   const apiKey = process.env.VITE_OILPRICE_API_KEY;
   if (!apiKey) return res.status(500).json({ error: 'OILPRICE_API_KEY not set' });
 
-  // Return cached data if still fresh
   if (cachedData && (Date.now() - cacheTime) < CACHE_TTL) {
     return res.status(200).json({ ...cachedData, cached: true });
   }
@@ -32,7 +31,7 @@ export default async function handler(req, res) {
     const wti = wtiData.data;
     const brent = brentData.data;
 
-    return res.status(200).json({
+    const result = {
       wti: wti ? {
         price: wti.price,
         change: wti.changes && wti.changes['24h'] ? wti.changes['24h'].amount : null,
@@ -57,6 +56,7 @@ export default async function handler(req, res) {
       } : null,
       timestamp: new Date().toISOString()
     };
+
     cachedData = result;
     cacheTime = Date.now();
     return res.status(200).json(result);
