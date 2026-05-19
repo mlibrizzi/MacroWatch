@@ -1,9 +1,19 @@
+// In-memory cache — 4 hour TTL
+let cachedData = null;
+let cacheTime = 0;
+const CACHE_TTL = 4 * 60 * 60 * 1000; // 4 hours in ms
+
 export default async function handler(req, res) {
   res.setHeader('Access-Control-Allow-Origin', '*');
   if (req.method !== 'GET') return res.status(405).json({ error: 'Method not allowed' });
 
   const apiKey = process.env.VITE_OILPRICE_API_KEY;
   if (!apiKey) return res.status(500).json({ error: 'OILPRICE_API_KEY not set' });
+
+  // Return cached data if still fresh
+  if (cachedData && (Date.now() - cacheTime) < CACHE_TTL) {
+    return res.status(200).json({ ...cachedData, cached: true });
+  }
 
   try {
     const headers = {
@@ -46,7 +56,10 @@ export default async function handler(req, res) {
         source: 'oilprice.com / Business Insider'
       } : null,
       timestamp: new Date().toISOString()
-    });
+    };
+    cachedData = result;
+    cacheTime = Date.now();
+    return res.status(200).json(result);
 
   } catch(err) {
     return res.status(500).json({ error: err.message });
