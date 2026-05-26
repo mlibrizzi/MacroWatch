@@ -200,7 +200,7 @@ const INFO_DEFS = {
     why: 'A rising ratio means gold is outperforming bonds — investors are fleeing to real assets. Above 800 signals elevated distrust. Current level of 992 is in DISTRUST territory, consistent with fiscal stress thesis.'
   },
   'VIX': {
-    what: 'The CBOE Volatility Index — measures the market's expectation of 30-day volatility in the S&P 500, derived from options prices.',
+    what: 'The CBOE Volatility Index — measures the market\'s expectation of 30-day volatility in the S&P 500, derived from options prices.',
     how: 'Calculated from implied volatility of SPX options across multiple strikes and expirations. Published real-time by CBOE.',
     why: 'The "fear gauge." Below 15 = complacency. 15-20 = normal. 20-30 = elevated concern. 30-40 = fear. Above 40 = crisis. Current 16.76 = normal but watch for spikes above 25 as a positioning signal.'
   },
@@ -210,12 +210,12 @@ const INFO_DEFS = {
     why: 'The most important driver of gold prices. When real yields are negative, gold pays a competitive "yield" of zero vs negative. Current +2.18% = moderately restrictive. If real yields rise above 2.5%, gold faces headwind.'
   },
   '5Y Breakeven': {
-    what: 'The bond market's forecast for average CPI inflation over the next 5 years, derived from the gap between nominal and TIPS yields.',
+    what: 'The bond market\'s forecast for average CPI inflation over the next 5 years, derived from the gap between nominal and TIPS yields.',
     how: 'Nominal 5Y Treasury yield minus 5Y TIPS yield = breakeven inflation rate. If CPI exceeds this rate, TIPS outperform. FRED series: T5YIE.',
     why: 'If rising: bond market expects persistent near-term inflation — gold bullish. If falling: market expects inflation to cool — potential gold headwind. Current 2.54% above Fed 2% target = inflation not yet anchored.'
   },
   '10Y Breakeven': {
-    what: 'The bond market's forecast for average CPI inflation over the next 10 years — the Fed's most-watched inflation expectations gauge.',
+    what: 'The bond market\'s forecast for average CPI inflation over the next 10 years — the Fed\'s most-watched inflation expectations gauge.',
     how: 'Nominal 10Y Treasury yield minus 10Y TIPS yield. FRED series: T10YIE.',
     why: 'The Fed watches this closely. Above 2.5% = inflation expectations becoming unanchored — hawkish pressure. Below 2% = deflation risk. Current 2.40% = slightly above target but not alarming. Watch for a break above 2.6%.'
   },
@@ -291,7 +291,7 @@ function InfoModal({ def, onClose }) {
           <div style={{color:'var(--t1)',fontSize:'13px',lineHeight:'1.5'}}>{def.what}</div>
         </div>
         <div style={{marginBottom:'12px'}}>
-          <div style={{color:'var(--acc3)',fontSize:'10px',fontWeight:700,letterSpacing:'0.1em',marginBottom:'4px'}}>HOW IT'S CALCULATED</div>
+          <div style={{color:'var(--acc3)',fontSize:'10px',fontWeight:700,letterSpacing:'0.1em',marginBottom:'4px'}}>HOW IT IS CALCULATED</div>
           <div style={{color:'var(--t2)',fontSize:'12px',lineHeight:'1.5'}}>{def.how}</div>
         </div>
         <div>
