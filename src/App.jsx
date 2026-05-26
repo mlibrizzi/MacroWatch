@@ -265,7 +265,7 @@ const INFO_DEFS = {
     why: 'When it unwinds in a crisis, funds must sell Treasuries rapidly — amplifying any selloff. This happened in March 2020 (Fed had to intervene) and April 2025. The SOFR-Treasury spread monitors stress. A rapid spread widening = forced unwind risk.'
   },
   'TGA Balance': {
-    what: 'The Treasury General Account — the US government's checking account held at the Federal Reserve. All federal tax receipts and spending flow through this account.',
+    what: 'The Treasury General Account — the US government\'s checking account held at the Federal Reserve. All federal tax receipts and spending flow through this account.',
     how: 'Published weekly by the Federal Reserve. Balance fluctuates with tax receipts, debt issuance, and spending. FRED series: WDTGAL.',
     why: 'When TGA balance is LOW, Treasury has spent its cash into the economy — a net liquidity injection, bullish for risk assets. When TGA is HIGH (Treasury issuing debt and building reserves), it drains liquidity from markets. A key but overlooked market driver.'
   },
