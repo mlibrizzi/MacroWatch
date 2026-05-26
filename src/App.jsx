@@ -988,6 +988,10 @@ export default function App() {
           ))}
         </div>
       </div>
+
+      <div style={{textAlign:"center",padding:"8px 16px",fontSize:"10px",color:"#4b5563",borderTop:"1px solid #1f2937",background:"#0a0f1a"}}>
+        © 2026 Michael Librizzi. MacroWatch. Not financial advice.
+      </div>
     </>
   );
 }
