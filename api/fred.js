@@ -82,7 +82,7 @@ fetchSeries('CES0500000003'), // Avg hourly earnings
     fetchSeries('VIXCLS'),       // VIX volatility index
     fetchSeries('T5YIE'),         // 5Y TIPS breakeven inflation rate
     fetchSeries('T10YIE'),        // 10Y TIPS breakeven inflation rate
-    fetchSeries('WILL5000PR', 8),     // Wilshire 5000 price return index (active)
+    fetchSeries('WILL5000', 8),        // Wilshire 5000 total return index
     fetchSeries('GDP', 8),         // Nominal GDP (quarterly)
 ]);
 
