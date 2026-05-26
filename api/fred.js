@@ -82,7 +82,7 @@ fetchSeries('CES0500000003'), // Avg hourly earnings
     fetchSeries('VIXCLS'),       // VIX volatility index
     fetchSeries('T5YIE'),         // 5Y TIPS breakeven inflation rate
     fetchSeries('T10YIE'),        // 10Y TIPS breakeven inflation rate
-    fetchSeries('WILL5000IND', 8), // Wilshire 5000 total market cap index
+    fetchSeries('WILL5000INDFC', 8), // Wilshire 5000 full cap index (points)
     fetchSeries('GDP', 8),         // Nominal GDP (quarterly)
 ]);
 
@@ -296,7 +296,7 @@ return res.status(200).json({
       name: 'Buffett Indicator',
       will5000: will5000.latest,
       gdp: gdpNom.latest,
-      ratio: will5000.latest && gdpNom.latest ? +((will5000.latest / gdpNom.latest) * 100).toFixed(1) : null,
+      ratio: will5000.latest && gdpNom.latest ? +((will5000.latest * 1.0) / gdpNom.latest * 100).toFixed(1) : null,
       date: will5000.date,
       history: [
         { date: will5000.date,        will: will5000.latest,  gdp: gdpNom.latest  },
