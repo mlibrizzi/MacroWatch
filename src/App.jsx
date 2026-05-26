@@ -176,6 +176,150 @@ function Loading({ text = 'LOADING...' }) {
   return <div className="load"><div className="spin" /><div className="load-txt">{text}</div></div>;
 }
 
+
+/* ─── INFO MODAL ─────────────────────────────────────────────────────────── */
+const INFO_DEFS = {
+  'Fed Broad USD': {
+    what: 'A trade-weighted index of the US dollar against 26 major currencies, published by the Federal Reserve.',
+    how: 'Weighted by trade volume with each country. Base year = 2006, so it reads ~118 vs ICE DXY ~99 (base year 1973). FRED series: DTWEXBGS.',
+    why: 'Measures true dollar strength across all trading partners. A falling broad dollar signals USD debasement — bullish for gold and commodities. Distinct from headline DXY which only tracks 6 currencies.'
+  },
+  'Term Premium': {
+    what: 'The extra yield investors demand for holding a 10-year Treasury instead of rolling over short-term bonds. Calculated as 10Y minus 2Y yield.',
+    how: 'Simple spread: 10Y Treasury yield minus 2Y Treasury yield. Positive = normal curve. Negative = inverted curve.',
+    why: 'A normal curve (+47bp today) signals markets expect growth. An inverted curve signals recession expectations. Currently flattening toward historical average of +80bp — watch for steepening as inflation persists.'
+  },
+  'Liquidity Proxy': {
+    what: 'A derived signal showing whether financial conditions are expanding or tightening, calculated as SPX divided by the Broad Dollar Index.',
+    how: 'SPX price divided by Fed Broad USD index. Rising ratio = stocks outpacing dollar = liquidity expanding. Falling = tightening.',
+    why: 'When this ratio falls sharply, it signals simultaneous equity weakness and dollar strengthening — a classic liquidity squeeze. Useful early warning for risk-off episodes.'
+  },
+  'Gold/Yield Ratio': {
+    what: 'Gold price divided by the 10-year Treasury yield — measures how much distrust exists in financial assets relative to safe alternatives.',
+    how: 'Gold spot price (USD) divided by 10Y Treasury yield (%). Current: $4,535 / 4.57% = 992.',
+    why: 'A rising ratio means gold is outperforming bonds — investors are fleeing to real assets. Above 800 signals elevated distrust. Current level of 992 is in DISTRUST territory, consistent with fiscal stress thesis.'
+  },
+  'VIX': {
+    what: 'The CBOE Volatility Index — measures the market's expectation of 30-day volatility in the S&P 500, derived from options prices.',
+    how: 'Calculated from implied volatility of SPX options across multiple strikes and expirations. Published real-time by CBOE.',
+    why: 'The "fear gauge." Below 15 = complacency. 15-20 = normal. 20-30 = elevated concern. 30-40 = fear. Above 40 = crisis. Current 16.76 = normal but watch for spikes above 25 as a positioning signal.'
+  },
+  '10Y TIPS Real': {
+    what: 'The real (inflation-adjusted) yield on 10-year Treasury Inflation-Protected Securities. Represents the true cost of money after inflation.',
+    how: 'Derived from TIPS market prices. When TIPS yield is positive, holders earn above inflation. FRED series: DFII10.',
+    why: 'The most important driver of gold prices. When real yields are negative, gold pays a competitive "yield" of zero vs negative. Current +2.18% = moderately restrictive. If real yields rise above 2.5%, gold faces headwind.'
+  },
+  '5Y Breakeven': {
+    what: 'The bond market's forecast for average CPI inflation over the next 5 years, derived from the gap between nominal and TIPS yields.',
+    how: 'Nominal 5Y Treasury yield minus 5Y TIPS yield = breakeven inflation rate. If CPI exceeds this rate, TIPS outperform. FRED series: T5YIE.',
+    why: 'If rising: bond market expects persistent near-term inflation — gold bullish. If falling: market expects inflation to cool — potential gold headwind. Current 2.54% above Fed 2% target = inflation not yet anchored.'
+  },
+  '10Y Breakeven': {
+    what: 'The bond market's forecast for average CPI inflation over the next 10 years — the Fed's most-watched inflation expectations gauge.',
+    how: 'Nominal 10Y Treasury yield minus 10Y TIPS yield. FRED series: T10YIE.',
+    why: 'The Fed watches this closely. Above 2.5% = inflation expectations becoming unanchored — hawkish pressure. Below 2% = deflation risk. Current 2.40% = slightly above target but not alarming. Watch for a break above 2.6%.'
+  },
+  'WTI Crude': {
+    what: 'West Texas Intermediate — the US benchmark crude oil price, set at Cushing, Oklahoma delivery.',
+    how: 'Spot price from OilPriceAPI (real-time) or FRED/EIA (daily). Denominated in USD per barrel.',
+    why: 'Energy prices drive 40-50% of the current inflation spike. Iran war premium currently ~$15-20/barrel above pre-war levels. Watch for ceasefire: WTI below $90 removes war premium and reduces headline inflation ~0.6pp.'
+  },
+  'Brent Crude': {
+    what: 'Brent crude — the global benchmark oil price, set in the North Sea. Used for ~80% of global oil pricing.',
+    how: 'Spot price from OilPriceAPI or FRED/EIA. Denominated in USD per barrel.',
+    why: 'Brent-WTI spread measures geopolitical risk premium. Spread widens during supply disruptions. Currently Brent $116 vs WTI $112 = $4 spread = moderate geopolitical premium on global vs US supply.'
+  },
+  '2-Year Note': {
+    what: 'The yield on the 2-year US Treasury Note — the most sensitive Treasury to Federal Reserve policy expectations.',
+    how: 'Set daily by Treasury auctions and secondary market trading. Moves in anticipation of Fed rate changes. FRED: DGS2.',
+    why: 'When 2Y yield rises above Fed Funds Rate, markets expect hikes. Currently 4.08% vs Fed 3.64% = markets pricing in rates staying higher. The 2Y is the best real-time read on where the Fed is going next.'
+  },
+  '10-Year Note': {
+    what: 'The yield on the 10-year US Treasury Note — the global benchmark borrowing rate used for mortgages, corporate bonds, and sovereign debt pricing worldwide.',
+    how: 'Set by Treasury auctions and secondary market. Reflects growth and inflation expectations over 10 years. FRED: DGS10.',
+    why: 'The most important interest rate in the world. Currently 4.57% despite Fed cutting 175bp — the bond market is overriding the Fed, signaling fiscal concerns. If it breaks 5%, expect significant market stress.'
+  },
+  '30-Year Bond': {
+    what: 'The yield on the 30-year US Treasury Bond — reflects long-term inflation expectations and the term premium for extended duration risk.',
+    how: 'Set by Treasury auctions. Most sensitive to long-run inflation expectations and fiscal sustainability concerns. FRED: DGS30.',
+    why: 'Currently 5.10% — the bond market is demanding more than 5% to lend to the US for 30 years. With 3.8% inflation, real yield is only ~1.3% — not compelling. Rising 30Y yields signal fiscal credibility erosion.'
+  },
+  'Fed Funds Rate': {
+    what: 'The Federal Reserve's target interest rate — the rate banks charge each other for overnight lending of reserves. The base price of money in the US economy.',
+    how: 'Set by the FOMC (Federal Open Market Committee) at 8 meetings per year by majority vote. Currently 3.50-3.75%.',
+    why: 'Every interest rate in the economy is anchored to this rate. The Fed cut 175bp since mid-2024 but 10Y yield only fell 35bp — an unprecedented disconnect showing the bond market does not trust the cuts will control inflation.'
+  },
+  'TIC Holdings': {
+    what: 'Treasury International Capital data — monthly report showing how much US government debt is held by foreign countries and investors.',
+    how: 'Published by US Treasury ~45 days after month-end. Covers official (central bank) and private (hedge fund, pension) holders. Total as of Feb 2026: $9.49T.',
+    why: 'Foreign demand for Treasuries determines US borrowing costs. China reduced holdings from $1.3T (2013) to $0.69T (2026). But total holdings are at a RECORD — private investors replacing governments. Composition matters: private buyers are more volatile.'
+  },
+  'Auction Tail': {
+    what: 'The difference between the highest accepted yield in a Treasury auction and the median yield — measures how desperate the auction was to attract buyers.',
+    how: 'MacroWatch calculates: (high_yield - median_yield) x 100 = basis points. A true "tail" uses the when-issued yield as benchmark (requires Bloomberg). Our proxy is a close approximation.',
+    why: 'A tail of 0-1bp = healthy auction. 1-3bp = modest stress. Above 3bp = weak demand. Above 5bp = alarm. Recent auctions showing 5-6bp tails = bond market demanding higher yields to absorb supply. Key stress indicator for the $9.7T refinancing wall.'
+  },
+  'Basis Trade': {
+    what: 'A highly leveraged arbitrage trade by hedge funds that exploits the price difference between cash Treasury bonds and Treasury futures contracts.',
+    how: 'Hedge funds buy cash Treasuries and short futures, profiting from the basis (spread). Typically leveraged 20-50x using repo market. Total size estimated $500B-$1T.',
+    why: 'When it unwinds in a crisis, funds must sell Treasuries rapidly — amplifying any selloff. This happened in March 2020 (Fed had to intervene) and April 2025. The SOFR-Treasury spread monitors stress. A rapid spread widening = forced unwind risk.'
+  },
+  'TGA Balance': {
+    what: 'The Treasury General Account — the US government's checking account held at the Federal Reserve. All federal tax receipts and spending flow through this account.',
+    how: 'Published weekly by the Federal Reserve. Balance fluctuates with tax receipts, debt issuance, and spending. FRED series: WDTGAL.',
+    why: 'When TGA balance is LOW, Treasury has spent its cash into the economy — a net liquidity injection, bullish for risk assets. When TGA is HIGH (Treasury issuing debt and building reserves), it drains liquidity from markets. A key but overlooked market driver.'
+  },
+};
+
+function InfoModal({ def, onClose }) {
+  if (!def) return null;
+  return (
+    <div onClick={onClose} style={{
+      position:'fixed',inset:0,background:'rgba(0,0,0,0.75)',
+      zIndex:1000,display:'flex',alignItems:'center',justifyContent:'center',padding:'20px'
+    }}>
+      <div onClick={e=>e.stopPropagation()} style={{
+        background:'var(--s2)',border:'1px solid var(--b2)',borderRadius:'12px',
+        padding:'20px',maxWidth:'420px',width:'100%',maxHeight:'80vh',overflowY:'auto'
+      }}>
+        <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:'16px'}}>
+          <div style={{color:'var(--acc)',fontWeight:700,fontSize:'14px',letterSpacing:'0.05em'}}>{def.label}</div>
+          <button onClick={onClose} style={{background:'none',border:'none',color:'var(--t2)',fontSize:'20px',cursor:'pointer',padding:'0 4px'}}>×</button>
+        </div>
+        <div style={{marginBottom:'12px'}}>
+          <div style={{color:'var(--acc3)',fontSize:'10px',fontWeight:700,letterSpacing:'0.1em',marginBottom:'4px'}}>WHAT IT IS</div>
+          <div style={{color:'var(--t1)',fontSize:'13px',lineHeight:'1.5'}}>{def.what}</div>
+        </div>
+        <div style={{marginBottom:'12px'}}>
+          <div style={{color:'var(--acc3)',fontSize:'10px',fontWeight:700,letterSpacing:'0.1em',marginBottom:'4px'}}>HOW IT'S CALCULATED</div>
+          <div style={{color:'var(--t2)',fontSize:'12px',lineHeight:'1.5'}}>{def.how}</div>
+        </div>
+        <div>
+          <div style={{color:'var(--acc3)',fontSize:'10px',fontWeight:700,letterSpacing:'0.1em',marginBottom:'4px'}}>WHY IT MATTERS</div>
+          <div style={{color:'var(--t2)',fontSize:'12px',lineHeight:'1.5'}}>{def.why}</div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function InfoBtn({ label }) {
+  const [open, setOpen] = React.useState(false);
+  const def = INFO_DEFS[label];
+  if (!def) return null;
+  return (
+    <>
+      <button onClick={()=>setOpen(true)} style={{
+        background:'none',border:'1px solid var(--b2)',borderRadius:'50%',
+        color:'var(--t3)',fontSize:'9px',width:'16px',height:'16px',
+        cursor:'pointer',marginLeft:'4px',lineHeight:'14px',textAlign:'center',
+        display:'inline-flex',alignItems:'center',justifyContent:'center',flexShrink:0
+      }}>i</button>
+      {open && <InfoModal def={{...def, label}} onClose={()=>setOpen(false)} />}
+    </>
+  );
+}
+
 /* ─── DAILY TAB ───────────────────────────────────────────────────────────── */
 function DailyTab({ d }) {
   if (!d) return <Loading text="FETCHING MARKETS..." />;
@@ -202,7 +346,7 @@ function DailyTab({ d }) {
           <div className="sig-grid">
             {derived.term_premium && (
               <div className="sig-box">
-                <div className="sig-lbl">TERM PREMIUM</div>
+                <div className="sig-lbl" style={{display:'flex',alignItems:'center',justifyContent:'center',gap:'2px'}}>TERM PREMIUM<InfoBtn label="Term Premium" /></div>
                 <div className={`sig-val ${SIGNAL_COLORS[derived.term_premium.signal] || 'neu'}`}>{fmt(derived.term_premium.value, 2)}%</div>
                 <div className={`sig-status`} style={{ background: 'rgba(255,208,96,.12)', color: 'var(--amber)' }}>{derived.term_premium.signal?.toUpperCase()}</div>
                 <div className="sig-note">{derived.term_premium.label}</div>
@@ -210,7 +354,7 @@ function DailyTab({ d }) {
             )}
             {derived.liquidity_proxy && (
               <div className="sig-box">
-                <div className="sig-lbl">LIQUIDITY</div>
+                <div className="sig-lbl" style={{display:'flex',alignItems:'center',justifyContent:'center',gap:'2px'}}>LIQUIDITY<InfoBtn label="Liquidity Proxy" /></div>
                 <div className={`sig-val ${SIGNAL_COLORS[derived.liquidity_proxy.signal] || 'neu'}`}>{fmt(derived.liquidity_proxy.value, 1)}</div>
                 <div className={`sig-status`} style={{ background: derived.liquidity_proxy.signal === 'expanding' ? 'rgba(0,229,192,.1)' : 'rgba(255,62,90,.1)', color: derived.liquidity_proxy.signal === 'expanding' ? 'var(--green)' : 'var(--red)' }}>{derived.liquidity_proxy.signal?.toUpperCase()}</div>
                 <div className="sig-note">SPX / DXY</div>
@@ -218,7 +362,7 @@ function DailyTab({ d }) {
             )}
             {derived.gold_vs_yield && (
               <div className="sig-box">
-                <div className="sig-lbl">GOLD/YIELD</div>
+                <div className="sig-lbl" style={{display:'flex',alignItems:'center',justifyContent:'center',gap:'2px'}}>GOLD/YIELD<InfoBtn label="Gold/Yield Ratio" /></div>
                 <div className={`sig-val ${SIGNAL_COLORS[derived.gold_vs_yield.signal] || 'neu'}`}>{fmt(derived.gold_vs_yield.ratio, 0)}</div>
                 <div className={`sig-status`} style={{ background: derived.gold_vs_yield.signal === 'distrust' ? 'rgba(255,62,90,.1)' : 'rgba(0,229,192,.1)', color: derived.gold_vs_yield.signal === 'distrust' ? 'var(--red)' : 'var(--green)' }}>{derived.gold_vs_yield.signal?.toUpperCase()}</div>
                 <div className="sig-note">Gold ÷ 10Y</div>
@@ -263,15 +407,15 @@ function DailyTab({ d }) {
           <table className="rates-tbl">
             <tbody>
               {rates && [['2Y','2-Year Note',rates.t2y,rates.t2y?.change_bp],['10Y','10-Year Note',rates.t10y,rates.t10y?.change_bp],['30Y','30-Year Bond',rates.t30y,rates.t30y?.change_bp]].map(([k,lbl,v,bp]) => v ? (
-                <tr key={k}><td><div className="lbl" style={{fontSize:12}}>{lbl}</div></td>
+                <tr key={k}><td><div className="lbl" style={{fontSize:12,display:'flex',alignItems:'center',gap:'2px'}}>{lbl}<InfoBtn label={lbl==='2-Year Note'?'2-Year Note':lbl==='10-Year Note'?'10-Year Note':'30-Year Bond'} /></div></td>
                 <td><div className={`val ${bp > 0 ? 'dn' : bp < 0 ? 'up' : 'neu'}`} style={{fontSize:13}}>{fmt(v.yield,3)}%</div>
                 <div className={`chg ${bp > 0 ? 'dn' : 'up'}`}>{bp > 0 ? '▲' : '▼'} {Math.abs(bp)}bp</div></td></tr>
               ) : null)}
               {rates?.fed_funds != null && <><tr><td colSpan={2}><div className="div" /></td></tr>
-              <tr><td><div className="sub">Fed Funds Rate</div></td><td><div className="val neu" style={{fontSize:12}}>{fmt(rates.fed_funds,2)}%</div></td></tr>
-              {rates.tips_10y_real != null && <tr><td><div className="sub">10Y TIPS Real</div></td><td><div className={`val ${rates.tips_10y_real > 2 ? 'dn' : 'neu'}`} style={{fontSize:12}}>{fmt(rates.tips_10y_real,2)}%</div></td></tr>}
-              {rates.tips_5y_breakeven != null && <tr><td><div className="sub">5Y Breakeven</div></td><td><div className={`val ${rates.tips_5y_breakeven > 2.5 ? 'dn' : 'neu'}`} style={{fontSize:12}}>{fmt(rates.tips_5y_breakeven,2)}%</div></td></tr>}
-              {rates.tips_10y_breakeven != null && <tr><td><div className="sub">10Y Breakeven</div></td><td><div className={`val ${rates.tips_10y_breakeven > 2.5 ? 'dn' : 'neu'}`} style={{fontSize:12}}>{fmt(rates.tips_10y_breakeven,2)}%</div></td></tr>}</>}
+              <tr><td><div className="sub" style={{display:'flex',alignItems:'center',gap:'2px'}}>Fed Funds Rate<InfoBtn label="Fed Funds Rate" /></div></td><td><div className="val neu" style={{fontSize:12}}>{fmt(rates.fed_funds,2)}%</div></td></tr>
+              {rates.tips_10y_real != null && <tr><td><div className="sub" style={{display:'flex',alignItems:'center',gap:'2px'}}>10Y TIPS Real<InfoBtn label="10Y TIPS Real" /></div></td><td><div className={`val ${rates.tips_10y_real > 2 ? 'dn' : 'neu'}`} style={{fontSize:12}}>{fmt(rates.tips_10y_real,2)}%</div></td></tr>}
+              {rates.tips_5y_breakeven != null && <tr><td><div className="sub" style={{display:'flex',alignItems:'center',gap:'2px'}}>5Y Breakeven<InfoBtn label="5Y Breakeven" /></div></td><td><div className={`val ${rates.tips_5y_breakeven > 2.5 ? 'dn' : 'neu'}`} style={{fontSize:12}}>{fmt(rates.tips_5y_breakeven,2)}%</div></td></tr>}
+              {rates.tips_10y_breakeven != null && <tr><td><div className="sub" style={{display:'flex',alignItems:'center',gap:'2px'}}>10Y Breakeven<InfoBtn label="10Y Breakeven" /></div></td><td><div className={`val ${rates.tips_10y_breakeven > 2.5 ? 'dn' : 'neu'}`} style={{fontSize:12}}>{fmt(rates.tips_10y_breakeven,2)}%</div></td></tr>}</>}
             </tbody>
           </table>
         </div>
