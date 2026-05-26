@@ -264,6 +264,11 @@ const INFO_DEFS = {
     how: `Funds buy cash Treasuries and short futures, profiting from the basis spread. Typically leveraged 20-50x using repo market. Total size estimated B-T.`,
     why: `When it unwinds in a crisis, funds must sell Treasuries rapidly — amplifying any selloff. Happened in March 2020 and April 2025. SOFR-Treasury spread monitors stress. Rapid spread widening = forced unwind risk.`
   },
+  'Buffett Indicator': {
+    what: `Total US stock market capitalization divided by GDP — measures whether stocks are expensive relative to the size of the economy. Warren Buffett called it the best single measure of valuations.`,
+    how: `Wilshire 5000 Index divided by Nominal GDP x 100 = percentage. FRED series: WILL5000IND and GDP. Updated quarterly when GDP releases.`,
+    why: `PTJ warning: currently at 252% — exceeding every prior bubble peak. 1929=65%, 1987=90%, 2000=170%. A 30-35% mean reversion destroys wealth equal to 89% of annual GDP, collapses capital gains tax revenues, and triggers a sovereign debt doom loop. The single most important valuation warning in MacroWatch.`
+  },
   'TGA Balance': {
     what: `The Treasury General Account — the US government checking account held at the Federal Reserve. All federal tax receipts and spending flow through this account.`,
     how: `Published weekly by the Federal Reserve. Balance fluctuates with tax receipts, debt issuance, and spending. FRED series: WDTGAL.`,
@@ -366,6 +371,14 @@ function DailyTab({ d }) {
                 <div className={`sig-val ${SIGNAL_COLORS[derived.gold_vs_yield.signal] || 'neu'}`}>{fmt(derived.gold_vs_yield.ratio, 0)}</div>
                 <div className={`sig-status`} style={{ background: derived.gold_vs_yield.signal === 'distrust' ? 'rgba(255,62,90,.1)' : 'rgba(0,229,192,.1)', color: derived.gold_vs_yield.signal === 'distrust' ? 'var(--red)' : 'var(--green)' }}>{derived.gold_vs_yield.signal?.toUpperCase()}</div>
                 <div className="sig-note">Gold ÷ 10Y</div>
+              </div>
+            )}
+            {d.macro?.buffett?.ratio && (
+              <div className="sig-box">
+                <div className="sig-lbl" style={{display:'flex',alignItems:'center',justifyContent:'center',gap:'2px'}}>BUFFETT<InfoBtn label="Buffett Indicator" /></div>
+                <div className={'sig-val ' + (d.macro.buffett.signal === 'EXTREME' ? 'dn' : d.macro.buffett.signal === 'OVERVALUED' ? 'warn' : 'up')}>{d.macro.buffett.ratio}%</div>
+                <div className="sig-status" style={{background: d.macro.buffett.signal === 'EXTREME' ? 'rgba(255,62,90,.1)' : 'rgba(255,208,96,.1)', color: d.macro.buffett.signal === 'EXTREME' ? 'var(--red)' : 'var(--amber)'}}>{d.macro.buffett.signal}</div>
+                <div className="sig-note">Mkt Cap / GDP</div>
               </div>
             )}
           </div>

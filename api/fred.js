@@ -46,6 +46,8 @@ ahe,
 vix,
 // TIPS breakeven inflation rates
 tips5yBE, tips10yBE,
+// Buffett Indicator
+will5000, gdpNom,
 ] = await Promise.all([
 fetchSeries('DGS2'),
 fetchSeries('DGS10'),
@@ -80,6 +82,8 @@ fetchSeries('CES0500000003'), // Avg hourly earnings
     fetchSeries('VIXCLS'),       // VIX volatility index
     fetchSeries('T5YIE'),         // 5Y TIPS breakeven inflation rate
     fetchSeries('T10YIE'),        // 10Y TIPS breakeven inflation rate
+    fetchSeries('WILL5000IND', 8), // Wilshire 5000 total market cap index
+    fetchSeries('GDP', 8),         // Nominal GDP (quarterly)
 ]);
 
 const termPremium = t10y.latest && t2y.latest
@@ -287,6 +291,28 @@ return res.status(200).json({
       unit: 'billions USD', delay: 'Monthly — released ~2 weeks after month end (Census via FRED)',
       source: 'US Census Bureau',
       note: 'March surge +1.7% MoM driven by +15.5% gasoline station receipts (energy shock)'
+    },
+    buffett: {
+      name: 'Buffett Indicator',
+      will5000: will5000.latest,
+      gdp: gdpNom.latest,
+      ratio: will5000.latest && gdpNom.latest ? +((will5000.latest / gdpNom.latest) * 100).toFixed(1) : null,
+      date: will5000.date,
+      history: [
+        { date: will5000.date,        will: will5000.latest,  gdp: gdpNom.latest  },
+        { date: will5000.priorDate,   will: will5000.prior,   gdp: gdpNom.prior   },
+        { date: will5000.prior2 ? will5000.prior2 : null, will: will5000.prior2, gdp: gdpNom.prior2 },
+        { date: will5000.prior3 ? will5000.prior3 : null, will: will5000.prior3, gdp: gdpNom.prior3 },
+      ].filter(h => h.will && h.gdp),
+      signal: will5000.latest && gdpNom.latest
+        ? (will5000.latest / gdpNom.latest) > 1.8 ? 'EXTREME' 
+        : (will5000.latest / gdpNom.latest) > 1.4 ? 'OVERVALUED'
+        : (will5000.latest / gdpNom.latest) > 1.0 ? 'FAIR'
+        : 'UNDERVALUED'
+        : null,
+      note: 'PTJ: 252% market cap/GDP. Crash precedents: 1929=65%, 1987=90%, 2000=170%',
+      delay: 'Quarterly — Wilshire 5000 daily, GDP quarterly (FRED)',
+      source: 'Wilshire Associates + BEA via FRED'
     },
   },
   timestamp: new Date().toISOString()
