@@ -22,7 +22,7 @@ export async function fetchDaily() {
     const t2y  = fred.yields?.t2y?.latest;
     const t10y = fred.yields?.t10y?.latest;
     const t30y = fred.yields?.t30y?.latest;
-    const dxy  = markets.fx?.dxy?.price;
+    const dxy  = fred.commodities?.dxy?.price || markets.fx?.dxy?.price;
     const spx  = markets.indices?.find(i => i.symbol === 'SPX')?.price;
     const gold = metals.gold?.price;
 
@@ -44,15 +44,19 @@ export async function fetchDaily() {
         silver: { ...metals.silver, delay: 'Real-time (gold-api.com)' },
       },
       oil: {
-        wti:   oilLive.wti   ? { ...oilLive.wti,   delay: 'Near real-time (OilPriceAPI.com)' } : null,
-        brent: oilLive.brent ? { ...oilLive.brent, delay: 'Near real-time (OilPriceAPI.com)' } : null,
+        wti:   oilLive.wti   ? { ...oilLive.wti,   delay: 'Near real-time (OilPriceAPI.com)' }
+             : fred.commodities?.wti   ? { ...fred.commodities.wti,   delay: 'Daily via FRED/EIA (OilPriceAPI limit hit)' }
+             : null,
+        brent: oilLive.brent ? { ...oilLive.brent, delay: 'Near real-time (OilPriceAPI.com)' }
+             : fred.commodities?.brent ? { ...fred.commodities.brent, delay: 'Daily via FRED/EIA (OilPriceAPI limit hit)' }
+             : null,
       },
 
       fx: {
         eurusd: { ...markets.fx?.eurusd, delay: 'Hourly (open.er-api.com)' },
         jpyusd: { ...markets.fx?.jpyusd, delay: 'Hourly (open.er-api.com)' },
         gbpusd: { ...markets.fx?.gbpusd, delay: 'Hourly (open.er-api.com)' },
-        dxy:    { ...markets.fx?.dxy,    delay: 'Real-time via UUP ETF (Finnhub)' },
+        dxy:    fred.commodities?.dxy ? { ...fred.commodities.dxy } : { ...markets.fx?.dxy, delay: 'Real-time via UUP ETF (Finnhub)' },
       },
       vix: fred.commodities && fred.commodities.vix ? { ...fred.commodities.vix, delay: 'Daily (CBOE via FRED)' } : null,
       rates: {
