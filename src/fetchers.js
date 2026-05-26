@@ -65,6 +65,8 @@ export async function fetchDaily() {
         t30y: { yield: t30y, change_bp: t30y && fred.yields.t30y.prior ? +((t30y - fred.yields.t30y.prior) * 100).toFixed(1) : null, date: fred.yields.t30y?.date },
         fed_funds: fred.yields?.fedfunds?.latest,
         tips_10y_real: fred.yields?.tips10y?.latest,
+        tips_5y_breakeven: fred.yields?.tips5yBE?.latest,
+        tips_10y_breakeven: fred.yields?.tips10yBE?.latest,
         delay: 'Daily (FRED / US Treasury)',
       },
       indices: markets.indices,
@@ -238,7 +240,7 @@ export async function fetchWeekly() {
       },
     ];
 
-    const fedNarrative = await callClaude('Fed held rates at 3.50-3.75% on April 29 2026 with 4 dissents most since 1992. Next FOMC June 16-17 2026. CME FedWatch shows ~6% probability of June cut. QT ended Dec 2025 now in reserve management. Return JSON: powell_status string, qt_status string, dots_median_2026 number.', 'Return only raw JSON. Start with {');
+    const fedNarrative = await callClaude('Fed held rates at 3.50-3.75% on April 29 2026 with 4 dissents (most since October 1992). IMPORTANT: dissents were SPLIT — Hammack, Kashkari, Logan dissented wanting to REMOVE the easing bias (hawkish, effectively signaling rate HIKES), while Miran dissented wanting to CUT rates (dovish). Kevin Warsh replaced Powell as Fed Chair May 15 2026. Next FOMC June 16-17 2026. CME FedWatch shows ~6% probability of June cut. QT ended Dec 2025 now in reserve management. Return JSON: powell_status string, qt_status string, dots_median_2026 number.', 'Return only raw JSON. Start with {');
     const fedPolicy = {
       current_rate: '3.50%-3.75%',
       next_meeting: '2026-06-16',
@@ -374,7 +376,7 @@ Return JSON:
   const vix = liveDaily?.vix?.price ? `${liveDaily.vix.price.toFixed(1)}` : '17';
   const spx = liveDaily?.indices?.find(i => i.symbol === 'SPX')?.price ? `${liveDaily.indices.find(i => i.symbol === 'SPX').price.toFixed(0)}` : '7200';
 
-  return callClaude(`MANDATORY LIVE DATA - USE EXACTLY AS PROVIDED for ${TODAY}. Gold=${gold}, Silver=${silver}, WTI=${wti}, SPX=${spx}, 10Y=${t10y}, 2Y=${t2y}, VIX=${vix}, Fed=3.50-3.75% (4 dissents April 29 2026), CPI=+0.87% MoM, CorePCE=+0.29% MoM, GDP=+2.0% Q1, Unemployment=4.3%, Debt/GDP=122%, Deficit=$2T/yr, TIC=$9.49T (Japan $1.24T, China $0.69T selling). You MUST use these exact numbers in your response. Generate macro briefing for ${TODAY}.
+  return callClaude(`MANDATORY LIVE DATA - USE EXACTLY AS PROVIDED for ${TODAY}. Gold=${gold}, Silver=${silver}, WTI=${wti}, SPX=${spx}, 10Y=${t10y}, 2Y=${t2y}, VIX=${vix}, Fed=3.50-3.75% (April 29 2026: 4 dissents — SPLIT: Hammack+Kashkari+Logan wanted to REMOVE easing bias signaling future HIKES, Miran wanted to CUT. Most dissents since Oct 1992. Warsh now Chair from May 15.), CPI=+0.87% MoM, CorePCE=+0.29% MoM, GDP=+2.0% Q1, Unemployment=4.3%, Debt/GDP=122%, Deficit=$2T/yr, TIC=$9.49T (Japan $1.24T, China $0.69T selling). You MUST use these exact numbers in your response. Generate macro briefing for ${TODAY}.
 Return JSON:
 {
   "thesis": "3-4 sentence thesis with specific data",

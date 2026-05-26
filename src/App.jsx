@@ -269,7 +269,9 @@ function DailyTab({ d }) {
               ) : null)}
               {rates?.fed_funds != null && <><tr><td colSpan={2}><div className="div" /></td></tr>
               <tr><td><div className="sub">Fed Funds Rate</div></td><td><div className="val neu" style={{fontSize:12}}>{fmt(rates.fed_funds,2)}%</div></td></tr>
-              {rates.tips_10y_real != null && <tr><td><div className="sub">10Y TIPS Real</div></td><td><div className={`val ${rates.tips_10y_real > 2 ? 'dn' : 'neu'}`} style={{fontSize:12}}>{fmt(rates.tips_10y_real,2)}%</div></td></tr>}</>}
+              {rates.tips_10y_real != null && <tr><td><div className="sub">10Y TIPS Real</div></td><td><div className={`val ${rates.tips_10y_real > 2 ? 'dn' : 'neu'}`} style={{fontSize:12}}>{fmt(rates.tips_10y_real,2)}%</div></td></tr>}
+              {rates.tips_5y_breakeven != null && <tr><td><div className="sub">5Y Breakeven</div></td><td><div className={`val ${rates.tips_5y_breakeven > 2.5 ? 'dn' : 'neu'}`} style={{fontSize:12}}>{fmt(rates.tips_5y_breakeven,2)}%</div></td></tr>}
+              {rates.tips_10y_breakeven != null && <tr><td><div className="sub">10Y Breakeven</div></td><td><div className={`val ${rates.tips_10y_breakeven > 2.5 ? 'dn' : 'neu'}`} style={{fontSize:12}}>{fmt(rates.tips_10y_breakeven,2)}%</div></td></tr>}</>}
             </tbody>
           </table>
         </div>

@@ -44,6 +44,8 @@ wdtgal,   // TGA balance
 ahe,
 // VIX volatility index
 vix,
+// TIPS breakeven inflation rates
+tips5yBE, tips10yBE,
 ] = await Promise.all([
 fetchSeries('DGS2'),
 fetchSeries('DGS10'),
@@ -76,6 +78,8 @@ fetchSeries('WRBWFRBL'),
 fetchSeries('WDTGAL'),
 fetchSeries('CES0500000003'), // Avg hourly earnings
     fetchSeries('VIXCLS'),       // VIX volatility index
+    fetchSeries('T5YIE'),         // 5Y TIPS breakeven inflation rate
+    fetchSeries('T10YIE'),        // 10Y TIPS breakeven inflation rate
 ]);
 
 const termPremium = t10y.latest && t2y.latest
@@ -116,6 +120,8 @@ return res.status(200).json({
     t10y:     { ...t10y,     delay: 'Daily (FRED / US Treasury)' },
     t30y:     { ...t30y,     delay: 'Daily (FRED / US Treasury)' },
     tips10y:  { ...tips10y,  delay: 'Daily (FRED)' },
+    tips5yBE:  { ...tips5yBE,  name: '5Y Breakeven Inflation Rate',  delay: 'Daily (FRED T5YIE)'  },
+    tips10yBE: { ...tips10yBE, name: '10Y Breakeven Inflation Rate', delay: 'Daily (FRED T10YIE)' },
     fedfunds: {
       latest: fedfunds.latest,
       prior:  fedfunds.prior,
