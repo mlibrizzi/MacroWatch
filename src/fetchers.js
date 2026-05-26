@@ -13,10 +13,10 @@ async function fetchLive(path) {
 export async function fetchDaily() {
   try {
     const [metals, markets, fred, oilLive] = await Promise.all([
-      fetchLive('/api/metals'),
-      fetchLive('/api/markets'),
-      fetchLive('/api/fred'),
-      fetchLive('/api/oil'),
+      fetchLive('/api/metals').catch(() => ({})),
+      fetchLive('/api/markets').catch(() => ({})),
+      fetchLive('/api/fred').catch(() => ({})),
+      fetchLive('/api/oil').catch(() => ({})),
     ]);
 
     const t2y  = fred.yields?.t2y?.latest;
