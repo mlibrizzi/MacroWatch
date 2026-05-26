@@ -180,94 +180,94 @@ function Loading({ text = 'LOADING...' }) {
 /* ─── INFO MODAL ─────────────────────────────────────────────────────────── */
 const INFO_DEFS = {
   'Fed Broad USD': {
-    what: 'A trade-weighted index of the US dollar against 26 major currencies, published by the Federal Reserve.',
-    how: 'Weighted by trade volume with each country. Base year = 2006, so it reads ~118 vs ICE DXY ~99 (base year 1973). FRED series: DTWEXBGS.',
-    why: 'Measures true dollar strength across all trading partners. A falling broad dollar signals USD debasement — bullish for gold and commodities. Distinct from headline DXY which only tracks 6 currencies.'
+    what: `A trade-weighted index of the US dollar against 26 major currencies, published by the Federal Reserve.`,
+    how: `Weighted by trade volume with each country. Base year = 2006, so it reads ~118 vs ICE DXY ~99 (base year 1973). FRED series: DTWEXBGS.`,
+    why: `Measures true dollar strength across all trading partners. A falling broad dollar signals USD debasement — bullish for gold and commodities. Distinct from headline DXY which only tracks 6 currencies.`
   },
   'Term Premium': {
-    what: 'The extra yield investors demand for holding a 10-year Treasury instead of rolling over short-term bonds. Calculated as 10Y minus 2Y yield.',
-    how: 'Simple spread: 10Y Treasury yield minus 2Y Treasury yield. Positive = normal curve. Negative = inverted curve.',
-    why: 'A normal curve (+47bp today) signals markets expect growth. An inverted curve signals recession expectations. Currently flattening toward historical average of +80bp — watch for steepening as inflation persists.'
+    what: `The extra yield investors demand for holding a 10-year Treasury instead of rolling over short-term bonds. Calculated as 10Y minus 2Y yield.`,
+    how: `Simple spread: 10Y Treasury yield minus 2Y Treasury yield. Positive = normal curve. Negative = inverted curve.`,
+    why: `A normal curve (+47bp today) signals markets expect growth. An inverted curve signals recession expectations. Currently flattening toward historical average of +80bp.`
   },
   'Liquidity Proxy': {
-    what: 'A derived signal showing whether financial conditions are expanding or tightening, calculated as SPX divided by the Broad Dollar Index.',
-    how: 'SPX price divided by Fed Broad USD index. Rising ratio = stocks outpacing dollar = liquidity expanding. Falling = tightening.',
-    why: 'When this ratio falls sharply, it signals simultaneous equity weakness and dollar strengthening — a classic liquidity squeeze. Useful early warning for risk-off episodes.'
+    what: `A derived signal showing whether financial conditions are expanding or tightening, calculated as SPX divided by the Broad Dollar Index.`,
+    how: `SPX price divided by Fed Broad USD index. Rising ratio = stocks outpacing dollar = liquidity expanding. Falling = tightening.`,
+    why: `When this ratio falls sharply, it signals simultaneous equity weakness and dollar strengthening — a classic liquidity squeeze. Useful early warning for risk-off episodes.`
   },
   'Gold/Yield Ratio': {
-    what: 'Gold price divided by the 10-year Treasury yield — measures how much distrust exists in financial assets relative to safe alternatives.',
-    how: 'Gold spot price (USD) divided by 10Y Treasury yield (%). Current: $4,535 / 4.57% = 992.',
-    why: 'A rising ratio means gold is outperforming bonds — investors are fleeing to real assets. Above 800 signals elevated distrust. Current level of 992 is in DISTRUST territory, consistent with fiscal stress thesis.'
+    what: `Gold price divided by the 10-year Treasury yield — measures distrust in financial assets relative to safe alternatives.`,
+    how: `Gold spot price (USD) divided by 10Y Treasury yield (%). Current: ~,535 / 4.57% = 992.`,
+    why: `A rising ratio means gold is outperforming bonds — investors fleeing to real assets. Above 800 signals elevated distrust. Current 992 is in DISTRUST territory, consistent with fiscal stress thesis.`
   },
   'VIX': {
-    what: 'The CBOE Volatility Index — measures the market\'s expectation of 30-day volatility in the S&P 500, derived from options prices.',
-    how: 'Calculated from implied volatility of SPX options across multiple strikes and expirations. Published real-time by CBOE.',
-    why: 'The "fear gauge." Below 15 = complacency. 15-20 = normal. 20-30 = elevated concern. 30-40 = fear. Above 40 = crisis. Current 16.76 = normal but watch for spikes above 25 as a positioning signal.'
+    what: `The CBOE Volatility Index — measures the market expectation of 30-day S&P 500 volatility, derived from options prices.`,
+    how: `Calculated from implied volatility of SPX options across multiple strikes and expirations. Published real-time by CBOE.`,
+    why: `The fear gauge. Below 15 = complacency. 15-20 = normal. 20-30 = elevated. 30-40 = fear. Above 40 = crisis. Current 16.76 = normal but watch for spikes above 25 as a positioning signal.`
   },
   '10Y TIPS Real': {
-    what: 'The real (inflation-adjusted) yield on 10-year Treasury Inflation-Protected Securities. Represents the true cost of money after inflation.',
-    how: 'Derived from TIPS market prices. When TIPS yield is positive, holders earn above inflation. FRED series: DFII10.',
-    why: 'The most important driver of gold prices. When real yields are negative, gold pays a competitive "yield" of zero vs negative. Current +2.18% = moderately restrictive. If real yields rise above 2.5%, gold faces headwind.'
+    what: `The real (inflation-adjusted) yield on 10-year Treasury Inflation-Protected Securities. Represents the true cost of money after inflation.`,
+    how: `Derived from TIPS market prices. When positive, holders earn above inflation. FRED series: DFII10.`,
+    why: `The most important driver of gold prices. When real yields are negative, gold competes favorably. Current +2.18% = moderately restrictive. If real yields rise above 2.5%, gold faces a meaningful headwind.`
   },
   '5Y Breakeven': {
-    what: 'The bond market\'s forecast for average CPI inflation over the next 5 years, derived from the gap between nominal and TIPS yields.',
-    how: 'Nominal 5Y Treasury yield minus 5Y TIPS yield = breakeven inflation rate. If CPI exceeds this rate, TIPS outperform. FRED series: T5YIE.',
-    why: 'If rising: bond market expects persistent near-term inflation — gold bullish. If falling: market expects inflation to cool — potential gold headwind. Current 2.54% above Fed 2% target = inflation not yet anchored.'
+    what: `The bond market forecast for average CPI inflation over the next 5 years, derived from the gap between nominal and TIPS yields.`,
+    how: `Nominal 5Y Treasury yield minus 5Y TIPS yield = breakeven inflation rate. FRED series: T5YIE.`,
+    why: `If rising: bond market expects persistent near-term inflation — gold bullish. If falling: inflation cooling — potential gold headwind. Current 2.54% above Fed 2% target = inflation not yet anchored.`
   },
   '10Y Breakeven': {
-    what: 'The bond market\'s forecast for average CPI inflation over the next 10 years — the Fed\'s most-watched inflation expectations gauge.',
-    how: 'Nominal 10Y Treasury yield minus 10Y TIPS yield. FRED series: T10YIE.',
-    why: 'The Fed watches this closely. Above 2.5% = inflation expectations becoming unanchored — hawkish pressure. Below 2% = deflation risk. Current 2.40% = slightly above target but not alarming. Watch for a break above 2.6%.'
+    what: `The bond market forecast for average CPI inflation over the next 10 years — the Fed most-watched inflation expectations gauge.`,
+    how: `Nominal 10Y Treasury yield minus 10Y TIPS yield. FRED series: T10YIE.`,
+    why: `Above 2.5% = inflation expectations becoming unanchored — hawkish pressure on Fed. Below 2% = deflation risk. Current 2.40% = slightly above target. Watch for a break above 2.6% as a regime shift signal.`
   },
   'WTI Crude': {
-    what: 'West Texas Intermediate — the US benchmark crude oil price, set at Cushing, Oklahoma delivery.',
-    how: 'Spot price from OilPriceAPI (real-time) or FRED/EIA (daily). Denominated in USD per barrel.',
-    why: 'Energy prices drive 40-50% of the current inflation spike. Iran war premium currently ~$15-20/barrel above pre-war levels. Watch for ceasefire: WTI below $90 removes war premium and reduces headline inflation ~0.6pp.'
+    what: `West Texas Intermediate — the US benchmark crude oil price, set at Cushing Oklahoma delivery.`,
+    how: `Spot price from OilPriceAPI (real-time) or FRED/EIA (daily fallback). Denominated in USD per barrel.`,
+    why: `Energy prices drive 40-50% of current inflation spike. Iran war premium currently ~-20/barrel above pre-war levels. Watch for ceasefire: WTI below  removes war premium and reduces headline inflation ~0.6pp.`
   },
   'Brent Crude': {
-    what: 'Brent crude — the global benchmark oil price, set in the North Sea. Used for ~80% of global oil pricing.',
-    how: 'Spot price from OilPriceAPI or FRED/EIA. Denominated in USD per barrel.',
-    why: 'Brent-WTI spread measures geopolitical risk premium. Spread widens during supply disruptions. Currently Brent $116 vs WTI $112 = $4 spread = moderate geopolitical premium on global vs US supply.'
+    what: `Brent crude — the global benchmark oil price, set in the North Sea. Used for ~80% of global oil pricing.`,
+    how: `Spot price from OilPriceAPI or FRED/EIA fallback. Denominated in USD per barrel.`,
+    why: `Brent-WTI spread measures geopolitical risk premium. Spread widens during supply disruptions. Currently ~ spread = moderate geopolitical premium on global vs US supply.`
   },
   '2-Year Note': {
-    what: 'The yield on the 2-year US Treasury Note — the most sensitive Treasury to Federal Reserve policy expectations.',
-    how: 'Set daily by Treasury auctions and secondary market trading. Moves in anticipation of Fed rate changes. FRED: DGS2.',
-    why: 'When 2Y yield rises above Fed Funds Rate, markets expect hikes. Currently 4.08% vs Fed 3.64% = markets pricing in rates staying higher. The 2Y is the best real-time read on where the Fed is going next.'
+    what: `The yield on the 2-year US Treasury Note — the most sensitive Treasury to Federal Reserve policy expectations.`,
+    how: `Set daily by Treasury auctions and secondary market trading. Moves in anticipation of Fed rate changes. FRED: DGS2.`,
+    why: `When 2Y yield is above Fed Funds Rate, markets expect hikes. Currently 4.08% vs Fed 3.64% = markets pricing in rates staying higher. Best real-time read on where the Fed is going next.`
   },
   '10-Year Note': {
-    what: 'The yield on the 10-year US Treasury Note — the global benchmark borrowing rate used for mortgages, corporate bonds, and sovereign debt pricing worldwide.',
-    how: 'Set by Treasury auctions and secondary market. Reflects growth and inflation expectations over 10 years. FRED: DGS10.',
-    why: 'The most important interest rate in the world. Currently 4.57% despite Fed cutting 175bp — the bond market is overriding the Fed, signaling fiscal concerns. If it breaks 5%, expect significant market stress.'
+    what: `The yield on the 10-year US Treasury Note — the global benchmark rate used for mortgages, corporate bonds, and sovereign debt pricing worldwide.`,
+    how: `Set by Treasury auctions and secondary market. Reflects growth and inflation expectations over 10 years. FRED: DGS10.`,
+    why: `The most important interest rate in the world. Currently 4.57% despite Fed cutting 175bp — the bond market is overriding the Fed, signaling fiscal concerns. A break above 5% would cause significant market stress.`
   },
   '30-Year Bond': {
-    what: 'The yield on the 30-year US Treasury Bond — reflects long-term inflation expectations and the term premium for extended duration risk.',
-    how: 'Set by Treasury auctions. Most sensitive to long-run inflation expectations and fiscal sustainability concerns. FRED: DGS30.',
-    why: 'Currently 5.10% — the bond market is demanding more than 5% to lend to the US for 30 years. With 3.8% inflation, real yield is only ~1.3% — not compelling. Rising 30Y yields signal fiscal credibility erosion.'
+    what: `The yield on the 30-year US Treasury Bond — reflects long-term inflation expectations and the term premium for extended duration risk.`,
+    how: `Set by Treasury auctions. Most sensitive to long-run inflation and fiscal sustainability concerns. FRED: DGS30.`,
+    why: `Currently 5.10% — the bond market demands more than 5% to lend to the US for 30 years. With 3.8% inflation, real yield is only ~1.3% — not compelling. Rising 30Y yields signal fiscal credibility erosion.`
   },
   'Fed Funds Rate': {
-    what: 'The Federal Reserve's target interest rate — the rate banks charge each other for overnight lending of reserves. The base price of money in the US economy.',
-    how: 'Set by the FOMC (Federal Open Market Committee) at 8 meetings per year by majority vote. Currently 3.50-3.75%.',
-    why: 'Every interest rate in the economy is anchored to this rate. The Fed cut 175bp since mid-2024 but 10Y yield only fell 35bp — an unprecedented disconnect showing the bond market does not trust the cuts will control inflation.'
+    what: `The Federal Reserve target interest rate — the rate banks charge each other for overnight lending of reserves. The base price of money in the US economy.`,
+    how: `Set by the FOMC at 8 meetings per year by majority vote. Currently 3.50-3.75%. April 29 2026: 4 dissents — Hammack, Kashkari, Logan wanted rate hikes; Miran wanted a cut.`,
+    why: `Every interest rate in the economy is anchored to this rate. The Fed cut 175bp since mid-2024 but 10Y yield only fell 35bp — an unprecedented disconnect showing bond market does not trust the cuts will control inflation.`
   },
   'TIC Holdings': {
-    what: 'Treasury International Capital data — monthly report showing how much US government debt is held by foreign countries and investors.',
-    how: 'Published by US Treasury ~45 days after month-end. Covers official (central bank) and private (hedge fund, pension) holders. Total as of Feb 2026: $9.49T.',
-    why: 'Foreign demand for Treasuries determines US borrowing costs. China reduced holdings from $1.3T (2013) to $0.69T (2026). But total holdings are at a RECORD — private investors replacing governments. Composition matters: private buyers are more volatile.'
+    what: `Treasury International Capital data — monthly report showing how much US government debt is held by foreign countries and investors.`,
+    how: `Published by US Treasury ~45 days after month-end. Covers official (central bank) and private (hedge fund, pension) holders. Total Feb 2026: .49T record.`,
+    why: `Foreign demand determines US borrowing costs. China reduced holdings from .3T (2013) to -zsh.69T (2026). Total is at record but private buyers are replacing stable central banks — making the market more volatile.`
   },
   'Auction Tail': {
-    what: 'The difference between the highest accepted yield in a Treasury auction and the median yield — measures how desperate the auction was to attract buyers.',
-    how: 'MacroWatch calculates: (high_yield - median_yield) x 100 = basis points. A true "tail" uses the when-issued yield as benchmark (requires Bloomberg). Our proxy is a close approximation.',
-    why: 'A tail of 0-1bp = healthy auction. 1-3bp = modest stress. Above 3bp = weak demand. Above 5bp = alarm. Recent auctions showing 5-6bp tails = bond market demanding higher yields to absorb supply. Key stress indicator for the $9.7T refinancing wall.'
+    what: `The difference between the highest accepted yield in a Treasury auction and the median yield — measures how desperate the auction was to attract buyers.`,
+    how: `MacroWatch calculates: (high_yield - median_yield) x 100 = basis points. True tail uses when-issued yield as benchmark (requires Bloomberg). Our proxy is a close approximation used by independent analysts.`,
+    why: `0-1bp = healthy. 1-3bp = modest stress. Above 3bp = weak demand. Above 5bp = alarm. Recent auctions showing 5-6bp tails = bond market demanding higher yields. Key stress indicator for the .7T refinancing wall.`
   },
   'Basis Trade': {
-    what: 'A highly leveraged arbitrage trade by hedge funds that exploits the price difference between cash Treasury bonds and Treasury futures contracts.',
-    how: 'Hedge funds buy cash Treasuries and short futures, profiting from the basis (spread). Typically leveraged 20-50x using repo market. Total size estimated $500B-$1T.',
-    why: 'When it unwinds in a crisis, funds must sell Treasuries rapidly — amplifying any selloff. This happened in March 2020 (Fed had to intervene) and April 2025. The SOFR-Treasury spread monitors stress. A rapid spread widening = forced unwind risk.'
+    what: `A highly leveraged arbitrage trade by hedge funds that exploits the price difference between cash Treasury bonds and Treasury futures contracts.`,
+    how: `Funds buy cash Treasuries and short futures, profiting from the basis spread. Typically leveraged 20-50x using repo market. Total size estimated B-T.`,
+    why: `When it unwinds in a crisis, funds must sell Treasuries rapidly — amplifying any selloff. Happened in March 2020 and April 2025. SOFR-Treasury spread monitors stress. Rapid spread widening = forced unwind risk.`
   },
   'TGA Balance': {
-    what: 'The Treasury General Account — the US government\'s checking account held at the Federal Reserve. All federal tax receipts and spending flow through this account.',
-    how: 'Published weekly by the Federal Reserve. Balance fluctuates with tax receipts, debt issuance, and spending. FRED series: WDTGAL.',
-    why: 'When TGA balance is LOW, Treasury has spent its cash into the economy — a net liquidity injection, bullish for risk assets. When TGA is HIGH (Treasury issuing debt and building reserves), it drains liquidity from markets. A key but overlooked market driver.'
+    what: `The Treasury General Account — the US government checking account held at the Federal Reserve. All federal tax receipts and spending flow through this account.`,
+    how: `Published weekly by the Federal Reserve. Balance fluctuates with tax receipts, debt issuance, and spending. FRED series: WDTGAL.`,
+    why: `Low TGA = Treasury has spent cash into economy = net liquidity injection = bullish for risk assets. High TGA = Treasury draining liquidity from markets. A key but overlooked market driver.`
   },
 };
 
