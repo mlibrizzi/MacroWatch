@@ -299,10 +299,8 @@ return res.status(200).json({
       ratio: will5000.latest ? +(will5000.latest).toFixed(1) : null,
       date: will5000.date,
       history: [
-        { date: will5000.date,        will: will5000.latest,  gdp: gdpNom.latest  },
-        { date: will5000.priorDate,   will: will5000.prior,   gdp: gdpNom.prior   },
-        { date: will5000.prior2 ? will5000.prior2 : null, will: will5000.prior2, gdp: gdpNom.prior2 },
-        { date: will5000.prior3 ? will5000.prior3 : null, will: will5000.prior3, gdp: gdpNom.prior3 },
+        { date: will5000.date,      will: will5000.latest, gdp: gdpNom.latest },
+        { date: will5000.priorDate, will: will5000.prior,  gdp: gdpNom.prior  },
       ].filter(h => h.will && h.gdp),
       signal: will5000.latest
         ? will5000.latest > 180 ? 'EXTREME'
