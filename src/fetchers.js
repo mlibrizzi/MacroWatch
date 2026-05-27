@@ -71,6 +71,7 @@ export async function fetchDaily() {
       },
       indices: markets.indices,
       mag7:   markets.mag7,
+      macro: { buffett: fred.macro?.buffett || null },
       derived: {
         term_premium:   { ...termPremium, delay: 'Daily (derived from FRED)' },
         liquidity_proxy: {
