@@ -651,7 +651,7 @@ function AuctionsTab({ d }) {
       {d.upcoming?.length > 0 && (
         <div className="sec">
           <div className="sec-hdr">
-            <div className="sec-ttl">⬡ UPCOMING AUCTIONS — 13 WEEK CALENDAR</div>
+            <div className="sec-ttl">⬡ UPCOMING AUCTIONS — ANNOUNCED</div>
           </div>
           <table style={{width:"100%",borderCollapse:"collapse",fontSize:"11px"}}>
             <thead>
@@ -669,7 +669,7 @@ function AuctionsTab({ d }) {
                 return (
                   <tr key={i} style={{borderBottom:"1px solid var(--b1)", background: isNext ? "rgba(0,150,255,0.05)" : "transparent"}}>
                     <td style={{padding:"5px 6px",color: isNext ? "var(--acc2)" : "var(--t2)"}}>{u.date}</td>
-                    <td style={{padding:"5px 6px",color:"var(--t1)",fontWeight: isNext ? 600 : 400}}>{u.term}</td>
+                    <td style={{padding:"5px 6px",color:"var(--t1)",fontWeight: isNext ? 600 : 400}}>{u.term}<div style={{fontSize:"9px",color:"var(--t3)",marginTop:"1px"}}>{u.pattern}</div></td>
                     <td style={{padding:"5px 6px",color:"var(--t2)",textAlign:"right"}}>${u.size_bn}B</td>
                     <td style={{padding:"5px 6px",textAlign:"right"}}>
                       <span style={{fontSize:"10px",padding:"2px 6px",borderRadius:"3px",background: daysAway <= 2 ? "rgba(255,208,96,.15)" : "rgba(0,150,255,.1)", color: daysAway <= 2 ? "var(--amber)" : "var(--t3)"}}>

@@ -112,17 +112,28 @@ export default async function handler(req, res) {
 
     const upcoming = upcomingAuctions
       .sort((a, b) => a.auction_date.localeCompare(b.auction_date))
-      .slice(0, 6)
+      .slice(0, 10)
       .map(a => {
         const offeringAmt = fmt(a.offering_amt);
         const label = a.security_type === 'Bond'
           ? a.security_term + ' Bond'
           : a.security_term + ' Note';
+
+    const AUCTION_PATTERNS = {
+      '4-Week': 'Weekly every Thu', '8-Week': 'Weekly every Thu',
+      '13-Week': 'Weekly every Mon', '26-Week': 'Weekly every Mon',
+      '52-Week': 'Every 4 weeks', '2-Year': 'Monthly last Wed',
+      '3-Year': 'Monthly 2nd Tue', '5-Year': 'Monthly last Wed',
+      '7-Year': 'Monthly last Thu', '10-Year': 'Monthly 2nd Wed benchmark',
+      '20-Year': 'Monthly 3rd Wed', '30-Year': 'Monthly 2nd Thu benchmark',
+    };
+        const termKey = Object.keys(AUCTION_PATTERNS).find(k => label.includes(k));
         return {
           term: label,
           date: a.auction_date,
           size_bn: offeringAmt ? +(offeringAmt / 1e9).toFixed(1) : null,
-          announced: a.announcemt_date || null
+          announced: a.announcemt_date || null,
+          pattern: termKey ? AUCTION_PATTERNS[termKey] : 'See treasury.gov'
         };
       });
 
