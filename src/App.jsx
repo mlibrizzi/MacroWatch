@@ -650,14 +650,37 @@ function AuctionsTab({ d }) {
       {/* UPCOMING */}
       {d.upcoming?.length > 0 && (
         <div className="sec">
-          <div className="sec-hdr"><div className="sec-ttl">⬡ UPCOMING AUCTIONS</div></div>
-          {d.upcoming.map((u, i) => (
-            <div className="sbar" key={i}>
-              <div className="sdot bl" />
-              <div className="stxt">{u.term} · ${u.size_bn}B</div>
-              <div className="smeta">{u.date}</div>
-            </div>
-          ))}
+          <div className="sec-hdr">
+            <div className="sec-ttl">⬡ UPCOMING AUCTIONS — 13 WEEK CALENDAR</div>
+          </div>
+          <table style={{width:"100%",borderCollapse:"collapse",fontSize:"11px"}}>
+            <thead>
+              <tr style={{borderBottom:"1px solid var(--b2)"}}>
+                <th style={{textAlign:"left",padding:"4px 6px",color:"var(--t3)",fontWeight:600}}>DATE</th>
+                <th style={{textAlign:"left",padding:"4px 6px",color:"var(--t3)",fontWeight:600}}>SECURITY</th>
+                <th style={{textAlign:"right",padding:"4px 6px",color:"var(--t3)",fontWeight:600}}>SIZE</th>
+                <th style={{textAlign:"right",padding:"4px 6px",color:"var(--t3)",fontWeight:600}}>STATUS</th>
+              </tr>
+            </thead>
+            <tbody>
+              {d.upcoming.map((u, i) => {
+                const daysAway = Math.ceil((new Date(u.date) - new Date()) / 86400000);
+                const isNext = i === 0;
+                return (
+                  <tr key={i} style={{borderBottom:"1px solid var(--b1)", background: isNext ? "rgba(0,150,255,0.05)" : "transparent"}}>
+                    <td style={{padding:"5px 6px",color: isNext ? "var(--acc2)" : "var(--t2)"}}>{u.date}</td>
+                    <td style={{padding:"5px 6px",color:"var(--t1)",fontWeight: isNext ? 600 : 400}}>{u.term}</td>
+                    <td style={{padding:"5px 6px",color:"var(--t2)",textAlign:"right"}}>${u.size_bn}B</td>
+                    <td style={{padding:"5px 6px",textAlign:"right"}}>
+                      <span style={{fontSize:"10px",padding:"2px 6px",borderRadius:"3px",background: daysAway <= 2 ? "rgba(255,208,96,.15)" : "rgba(0,150,255,.1)", color: daysAway <= 2 ? "var(--amber)" : "var(--t3)"}}>
+                        {daysAway <= 0 ? "TODAY" : daysAway === 1 ? "TOMORROW" : daysAway + "d"}
+                      </span>
+                    </td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
         </div>
       )}
     </div>

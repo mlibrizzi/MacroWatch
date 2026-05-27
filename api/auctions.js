@@ -5,9 +5,9 @@ export default async function handler(req, res) {
   try {
     const base = 'https://api.fiscaldata.treasury.gov/services/api/fiscal_service/v1/accounting/od/auctions_query';
     const fields = 'security_type,security_term,auction_date,offering_amt,bid_to_cover_ratio,indirect_bidder_accepted,direct_bidder_accepted,primary_dealer_accepted,total_accepted,total_tendered,high_yield,avg_med_yield,low_yield,reopening,announcemt_date';
-    const filter = 'security_type:in:(Note,Bond),auction_date:gte:2026-01-01';
+    const filter = 'security_type:in:(Note,Bond,Bill),auction_date:gte:2026-02-26,auction_date:lte:2026-08-26';
     const sort = '-auction_date';
-    const url = `${base}?fields=${fields}&filter=${filter}&sort=${sort}&page%5Bsize%5D=30`;
+    const url = `${base}?fields=${fields}&filter=${filter}&sort=${sort}&page%5Bsize%5D=100`;
 
     const r = await fetch(url);
     const d = await r.json();
