@@ -378,7 +378,7 @@ function DailyTab({ d }) {
                 <div className="sig-lbl" style={{display:'flex',alignItems:'center',justifyContent:'center',gap:'2px'}}>BUFFETT<InfoBtn label="Buffett Indicator" /></div>
                 <div className={'sig-val ' + (d.macro.buffett.signal === 'EXTREME' ? 'dn' : d.macro.buffett.signal === 'OVERVALUED' ? 'warn' : 'up')}>{d.macro.buffett.ratio}%</div>
                 <div className="sig-status" style={{background: d.macro.buffett.signal === 'EXTREME' ? 'rgba(255,62,90,.1)' : 'rgba(255,208,96,.1)', color: d.macro.buffett.signal === 'EXTREME' ? 'var(--red)' : 'var(--amber)'}}>{d.macro.buffett.signal}</div>
-                <div className="sig-note">Mkt Cap / GDP</div>
+                <div className="sig-note" style={{fontSize:"9px",lineHeight:"1.5",marginTop:"2px"}}><span style={{color:"var(--green)"}}>below 100 fair</span> / <span style={{color:"var(--amber)"}}>100-150 ok</span> / <span style={{color:"var(--warn)"}}>150-180 high</span> / <span style={{color:"var(--red)"}}>180+ extreme</span></div>
               </div>
             )}
           </div>
