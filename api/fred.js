@@ -304,13 +304,13 @@ return res.status(200).json({
         { date: will5000.prior2 ? will5000.prior2 : null, will: will5000.prior2, gdp: gdpNom.prior2 },
         { date: will5000.prior3 ? will5000.prior3 : null, will: will5000.prior3, gdp: gdpNom.prior3 },
       ].filter(h => h.will && h.gdp),
-      signal: will5000.latest && gdpNom.latest
-        ? (will5000.latest / gdpNom.latest) > 1.8 ? 'EXTREME' 
-        : (will5000.latest / gdpNom.latest) > 1.4 ? 'OVERVALUED'
-        : (will5000.latest / gdpNom.latest) > 1.0 ? 'FAIR'
+      signal: will5000.latest
+        ? will5000.latest > 180 ? 'EXTREME'
+        : will5000.latest > 150 ? 'OVERVALUED'
+        : will5000.latest > 100 ? 'FAIR'
         : 'UNDERVALUED'
         : null,
-      note: 'PTJ: 252% market cap/GDP. Crash precedents: 1929=65%, 1987=90%, 2000=170%',
+      note: 'World Bank mkt cap/GDP: 194.9% (2024). PTJ uses broader measure ~252%. Crash precedents: 2000=175%, 2021=220%.',
       delay: 'Quarterly — Wilshire 5000 daily, GDP quarterly (FRED)',
       source: 'Wilshire Associates + BEA via FRED'
     },
