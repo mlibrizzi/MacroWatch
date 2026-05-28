@@ -900,9 +900,9 @@ function HistoryTab({ d }) {
               <XAxis dataKey="date" tickFormatter={fmtDate} tick={false} interval={60}/>
               <YAxis tick={{fontSize:9,fill:"var(--t3)"}} tickFormatter={v=>v+"%"}/>
               <Tooltip formatter={v=>[v+"%","Spread"]} labelFormatter={fmtDate} contentStyle={cs}/>
-              <ReferenceArea y1={-2} y2={0} fill="rgba(255,62,90,0.12)" label={{value:"INVERTED",fill:"rgba(255,62,90,0.5)",fontSize:9,position:"insideTop"}}/>
+              <ReferenceArea y1={-1.5} y2={0} fill="rgba(255,62,90,0.12)"/>
               <ReferenceArea y1={0} y2={0.5} fill="rgba(255,208,96,0.06)"/>
-              <ReferenceArea y1={0.5} y2={2} fill="rgba(0,229,192,0.06)"/>
+              <ReferenceArea y1={0.5} y2={1.5} fill="rgba(0,229,192,0.06)"/>
               <ReferenceLine y={0} stroke="var(--red)" strokeDasharray="3 3"/>
               <Line type="monotone" dataKey="spread" stroke="var(--acc2)" dot={false} strokeWidth={1.5}/>
             </LineChart>
@@ -935,8 +935,7 @@ function HistoryTab({ d }) {
               <XAxis dataKey="date" tickFormatter={fmtDate} tick={false} interval={60}/>
               <YAxis tick={{fontSize:9,fill:"var(--t3)"}} tickFormatter={v=>v+"%"}/>
               <Tooltip formatter={v=>[v+"%","Real Yield"]} labelFormatter={fmtDate} contentStyle={cs}/>
-              <ReferenceArea y1={-2} y2={0} fill="rgba(0,229,192,0.12)" label={{value:"GOLD BULLISH",fill:"rgba(0,229,192,0.5)",fontSize:8,position:"insideTop"}}/>
-              <ReferenceArea y1={2} y2={5} fill="rgba(255,62,90,0.10)" label={{value:"HEADWIND",fill:"rgba(255,62,90,0.5)",fontSize:8,position:"insideBottom"}}/>
+              <ReferenceArea y1={2} y2={3} fill="rgba(255,62,90,0.15)"/>
               <ReferenceLine y={0} stroke="var(--acc3)" strokeDasharray="3 3"/>
               <ReferenceLine y={2} stroke="var(--red)" strokeDasharray="3 3"/>
               <Line type="monotone" dataKey="value" stroke="var(--acc)" dot={false} strokeWidth={1.5}/>
@@ -952,7 +951,7 @@ function HistoryTab({ d }) {
               <YAxis tick={{fontSize:9,fill:"var(--t3)"}} tickFormatter={v=>v+"%"}/>
               <Tooltip formatter={(v,n)=>[v+"%",n]} labelFormatter={fmtDate} contentStyle={cs}/>
               <ReferenceArea y1={0} y2={0.17} fill="rgba(0,229,192,0.08)"/>
-              <ReferenceArea y1={0.33} y2={2} fill="rgba(255,62,90,0.08)"/>
+              <ReferenceArea y1={0.33} y2={1.5} fill="rgba(255,62,90,0.08)"/>
               <ReferenceLine y={0.17} stroke="var(--acc3)" strokeDasharray="3 3"/>
               <Line type="monotone" dataKey="mom" stroke="var(--red)" dot={false} strokeWidth={1.5} name="CPI MoM"/>
             </LineChart>
