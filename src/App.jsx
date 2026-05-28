@@ -895,11 +895,14 @@ function HistoryTab({ d }) {
     <div className="tab-content">
       {d.yieldCurve && d.yieldCurve.length > 0 && (
         <Sect title="YIELD CURVE SPREAD 10Y-2Y (4 YEARS)" infoKey="Yield Curve Spread" note={cur ? "Current: "+(cur.spread>0?"+":"")+cur.spread+"%" : ""}>
-          <ResponsiveContainer width="100%" height={160}>
+          <ResponsiveContainer width="100%" height={200}>
             <LineChart data={d.yieldCurve} margin={{top:4,right:8,left:-20,bottom:0}}>
-              <XAxis dataKey="date" tickFormatter={fmtDate} tick={{fontSize:9,fill:"var(--t3)"}} interval={60}/>
+              <XAxis dataKey="date" tickFormatter={fmtDate} tick={false} interval={60}/>
               <YAxis tick={{fontSize:9,fill:"var(--t3)"}} tickFormatter={v=>v+"%"}/>
               <Tooltip formatter={v=>[v+"%","Spread"]} labelFormatter={fmtDate} contentStyle={cs}/>
+              <ReferenceArea y1={-2} y2={0} fill="rgba(255,62,90,0.12)" label={{value:"INVERTED",fill:"rgba(255,62,90,0.5)",fontSize:9,position:"insideTop"}}/>
+              <ReferenceArea y1={0} y2={0.5} fill="rgba(255,208,96,0.06)"/>
+              <ReferenceArea y1={0.5} y2={2} fill="rgba(0,229,192,0.06)"/>
               <ReferenceLine y={0} stroke="var(--red)" strokeDasharray="3 3"/>
               <Line type="monotone" dataKey="spread" stroke="var(--acc2)" dot={false} strokeWidth={1.5}/>
             </LineChart>
@@ -908,9 +911,9 @@ function HistoryTab({ d }) {
       )}
       {d.yieldCurve && d.yieldCurve.length > 0 && (
         <Sect title="TREASURY YIELDS 2Y / 10Y / 30Y" infoKey="Treasury Yields History" note="All 3 yields shown 4 years. 2Y above 10Y from 2022-2024 = inversion. Normal spread = +80bp.">
-          <ResponsiveContainer width="100%" height={160}>
+          <ResponsiveContainer width="100%" height={200}>
             <LineChart data={d.yieldCurve} margin={{top:4,right:8,left:-20,bottom:0}}>
-              <XAxis dataKey="date" tickFormatter={fmtDate} tick={{fontSize:9,fill:"var(--t3)"}} interval={60}/>
+              <XAxis dataKey="date" tickFormatter={fmtDate} tick={false} interval={60}/>
               <YAxis tick={{fontSize:9,fill:"var(--t3)"}} tickFormatter={v=>v+"%"}/>
               <Tooltip formatter={(v,n)=>[v+"%",n.toUpperCase()]} labelFormatter={fmtDate} contentStyle={cs}/>
               <Line type="monotone" dataKey="t2y" stroke="var(--acc)" dot={false} strokeWidth={1.5} name="2Y"/>
@@ -927,11 +930,13 @@ function HistoryTab({ d }) {
       )}
       {d.tips10y && d.tips10y.length > 0 && (
         <Sect title="10Y TIPS REAL YIELD" infoKey="TIPS Real Yield History" note="Below 0% = gold very bullish. Above 2% = gold headwind.">
-          <ResponsiveContainer width="100%" height={140}>
+          <ResponsiveContainer width="100%" height={180}>
             <LineChart data={d.tips10y} margin={{top:4,right:8,left:-20,bottom:0}}>
-              <XAxis dataKey="date" tickFormatter={fmtDate} tick={{fontSize:9,fill:"var(--t3)"}} interval={60}/>
+              <XAxis dataKey="date" tickFormatter={fmtDate} tick={false} interval={60}/>
               <YAxis tick={{fontSize:9,fill:"var(--t3)"}} tickFormatter={v=>v+"%"}/>
               <Tooltip formatter={v=>[v+"%","Real Yield"]} labelFormatter={fmtDate} contentStyle={cs}/>
+              <ReferenceArea y1={-2} y2={0} fill="rgba(0,229,192,0.12)" label={{value:"GOLD BULLISH",fill:"rgba(0,229,192,0.5)",fontSize:8,position:"insideTop"}}/>
+              <ReferenceArea y1={2} y2={5} fill="rgba(255,62,90,0.10)" label={{value:"HEADWIND",fill:"rgba(255,62,90,0.5)",fontSize:8,position:"insideBottom"}}/>
               <ReferenceLine y={0} stroke="var(--acc3)" strokeDasharray="3 3"/>
               <ReferenceLine y={2} stroke="var(--red)" strokeDasharray="3 3"/>
               <Line type="monotone" dataKey="value" stroke="var(--acc)" dot={false} strokeWidth={1.5}/>
@@ -941,11 +946,13 @@ function HistoryTab({ d }) {
       )}
       {d.cpi && d.cpi.length > 0 && (
         <Sect title="CPI INFLATION MoM" infoKey="CPI Inflation History" note="Fed target = 0.17% MoM (2% annualized). Dashed = target.">
-          <ResponsiveContainer width="100%" height={140}>
+          <ResponsiveContainer width="100%" height={180}>
             <LineChart data={d.cpi} margin={{top:4,right:8,left:-20,bottom:0}}>
-              <XAxis dataKey="date" tickFormatter={fmtDate} tick={{fontSize:9,fill:"var(--t3)"}} interval={6}/>
+              <XAxis dataKey="date" tickFormatter={fmtDate} tick={false} interval={6}/>
               <YAxis tick={{fontSize:9,fill:"var(--t3)"}} tickFormatter={v=>v+"%"}/>
               <Tooltip formatter={(v,n)=>[v+"%",n]} labelFormatter={fmtDate} contentStyle={cs}/>
+              <ReferenceArea y1={0} y2={0.17} fill="rgba(0,229,192,0.08)"/>
+              <ReferenceArea y1={0.33} y2={2} fill="rgba(255,62,90,0.08)"/>
               <ReferenceLine y={0.17} stroke="var(--acc3)" strokeDasharray="3 3"/>
               <Line type="monotone" dataKey="mom" stroke="var(--red)" dot={false} strokeWidth={1.5} name="CPI MoM"/>
             </LineChart>
@@ -954,9 +961,9 @@ function HistoryTab({ d }) {
       )}
       {d.fedBalance && d.fedBalance.length > 0 && (
         <Sect title="FED BALANCE SHEET TOTAL ASSETS" infoKey="Fed Balance Sheet History" note="QT ended Dec 2025. Now in reserve management.">
-          <ResponsiveContainer width="100%" height={140}>
+          <ResponsiveContainer width="100%" height={180}>
             <LineChart data={d.fedBalance} margin={{top:4,right:8,left:-20,bottom:0}}>
-              <XAxis dataKey="date" tickFormatter={fmtDate} tick={{fontSize:9,fill:"var(--t3)"}} interval={60}/>
+              <XAxis dataKey="date" tickFormatter={fmtDate} tick={false} interval={60}/>
               <YAxis tick={{fontSize:9,fill:"var(--t3)"}} tickFormatter={v=>(v/1e6).toFixed(1)+"T"}/>
               <Tooltip formatter={v=>["$"+(v/1e6).toFixed(2)+"T","Assets"]} labelFormatter={fmtDate} contentStyle={cs}/>
               <Line type="monotone" dataKey="value" stroke="var(--acc2)" dot={false} strokeWidth={1.5}/>
