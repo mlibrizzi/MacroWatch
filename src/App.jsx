@@ -196,7 +196,7 @@ const INFO_DEFS = {
   },
   'Gold/Yield Ratio': {
     what: `Gold price divided by the 10-year Treasury yield — measures distrust in financial assets relative to safe alternatives.`,
-    how: `Gold spot price (USD) divided by 10Y Treasury yield (%). Current: ~,535 / 4.57% = 992.`,
+    how: `Gold spot price (USD) divided by 10Y Treasury yield (%). Formula: Gold price divided by 10Y yield = ratio. Example: 4,400 divided by 4.5% = 978. Higher = more distrust of bonds vs gold.`,
     why: `A rising ratio means gold is outperforming bonds — investors fleeing to real assets. Above 800 signals elevated distrust. Current 992 is in DISTRUST territory, consistent with fiscal stress thesis.`
   },
   'VIX': {
