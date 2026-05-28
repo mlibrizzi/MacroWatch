@@ -269,6 +269,31 @@ const INFO_DEFS = {
     how: `Wilshire 5000 Index divided by Nominal GDP x 100 = percentage. FRED series: WILL5000IND and GDP. Updated quarterly when GDP releases.`,
     why: `PTJ warning: currently at 252% — exceeding every prior bubble peak. 1929=65%, 1987=90%, 2000=170%. A 30-35% mean reversion destroys wealth equal to 89% of annual GDP, collapses capital gains tax revenues, and triggers a sovereign debt doom loop. The single most important valuation warning in MacroWatch.`
   },
+  'Yield Curve Spread': {
+    what: `The difference between the 10-year and 2-year Treasury yields plotted over time. Shows when the curve inverted (short rates above long rates) and when it normalized.`,
+    how: `10Y Treasury yield minus 2Y Treasury yield, daily from FRED. Plotted over 2 years. Red dashed line = zero (inversion threshold).`,
+    why: `The 2022-2024 inversion was the deepest since 1981 and lasted over 2 years — the longest on record. Every US recession since 1955 was preceded by an inversion. The curve normalized in 2025 at +47bp but remains compressed vs historical average of +80bp. Watch for re-inversion as a recession early warning.`
+  },
+  'Treasury Yields History': {
+    what: `The 2-year, 10-year, and 30-year Treasury yields plotted over 2 years, showing how rates moved as the Fed cut 175bp since mid-2024.`,
+    how: `Daily FRED data for DGS2, DGS10, DGS30 over 104 weeks. Three lines showing the full curve shape over time.`,
+    why: `The bond market disconnect is visible here: despite Fed cutting 175bp, the 10Y yield only fell ~35bp. This unprecedented divergence shows bond vigilantes overriding the Fed — pricing in fiscal risk and persistent inflation rather than following the policy rate down.`
+  },
+  'TIPS Real Yield History': {
+    what: `The 10-year inflation-adjusted yield plotted over 2 years. Shows the shift from negative real yields (2021-2022) to positive real yields today.`,
+    how: `Daily FRED data for DFII10 over 104 weeks. Two reference lines: zero (gold very bullish below) and 2% (gold headwind above).`,
+    why: `Gold peaked at $2,075 in 2022 when real yields were deeply negative. As real yields rose to +2%, gold was pressured. Now at +2.18%, gold is competing with real returns. If real yields rise above 2.5%, expect gold headwind. If they fall (Fed cuts or inflation rises), gold benefits directly.`
+  },
+  'CPI Inflation History': {
+    what: `Monthly CPI change over the past 2 years, showing the inflation trajectory from the 2022 peak through the current sticky elevated period.`,
+    how: `Monthly FRED data for CPIAUCSL, calculated as month-over-month percentage change. Dashed line = Fed 2% annualized target (0.17% MoM).`,
+    why: `Inflation decomposition: roughly 40-50% of current 3.8% reading is war/energy-driven (transient), 50-60% is structural (tariffs, fiscal, dollar). The chart shows whether inflation is trending toward or away from the Fed target. Persistent above-target readings validate the stagflation thesis and gold overweight.`
+  },
+  'Fed Balance Sheet History': {
+    what: `The Federal Reserve total assets over 2 years, showing the quantitative tightening (QT) phase that ended December 2025.`,
+    how: `Weekly FRED data for WALCL (Fed total assets in millions). Converted to trillions for display.`,
+    why: `The Fed reduced its balance sheet from $9T peak to ~$6.7T through QT. QT ended December 2025 — the Fed is now in reserve management mode. If the Fed resumes asset purchases (QE4), it would be massively inflationary and gold-bullish. Watch for any balance sheet expansion as a regime shift signal.`
+  },
   'TGA Balance': {
     what: `The Treasury General Account — the US government checking account held at the Federal Reserve. All federal tax receipts and spending flow through this account.`,
     how: `Published weekly by the Federal Reserve. Balance fluctuates with tax receipts, debt issuance, and spending. FRED series: WDTGAL.`,
@@ -854,9 +879,13 @@ function HistoryTab({ d }) {
   if (!d) return <Loading text="LOADING TREND DATA..." />;
   const fmtDate = (s) => { if (!s) return ""; const p = s.split("-"); return p[0].slice(2)+"/"+p[1]; };
   const cs = {background:"var(--s2)",border:"1px solid var(--b2)",fontSize:"11px"};
-  const Sect = ({title, note, children}) => (
+  const Sect = ({title, infoKey, note, children}) => (
     <div className="sec">
-      <div className="sec-hdr"><div className="sec-ttl">{title}</div></div>
+      <div className="sec-hdr">
+        <div className="sec-ttl" style={{display:"flex",alignItems:"center",gap:"4px"}}>
+          {title}{infoKey && <InfoBtn label={infoKey}/>}
+        </div>
+      </div>
       {note && <div style={{fontSize:"10px",color:"var(--t3)",marginBottom:"4px",paddingLeft:"8px"}}>{note}</div>}
       {children}
     </div>
@@ -865,7 +894,7 @@ function HistoryTab({ d }) {
   return (
     <div className="tab-content">
       {d.yieldCurve && d.yieldCurve.length > 0 && (
-        <Sect title="YIELD CURVE SPREAD 10Y-2Y" note={cur ? "Current: "+(cur.spread>0?"+":"")+cur.spread+"%" : ""}>
+        <Sect title="YIELD CURVE SPREAD 10Y-2Y" infoKey="Yield Curve Spread" note={cur ? "Current: "+(cur.spread>0?"+":"")+cur.spread+"%" : ""}>
           <ResponsiveContainer width="100%" height={160}>
             <LineChart data={d.yieldCurve} margin={{top:4,right:8,left:-20,bottom:0}}>
               <XAxis dataKey="date" tickFormatter={fmtDate} tick={{fontSize:9,fill:"var(--t3)"}} interval={12}/>
@@ -878,7 +907,7 @@ function HistoryTab({ d }) {
         </Sect>
       )}
       {d.yieldCurve && d.yieldCurve.length > 0 && (
-        <Sect title="TREASURY YIELDS 2Y / 10Y / 30Y" note="2022-2024 inversion clearly visible. Normal curve = +80bp.">
+        <Sect title="TREASURY YIELDS 2Y / 10Y / 30Y" infoKey="Treasury Yields History" note="2022-2024 inversion clearly visible. Normal curve = +80bp.">
           <ResponsiveContainer width="100%" height={160}>
             <LineChart data={d.yieldCurve} margin={{top:4,right:8,left:-20,bottom:0}}>
               <XAxis dataKey="date" tickFormatter={fmtDate} tick={{fontSize:9,fill:"var(--t3)"}} interval={12}/>
@@ -897,7 +926,7 @@ function HistoryTab({ d }) {
         </Sect>
       )}
       {d.tips10y && d.tips10y.length > 0 && (
-        <Sect title="10Y TIPS REAL YIELD" note="Below 0% = gold very bullish. Above 2% = gold headwind.">
+        <Sect title="10Y TIPS REAL YIELD" infoKey="TIPS Real Yield History" note="Below 0% = gold very bullish. Above 2% = gold headwind.">
           <ResponsiveContainer width="100%" height={140}>
             <LineChart data={d.tips10y} margin={{top:4,right:8,left:-20,bottom:0}}>
               <XAxis dataKey="date" tickFormatter={fmtDate} tick={{fontSize:9,fill:"var(--t3)"}} interval={12}/>
@@ -911,7 +940,7 @@ function HistoryTab({ d }) {
         </Sect>
       )}
       {d.cpi && d.cpi.length > 0 && (
-        <Sect title="CPI INFLATION MoM" note="Fed target = 0.17% MoM (2% annualized). Dashed = target.">
+        <Sect title="CPI INFLATION MoM" infoKey="CPI Inflation History" note="Fed target = 0.17% MoM (2% annualized). Dashed = target.">
           <ResponsiveContainer width="100%" height={140}>
             <LineChart data={d.cpi} margin={{top:4,right:8,left:-20,bottom:0}}>
               <XAxis dataKey="date" tickFormatter={fmtDate} tick={{fontSize:9,fill:"var(--t3)"}} interval={3}/>
@@ -924,7 +953,7 @@ function HistoryTab({ d }) {
         </Sect>
       )}
       {d.fedBalance && d.fedBalance.length > 0 && (
-        <Sect title="FED BALANCE SHEET TOTAL ASSETS" note="QT ended Dec 2025. Now in reserve management.">
+        <Sect title="FED BALANCE SHEET TOTAL ASSETS" infoKey="Fed Balance Sheet History" note="QT ended Dec 2025. Now in reserve management.">
           <ResponsiveContainer width="100%" height={140}>
             <LineChart data={d.fedBalance} margin={{top:4,right:8,left:-20,bottom:0}}>
               <XAxis dataKey="date" tickFormatter={fmtDate} tick={{fontSize:9,fill:"var(--t3)"}} interval={12}/>
