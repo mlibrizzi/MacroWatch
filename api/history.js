@@ -22,14 +22,14 @@ export default async function handler(req, res) {
 
   try {
     const [t2y, t10y, t30y, tips10y, cpi, pce, walcl, vix] = await Promise.all([
-      fetchSeries('DGS2',      104), // 2Y yield — 2 years weekly
-      fetchSeries('DGS10',     104), // 10Y yield
-      fetchSeries('DGS30',     104), // 30Y yield
-      fetchSeries('DFII10',    104), // 10Y TIPS real yield
-      fetchSeries('CPIAUCSL',   24), // CPI — 24 months
-      fetchSeries('PCEPILFE',   24), // Core PCE
-      fetchSeries('WALCL',     104), // Fed balance sheet
-      fetchSeries('VIXCLS',    104), // VIX history
+      fetchSeries('DGS2',      208), // 2Y yield — 2 years weekly
+      fetchSeries('DGS10',     208), // 10Y yield
+      fetchSeries('DGS30',     208), // 30Y yield
+      fetchSeries('DFII10',    208), // 10Y TIPS real yield
+      fetchSeries('CPIAUCSL',   48), // CPI — 24 months
+      fetchSeries('PCEPILFE',   48), // Core PCE
+      fetchSeries('WALCL',     208), // Fed balance sheet
+      fetchSeries('VIXCLS',    208), // VIX history
     ]);
 
     // Build yield curve spread (10Y - 2Y) history
