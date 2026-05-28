@@ -93,6 +93,14 @@ export async function fetchDaily() {
   }
 }
 
+export async function fetchHistory() {
+  try {
+    return await fetchLive('/api/history');
+  } catch(e) {
+    return null;
+  }
+}
+
 export async function fetchWeekly() {
   try {
     const fred = await fetchLive('/api/fred');
