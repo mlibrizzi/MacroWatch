@@ -74,7 +74,7 @@ body{font-family:var(--sans);color:var(--t1);overflow-x:hidden}
 .tk-chg{font-family:var(--mono);font-size:10px;margin-top:2px}
 
 /* DERIVED SIGNALS */
-.sig-grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px}
+.sig-grid{display:grid;grid-template-columns:1fr 1fr;gap:6px}
 .sig-box{background:var(--s2);border:1px solid var(--b2);border-radius:var(--r);padding:10px;text-align:center}
 .sig-lbl{font-family:var(--mono);font-size:7px;color:var(--t3);letter-spacing:1px;margin-bottom:6px}
 .sig-val{font-family:var(--mono);font-size:13px;font-weight:700;margin-bottom:4px}
