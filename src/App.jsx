@@ -1252,7 +1252,7 @@ export default function App() {
         {active === 'monthly'   && <MonthlyTab   d={data.monthly} />}
         {active === 'quarterly' && <QuarterlyTab d={data.quarterly} />}
         {active === 'history'   && <HistoryTab  d={data.history} />}
-        \{active === 'intel'     && <IntelTab     d={data.intel} dailyData={data.daily} loading={loading.intel} onRefresh={() => load('intel')} />}
+        {active === 'intel'     && <IntelTab     d={data.intel} dailyData={data.daily} loading={loading.intel} onRefresh={() => load('intel')} />}
 
         <div className="bnav">
           {TABS.map(t => (
