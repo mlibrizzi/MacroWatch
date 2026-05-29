@@ -280,9 +280,9 @@ const INFO_DEFS = {
     why: `The bond market disconnect is visible here: despite Fed cutting 175bp, the 10Y yield only fell ~35bp. This unprecedented divergence shows bond vigilantes overriding the Fed — pricing in fiscal risk and persistent inflation rather than following the policy rate down.`
   },
   'TIPS Real Yield History': {
-    what: `The 10-year inflation-adjusted yield plotted over 2 years. Shows the shift from negative real yields (2021-2022) to positive real yields today.`,
-    how: `Daily FRED data for DFII10 over 104 weeks. Two reference lines: zero (gold very bullish below) and 2% (gold headwind above).`,
-    why: `Gold peaked at $2,075 in 2022 when real yields were deeply negative. As real yields rose to +2%, gold was pressured. Now at +2.18%, gold is competing with real returns. If real yields rise above 2.5%, expect gold headwind. If they fall (Fed cuts or inflation rises), gold benefits directly.`
+    what: `The 10-year inflation-adjusted yield plotted over 4 years. Shows the shift from deeply negative real yields (2021-2022) through the rapid rise to positive territory, and current levels around 2%.`,
+    how: `Daily FRED data for DFII10. Dashed lines at 0% and 2%. Formula: nominal 10Y yield minus 10Y inflation expectations (TIPS market price).`,
+    why: `The textbook rule: negative real yields = gold bullish (gold pays zero yield but beats negative real return). Positive real yields = competition for gold. BUT since late 2023 this relationship has broken down — real yields rose to 2%+ yet gold surged from USD1,800 to USD4,500. Why? Central bank buying (China, India, Turkey buying gold as dollar reserve diversification regardless of yield), fiscal credibility erosion (2% real yield on USD36T debt is not truly risk-free), and geopolitical hedging demand. The 2% line is still meaningful — a further rise to 3%+ would create genuine headwinds even with central bank support. Watch for TIPS above 2.5% as the real danger zone.`
   },
   'CPI Inflation History': {
     what: `Monthly CPI change over the past 2 years, showing the inflation trajectory from the 2022 peak through the current sticky elevated period.`,
