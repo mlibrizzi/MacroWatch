@@ -294,10 +294,15 @@ const INFO_DEFS = {
     how: `Weekly FRED data for WALCL (Fed total assets in millions). Converted to trillions for display.`,
     why: `The Fed reduced its balance sheet from $9T peak to ~$6.7T through QT. QT ended December 2025 — the Fed is now in reserve management mode. If the Fed resumes asset purchases (QE4), it would be massively inflationary and gold-bullish. Watch for any balance sheet expansion as a regime shift signal.`
   },
-  'TIC Foreign Holdings Trend': {
-    what: `Monthly chart of total foreign Treasury holdings, China holdings, and Japan holdings over 13 months — the most recent TIC data available.`,
-    how: `Data from US Treasury slt_table5.txt published monthly with ~45 day lag. Total = all foreign holders (official + private). China and Japan shown separately as the two most watched holders.`,
-    why: `The composition story is critical: total holdings hit a record USD9.49T in Feb 2026 yet China fell from USD1.3T (2013) to USD0.69T. Private investors are replacing stable central banks. China selling = deliberate de-dollarization. Japan selling = BoJ normalization forcing domestic JGB purchases. Watch for total holdings declining 3+ months in a row as a systemic warning signal.`
+  'TIC Official Buyers': {
+    what: `Monthly holdings of Japan, China, Taiwan, and India — the four largest sovereign and central bank holders of US Treasuries. These are official, price-insensitive buyers who hold Treasuries as foreign exchange reserves.`,
+    how: `Data from US Treasury slt_table5.txt, monthly with ~45 day lag. These represent central bank and government purchases, not private investors.`,
+    why: `Official buyers are the foundation of Treasury demand. Japan at USD1.2T is the largest single holder — BoJ normalization (raising Japanese rates) could force Japan to sell Treasuries to defend the yen, a major risk. China has fallen from USD1.3T (2013) to USD0.65T — a deliberate 50% reduction as geopolitical de-dollarization. Taiwan and India are steady buyers but smaller. Watch: if Japan AND China are both selling simultaneously, the official buyer base collapses and private buyers must fill the gap at higher yields.`
+  },
+  'TIC Financial Centers': {
+    what: `Monthly holdings of UK, Cayman Islands, Belgium, Luxembourg, France, Ireland, and Switzerland — financial center custody hubs that represent private investor demand (hedge funds, asset managers, wealth funds) rather than central banks.`,
+    how: `Same TIC source. These countries hold Treasuries primarily as custodians for private investors worldwide. Rising = private money flowing into Treasuries. Falling = private money leaving.`,
+    why: `This is the replacement demand story. As official central banks (China, Japan) sell, private investors routed through financial centers are buying more. UK at USD927B and Cayman at USD459B represent massive hedge fund and family office demand. This demand is PRICE SENSITIVE — unlike central banks, these investors will sell if yields fall or if they find better returns elsewhere. The shift from stable official buyers to volatile private buyers makes the Treasury market more fragile. Watch for simultaneous declines in both official AND financial center holdings as the true crisis signal.`
   },
   'TGA Balance': {
     what: `The Treasury General Account — the US government checking account held at the Federal Reserve. All federal tax receipts and spending flow through this account.`,
@@ -976,22 +981,50 @@ function HistoryTab({ d }) {
         </Sect>
       )}
       {d.ticHistory && d.ticHistory.length > 0 && (
-        <Sect title="TIC FOREIGN HOLDINGS TREND" infoKey="TIC Foreign Holdings Trend" note="Total, China and Japan holdings over 13 months. Record total but China actively selling.">
+        <Sect title="TIC OFFICIAL BUYERS — Sovereign & Central Bank" infoKey="TIC Official Buyers" note="Japan, China, Taiwan, India — price-insensitive official holders. China down 50% from 2013 peak.">
           <ResponsiveContainer width="100%" height={200}>
             <LineChart data={d.ticHistory} margin={{top:4,right:8,left:-10,bottom:0}}>
               <XAxis dataKey="date" tick={false}/>
-              <YAxis tick={{fontSize:9,fill:"var(--t3)"}} tickFormatter={v=>v>=1000?(v/1000).toFixed(1)+"T":v+"B"}/>
+              <YAxis tick={{fontSize:9,fill:"var(--t3)"}} tickFormatter={v=>v+"B"}/>
               <Tooltip formatter={(v,n)=>[v ? "$"+v.toFixed(0)+"B" : "N/A", n]} labelFormatter={s=>s} contentStyle={{background:"var(--s1)",border:"1px solid var(--b2)",fontSize:"11px"}}/>
-              <ReferenceLine y={9000} stroke="var(--acc3)" strokeDasharray="3 3"/>
-              <Line type="monotone" dataKey="total" stroke="var(--acc2)" dot={true} strokeWidth={2} name="Total Foreign"/>
-              <Line type="monotone" dataKey="china" stroke="var(--red)" dot={true} strokeWidth={1.5} name="China"/>
-              <Line type="monotone" dataKey="japan" stroke="var(--acc3)" dot={true} strokeWidth={1.5} name="Japan"/>
+              <Line type="monotone" dataKey="japan" stroke="var(--acc3)" dot={true} strokeWidth={2} name="Japan"/>
+              <Line type="monotone" dataKey="china" stroke="var(--red)" dot={true} strokeWidth={2} name="China"/>
+              <Line type="monotone" dataKey="taiwan" stroke="#60a5fa" dot={true} strokeWidth={1.5} name="Taiwan"/>
+              <Line type="monotone" dataKey="india" stroke="#34d399" dot={true} strokeWidth={1.5} name="India"/>
             </LineChart>
           </ResponsiveContainer>
-          <div style={{display:"flex",gap:"12px",padding:"4px 8px",fontSize:"9px"}}>
-            <span style={{color:"var(--acc2)"}}>Total Foreign</span>
-            <span style={{color:"var(--red)"}}>China</span>
+          <div style={{display:"flex",flexWrap:"wrap",gap:"10px",padding:"4px 8px",fontSize:"9px"}}>
             <span style={{color:"var(--acc3)"}}>Japan</span>
+            <span style={{color:"var(--red)"}}>China</span>
+            <span style={{color:"#60a5fa"}}>Taiwan</span>
+            <span style={{color:"#34d399"}}>India</span>
+          </div>
+        </Sect>
+      )}
+      {d.ticHistory && d.ticHistory.length > 0 && (
+        <Sect title="TIC FINANCIAL CENTERS — Private Investor Demand" infoKey="TIC Financial Centers" note="UK, Cayman, Belgium, Luxembourg, France, Ireland, Switzerland — hedge funds and asset managers replacing central banks.">
+          <ResponsiveContainer width="100%" height={200}>
+            <LineChart data={d.ticHistory} margin={{top:4,right:8,left:-10,bottom:0}}>
+              <XAxis dataKey="date" tick={false}/>
+              <YAxis tick={{fontSize:9,fill:"var(--t3)"}} tickFormatter={v=>v+"B"}/>
+              <Tooltip formatter={(v,n)=>[v ? "$"+v.toFixed(0)+"B" : "N/A", n]} labelFormatter={s=>s} contentStyle={{background:"var(--s1)",border:"1px solid var(--b2)",fontSize:"11px"}}/>
+              <Line type="monotone" dataKey="uk" stroke="#60a5fa" dot={true} strokeWidth={2} name="UK"/>
+              <Line type="monotone" dataKey="cayman" stroke="#a78bfa" dot={true} strokeWidth={1.5} name="Cayman"/>
+              <Line type="monotone" dataKey="belgium" stroke="#f472b6" dot={true} strokeWidth={1.5} name="Belgium"/>
+              <Line type="monotone" dataKey="luxembourg" stroke="#34d399" dot={true} strokeWidth={1.5} name="Luxembourg"/>
+              <Line type="monotone" dataKey="france" stroke="#e879f9" dot={true} strokeWidth={1.5} name="France"/>
+              <Line type="monotone" dataKey="ireland" stroke="#fb923c" dot={true} strokeWidth={1.5} name="Ireland"/>
+              <Line type="monotone" dataKey="switzerland" stroke="#f59e0b" dot={true} strokeWidth={1.5} name="Switzerland"/>
+            </LineChart>
+          </ResponsiveContainer>
+          <div style={{display:"flex",flexWrap:"wrap",gap:"8px",padding:"4px 8px",fontSize:"9px"}}>
+            <span style={{color:"#60a5fa"}}>UK</span>
+            <span style={{color:"#a78bfa"}}>Cayman</span>
+            <span style={{color:"#f472b6"}}>Belgium</span>
+            <span style={{color:"#34d399"}}>Luxembourg</span>
+            <span style={{color:"#e879f9"}}>France</span>
+            <span style={{color:"#fb923c"}}>Ireland</span>
+            <span style={{color:"#f59e0b"}}>Switzerland</span>
           </div>
         </Sect>
       )}
