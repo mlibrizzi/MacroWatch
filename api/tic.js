@@ -68,7 +68,7 @@ export default async function handler(req, res) {
     const months = headerRow.slice(1).filter(m => m && m.trim());
     const history = months.map((month, colIdx) => {
       const col = colIdx + 1;
-      let total = null, china = null, japan = null;
+      let total = null, china = null, japan = null, uk = null, cayman = null, belgium = null, luxembourg = null, france = null, ireland = null, switzerland = null, taiwan = null, india = null;
       for (const row of dataRows) {
         const cols = row.split('\t');
         if (cols.length <= col) continue;
@@ -77,8 +77,17 @@ export default async function handler(req, res) {
         if (country === 'Grand Total') total = isNaN(val) ? null : val;
         if (country === 'China, Mainland') china = isNaN(val) ? null : val;
         if (country === 'Japan') japan = isNaN(val) ? null : val;
+        if (country === 'United Kingdom') uk = isNaN(val) ? null : val;
+        if (country === 'Cayman Islands') cayman = isNaN(val) ? null : val;
+        if (country === 'Belgium') belgium = isNaN(val) ? null : val;
+        if (country === 'Luxembourg') luxembourg = isNaN(val) ? null : val;
+        if (country === 'France') france = isNaN(val) ? null : val;
+        if (country === 'Ireland') ireland = isNaN(val) ? null : val;
+        if (country === 'Switzerland') switzerland = isNaN(val) ? null : val;
+        if (country === 'Taiwan') taiwan = isNaN(val) ? null : val;
+        if (country === 'India') india = isNaN(val) ? null : val;
       }
-      return { date: month, total, china, japan };
+      return { date: month, total, china, japan, uk, cayman, belgium, luxembourg, france, ireland, switzerland, taiwan, india };
     }).filter(h => h.total).reverse(); // oldest first for charting
 
     return res.status(200).json({
