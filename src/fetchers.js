@@ -95,7 +95,11 @@ export async function fetchDaily() {
 
 export async function fetchHistory() {
   try {
-    return await fetchLive('/api/history');
+    const [history, tic] = await Promise.all([
+      fetchLive('/api/history'),
+      fetchLive('/api/tic')
+    ]);
+    return { ...history, ticHistory: tic?.history || [] };
   } catch(e) {
     return null;
   }

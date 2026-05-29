@@ -64,7 +64,25 @@ export default async function handler(req, res) {
       .sort((a, b) => b.holdings_bn - a.holdings_bn)
       .slice(0, 8);
 
+    // Build history array from all columns
+    const months = headerRow.slice(1).filter(m => m && m.trim());
+    const history = months.map((month, colIdx) => {
+      const col = colIdx + 1;
+      let total = null, china = null, japan = null;
+      for (const row of dataRows) {
+        const cols = row.split('\t');
+        if (cols.length <= col) continue;
+        const country = cols[0].trim();
+        const val = parseFloat(cols[col]);
+        if (country === 'Grand Total') total = isNaN(val) ? null : val;
+        if (country === 'China, Mainland') china = isNaN(val) ? null : val;
+        if (country === 'Japan') japan = isNaN(val) ? null : val;
+      }
+      return { date: month, total, china, japan };
+    }).filter(h => h.total).reverse(); // oldest first for charting
+
     return res.status(200).json({
+      history,
       report_month: latestMonth,
       total_foreign_bn: grandTotal,
       prior_month_bn: grandTotalPrior,

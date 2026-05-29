@@ -294,6 +294,11 @@ const INFO_DEFS = {
     how: `Weekly FRED data for WALCL (Fed total assets in millions). Converted to trillions for display.`,
     why: `The Fed reduced its balance sheet from $9T peak to ~$6.7T through QT. QT ended December 2025 — the Fed is now in reserve management mode. If the Fed resumes asset purchases (QE4), it would be massively inflationary and gold-bullish. Watch for any balance sheet expansion as a regime shift signal.`
   },
+  'TIC Foreign Holdings Trend': {
+    what: `Monthly chart of total foreign Treasury holdings, China holdings, and Japan holdings over 13 months — the most recent TIC data available.`,
+    how: `Data from US Treasury slt_table5.txt published monthly with ~45 day lag. Total = all foreign holders (official + private). China and Japan shown separately as the two most watched holders.`,
+    why: `The composition story is critical: total holdings hit a record USD9.49T in Feb 2026 yet China fell from USD1.3T (2013) to USD0.69T. Private investors are replacing stable central banks. China selling = deliberate de-dollarization. Japan selling = BoJ normalization forcing domestic JGB purchases. Watch for total holdings declining 3+ months in a row as a systemic warning signal.`
+  },
   'TGA Balance': {
     what: `The Treasury General Account — the US government checking account held at the Federal Reserve. All federal tax receipts and spending flow through this account.`,
     how: `Published weekly by the Federal Reserve. Balance fluctuates with tax receipts, debt issuance, and spending. FRED series: WDTGAL.`,
@@ -968,6 +973,26 @@ function HistoryTab({ d }) {
               <Line type="monotone" dataKey="value" stroke="var(--acc2)" dot={false} strokeWidth={1.5}/>
             </LineChart>
           </ResponsiveContainer>
+        </Sect>
+      )}
+      {d.ticHistory && d.ticHistory.length > 0 && (
+        <Sect title="TIC FOREIGN HOLDINGS TREND" infoKey="TIC Foreign Holdings Trend" note="Total, China and Japan holdings over 13 months. Record total but China actively selling.">
+          <ResponsiveContainer width="100%" height={200}>
+            <LineChart data={d.ticHistory} margin={{top:4,right:8,left:-10,bottom:0}}>
+              <XAxis dataKey="date" tick={false}/>
+              <YAxis tick={{fontSize:9,fill:"var(--t3)"}} tickFormatter={v=>v>=1000?(v/1000).toFixed(1)+"T":v+"B"}/>
+              <Tooltip formatter={(v,n)=>[v ? "$"+v.toFixed(0)+"B" : "N/A", n]} labelFormatter={s=>s} contentStyle={{background:"var(--s1)",border:"1px solid var(--b2)",fontSize:"11px"}}/>
+              <ReferenceLine y={9000} stroke="var(--acc3)" strokeDasharray="3 3"/>
+              <Line type="monotone" dataKey="total" stroke="var(--acc2)" dot={true} strokeWidth={2} name="Total Foreign"/>
+              <Line type="monotone" dataKey="china" stroke="var(--red)" dot={true} strokeWidth={1.5} name="China"/>
+              <Line type="monotone" dataKey="japan" stroke="var(--acc3)" dot={true} strokeWidth={1.5} name="Japan"/>
+            </LineChart>
+          </ResponsiveContainer>
+          <div style={{display:"flex",gap:"12px",padding:"4px 8px",fontSize:"9px"}}>
+            <span style={{color:"var(--acc2)"}}>Total Foreign</span>
+            <span style={{color:"var(--red)"}}>China</span>
+            <span style={{color:"var(--acc3)"}}>Japan</span>
+          </div>
         </Sect>
       )}
     </div>
