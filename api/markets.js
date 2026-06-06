@@ -60,6 +60,25 @@ export default async function handler(req, res) {
           delay: 'Real-time (Finnhub / CBOE)'
         };
       }
+      // Fallback: CBOE direct CSV
+      try {
+        const cboeR = await fetch('https://cdn.cboe.com/api/global/us_indices/daily_prices/VIX_History.csv');
+        const csv = await cboeR.text();
+        const rows = csv.trim().split('\n');
+        const last = rows[rows.length - 1].split(',');
+        const prev = rows[rows.length - 2].split(',');
+        const price = parseFloat(last[4]); // CLOSE
+        const prevClose = parseFloat(prev[4]);
+        if (price > 0) {
+          return {
+            symbol: 'VIX', price,
+            change: +((price - prevClose).toFixed(2)),
+            changePct: +(((price - prevClose) / prevClose) * 100).toFixed(2),
+            source: 'CBOE VIX History CSV',
+            delay: 'Daily close (CBOE direct — most recent trading day)'
+          };
+        }
+      } catch(e2) {}
       return null;
     } catch(e) { return null; }
   };
