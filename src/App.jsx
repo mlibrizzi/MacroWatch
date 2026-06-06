@@ -944,13 +944,16 @@ function HistoryTab({ d }) {
 
   const filterByRange = (arr) => {
     if (!arr || !arr.length) return arr;
+    if (range === '4Y') return arr;
     const now = new Date();
     const cutoff = new Date(now);
     if (range === '1Y') cutoff.setFullYear(now.getFullYear() - 1);
     else if (range === '3M') cutoff.setMonth(now.getMonth() - 3);
-    else return arr; // 4Y = all data
-    const cutoffStr = cutoff.toISOString().split('T')[0];
-    return arr.filter(p => p.date >= cutoffStr);
+    const cutoffStr = cutoff.toISOString().split('T')[0].slice(0, 7); // YYYY-MM for comparison
+    return arr.filter(p => {
+      const d = p.date ? p.date.slice(0, 7) : '';
+      return d >= cutoffStr;
+    });
   };
   const cs = {background:"var(--s2)",border:"1px solid var(--b2)",fontSize:"11px"};
   const Sect = ({title, infoKey, note, children}) => (
