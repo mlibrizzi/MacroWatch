@@ -118,6 +118,10 @@ export default async function handler(req, res) {
         const offeringAmt = fmt(a.offering_amt);
         const label = a.security_type === 'Bond'
           ? a.security_term + ' Bond'
+          : a.security_type === 'Bill'
+          ? a.security_term + ' Bill'
+          : a.security_type === 'TIPS'
+          ? a.security_term + ' TIPS'
           : a.security_term + ' Note';
 
     const AUCTION_PATTERNS = {
