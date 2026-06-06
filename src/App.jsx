@@ -360,8 +360,59 @@ function InfoBtn({ label }) {
   );
 }
 
+
+/* ─── ALERT BANNER ───────────────────────────────────────────────────────── */
+const ALERT_THRESHOLDS = [
+  { key: 't10y_critical',  label: '10Y Yield',     check: d => d?.rates?.t10y?.yield > 4.75,  severity: 'critical', msg: v => `10Y at ${v?.rates?.t10y?.yield?.toFixed(2)}% — above 4.75% bond vigilante threshold` },
+  { key: 't30y_critical',  label: '30Y Yield',     check: d => d?.rates?.t30y?.yield > 5.25,  severity: 'critical', msg: v => `30Y at ${v?.rates?.t30y?.yield?.toFixed(2)}% — fiscal credibility breaking point` },
+  { key: 'vix_crisis',     label: 'VIX Crisis',    check: d => d?.vix?.price > 35,            severity: 'critical', msg: v => `VIX at ${v?.vix?.price?.toFixed(1)} — crisis mode, defensive positioning` },
+  { key: 'vix_warning',    label: 'VIX Elevated',  check: d => d?.vix?.price > 25 && d?.vix?.price <= 35, severity: 'warning', msg: v => `VIX at ${v?.vix?.price?.toFixed(1)} — elevated fear, watch for escalation` },
+  { key: 'breakeven_warn', label: 'Inflation',     check: d => d?.rates?.tips_5y_breakeven > 2.6, severity: 'warning', msg: v => `5Y breakeven at ${v?.rates?.tips_5y_breakeven?.toFixed(2)}% — inflation expectations unanchoring` },
+  { key: 'tips_warn',      label: 'Real Yield',    check: d => d?.rates?.tips_10y_real > 2.5, severity: 'warning', msg: v => `10Y TIPS real at ${v?.rates?.tips_10y_real?.toFixed(2)}% — gold headwind zone` },
+  { key: 'gold_watch',     label: 'Gold Signal',   check: d => d?.metals?.gold?.price > 4850, severity: 'watch',   msg: v => `Gold at $${v?.metals?.gold?.price?.toFixed(0)} — above $4,850 regime shift signal` },
+  { key: 'usd_warn',       label: 'USD Weak',      check: d => d?.fx?.dxy?.price < 115,       severity: 'warning', msg: v => `Broad USD at ${v?.fx?.dxy?.price?.toFixed(1)} — below 115 debasement warning` },
+];
+
+function AlertBanner({ daily, auctions }) {
+  const alerts = ALERT_THRESHOLDS.filter(a => {
+    try { return a.check(daily); } catch { return false; }
+  });
+
+  // Add auction alerts
+  if (auctions?.recent?.length > 0) {
+    const latest = auctions.recent[0];
+    if (latest?.tail > 5) alerts.push({ key: 'auction_tail', label: 'Auction Tail', severity: 'critical', msg: () => `Auction tail ${latest.tail?.toFixed(1)}bp — demand collapsing, above 5bp alarm` });
+    else if (latest?.tail > 3) alerts.push({ key: 'auction_tail_warn', label: 'Auction Tail', severity: 'warning', msg: () => `Auction tail ${latest.tail?.toFixed(1)}bp — weak demand, watch closely` });
+    if (latest?.bid_to_cover < 2.3) alerts.push({ key: 'auction_btc', label: 'Auction BTC', severity: 'warning', msg: () => `BTC ${latest.bid_to_cover?.toFixed(2)}x — below 2.3x weak demand threshold` });
+  }
+
+  if (alerts.length === 0) return null;
+
+  const colorMap = { critical: 'var(--red)', warning: 'var(--amber)', watch: 'var(--acc)' };
+  const bgMap = { critical: 'rgba(255,62,90,0.1)', warning: 'rgba(255,208,96,0.08)', watch: 'rgba(0,229,192,0.08)' };
+
+  return (
+    <div style={{padding:'6px 12px',borderBottom:'1px solid var(--b2)'}}>
+      {alerts.map(a => (
+        <div key={a.key} style={{
+          display:'flex',alignItems:'center',gap:'8px',
+          padding:'5px 10px',marginBottom:'4px',borderRadius:'6px',
+          background: bgMap[a.severity],
+          border: `1px solid ${colorMap[a.severity]}33`
+        }}>
+          <span style={{
+            fontSize:'9px',fontWeight:700,letterSpacing:'0.08em',
+            color: colorMap[a.severity],minWidth:'60px'
+          }}>{a.severity.toUpperCase()}</span>
+          <span style={{fontSize:'11px',color:'var(--t1)',lineHeight:'1.3'}}>{a.msg(daily)}</span>
+        </div>
+      ))}
+    </div>
+  );
+}
+
 /* ─── DAILY TAB ───────────────────────────────────────────────────────────── */
-function DailyTab({ d }) {
+function DailyTab({ d, auctions }) {
   if (!d) return <Loading text="FETCHING MARKETS..." />;
   const { metals, oil, fx, vix, rates, indices, mag7, derived } = d;
 
