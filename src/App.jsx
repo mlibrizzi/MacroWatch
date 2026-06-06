@@ -430,6 +430,7 @@ function DailyTab({ d, auctions }) {
 
   return (
     <div className="page">
+      <AlertBanner daily={d} auctions={auctions} />
       {/* DERIVED SIGNALS — top of page, highest value */}
       {derived && (
         <div className="sec">
@@ -1390,7 +1391,7 @@ export default function App() {
           </div>
         </div>
 
-        {active === 'daily'     && <DailyTab     d={data.daily} />}
+        {active === 'daily'     && <DailyTab     d={data.daily} auctions={data.auctions} />}
         {active === 'auctions'  && <AuctionsTab  d={data.auctions} />}
         {active === 'weekly'    && <WeeklyTab    d={data.weekly} />}
         {active === 'monthly'   && <MonthlyTab   d={data.monthly} />}
