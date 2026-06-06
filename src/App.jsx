@@ -381,8 +381,8 @@ function AlertBanner({ daily, auctions }) {
   // Add auction alerts
   if (auctions?.recent?.length > 0) {
     const latest = auctions.recent[0];
-    if (latest?.tail > 5) alerts.push({ key: 'auction_tail', label: 'Auction Tail', severity: 'critical', msg: () => `Auction tail ${latest.tail?.toFixed(1)}bp — demand collapsing, above 5bp alarm` });
-    else if (latest?.tail > 3) alerts.push({ key: 'auction_tail_warn', label: 'Auction Tail', severity: 'warning', msg: () => `Auction tail ${latest.tail?.toFixed(1)}bp — weak demand, watch closely` });
+    if (latest?.tail_bp > 5) alerts.push({ key: 'auction_tail', label: 'Auction Tail', severity: 'critical', msg: () => `Auction tail ${latest.tail_bp?.toFixed(1)}bp — demand collapsing, above 5bp alarm` });
+    else if (latest?.tail_bp > 3) alerts.push({ key: 'auction_tail_warn', label: 'Auction Tail', severity: 'warning', msg: () => `Auction tail ${latest.tail_bp?.toFixed(1)}bp — weak demand, watch closely` });
     if (latest?.bid_to_cover < 2.3) alerts.push({ key: 'auction_btc', label: 'Auction BTC', severity: 'warning', msg: () => `BTC ${latest.bid_to_cover?.toFixed(2)}x — below 2.3x weak demand threshold` });
   }
 
