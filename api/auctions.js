@@ -23,7 +23,8 @@ export default async function handler(req, res) {
     const today = new Date().toISOString().split('T')[0];
 
     const completedAuctions = auctions.filter(a =>
-      a.bid_to_cover_ratio && a.bid_to_cover_ratio !== 'null'
+      a.bid_to_cover_ratio && a.bid_to_cover_ratio !== 'null' &&
+      (a.security_type === 'Note' || a.security_type === 'Bond')
     );
 
     const upcomingAuctions = auctions.filter(a =>
