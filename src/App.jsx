@@ -1350,9 +1350,10 @@ export default function App() {
     setLoading(p => ({ ...p, [tabId]: false }));
   }, []);
 
-  // Always preload Daily data on startup for Intel tab live prices
+  // Always preload Daily and Auctions data on startup
   useEffect(() => {
     if (!refreshed.current['daily']) load('daily');
+    if (!refreshed.current['auctions']) load('auctions');
   }, [load]);
 
   useEffect(() => {
