@@ -370,7 +370,7 @@ const ALERT_THRESHOLDS = [
   { key: 'breakeven_warn', label: 'Inflation',     check: d => d?.rates?.tips_5y_breakeven > 2.6, severity: 'warning', msg: v => `5Y breakeven at ${v?.rates?.tips_5y_breakeven?.toFixed(2)}% — inflation expectations unanchoring` },
   { key: 'tips_warn',      label: 'Real Yield',    check: d => d?.rates?.tips_10y_real > 2.5, severity: 'warning', msg: v => `10Y TIPS real at ${v?.rates?.tips_10y_real?.toFixed(2)}% — gold headwind zone` },
   { key: 'gold_watch',     label: 'Gold Signal',   check: d => d?.metals?.gold?.price > 4850, severity: 'watch',   msg: v => `Gold at $${v?.metals?.gold?.price?.toFixed(0)} — above $4,850 regime shift signal` },
-  { key: 'usd_warn',       label: 'USD Weak',      check: d => d?.fx?.dxy?.price < 115,       severity: 'warning', msg: v => `Broad USD at ${v?.fx?.dxy?.price?.toFixed(1)} — below 115 debasement warning` },
+  { key: 'usd_warn',       label: 'USD Weak',      check: d => d?.fx?.dxy?.price != null && d.fx.dxy.price < 115,       severity: 'warning', msg: v => `Broad USD at ${v?.fx?.dxy?.price != null ? v.fx.dxy.price.toFixed(1) : v?.fx?.dxy?.latest?.toFixed(1) ?? 'N/A'} — below 115 debasement warning` },
 ];
 
 function AlertBanner({ daily, auctions }) {
