@@ -939,7 +939,19 @@ function MonthlyTab({ d }) {
 
 function HistoryTab({ d }) {
   if (!d) return <Loading text="LOADING TREND DATA..." />;
+  const [range, setRange] = React.useState('4Y');
   const fmtDate = (s) => { if (!s) return ""; const p = s.split("-"); return p[0].slice(2)+"/"+p[1]; };
+
+  const filterByRange = (arr) => {
+    if (!arr || !arr.length) return arr;
+    const now = new Date();
+    const cutoff = new Date(now);
+    if (range === '1Y') cutoff.setFullYear(now.getFullYear() - 1);
+    else if (range === '3M') cutoff.setMonth(now.getMonth() - 3);
+    else return arr; // 4Y = all data
+    const cutoffStr = cutoff.toISOString().split('T')[0];
+    return arr.filter(p => p.date >= cutoffStr);
+  };
   const cs = {background:"var(--s2)",border:"1px solid var(--b2)",fontSize:"11px"};
   const Sect = ({title, infoKey, note, children}) => (
     <div className="sec">
@@ -955,10 +967,21 @@ function HistoryTab({ d }) {
   const cur = d.yieldCurve && d.yieldCurve.length > 0 ? d.yieldCurve[d.yieldCurve.length-1] : null;
   return (
     <div className="tab-content">
+      <div style={{display:"flex",gap:"8px",padding:"8px 12px 4px",justifyContent:"flex-end"}}>
+        {['3M','1Y','4Y'].map(r => (
+          <button key={r} onClick={() => setRange(r)} style={{
+            padding:"4px 12px",borderRadius:"12px",fontSize:"11px",fontWeight:600,
+            fontFamily:"var(--mono)",letterSpacing:"0.05em",cursor:"pointer",
+            border: range===r ? "1px solid var(--acc2)" : "1px solid var(--b2)",
+            background: range===r ? "rgba(0,229,192,0.15)" : "var(--s2)",
+            color: range===r ? "var(--acc2)" : "var(--t3)"
+          }}>{r}</button>
+        ))}
+      </div>
       {d.yieldCurve && d.yieldCurve.length > 0 && (
         <Sect title="YIELD CURVE SPREAD 10Y-2Y (4 YEARS)" infoKey="Yield Curve Spread" note={cur ? "Current: "+(cur.spread>0?"+":"")+cur.spread+"%" : ""}>
           <ResponsiveContainer width="100%" height={200}>
-            <LineChart data={d.yieldCurve} margin={{top:4,right:8,left:-20,bottom:0}}>
+            <LineChart data={filterByRange(d.yieldCurve)} margin={{top:4,right:8,left:-20,bottom:0}}>
               <XAxis dataKey="date" tickFormatter={fmtDate} tick={false} interval={60}/>
               <YAxis tick={{fontSize:9,fill:"var(--t3)"}} tickFormatter={v=>v+"%"}/>
               <Tooltip formatter={v=>[v+"%","Spread"]} labelFormatter={fmtDate} contentStyle={cs}/>
@@ -974,7 +997,7 @@ function HistoryTab({ d }) {
       {d.yieldCurve && d.yieldCurve.length > 0 && (
         <Sect title="TREASURY YIELDS 2Y / 10Y / 30Y" infoKey="Treasury Yields History" note="All 3 yields shown 4 years. 2Y above 10Y from 2022-2024 = inversion. Normal spread = +80bp.">
           <ResponsiveContainer width="100%" height={200}>
-            <LineChart data={d.yieldCurve} margin={{top:4,right:8,left:-20,bottom:0}}>
+            <LineChart data={filterByRange(d.yieldCurve)} margin={{top:4,right:8,left:-20,bottom:0}}>
               <XAxis dataKey="date" tickFormatter={fmtDate} tick={false} interval={60}/>
               <YAxis tick={{fontSize:9,fill:"var(--t3)"}} tickFormatter={v=>v+"%"}/>
               <Tooltip formatter={(v,n)=>[v+"%",n.toUpperCase()]} labelFormatter={fmtDate} contentStyle={cs}/>
@@ -993,7 +1016,7 @@ function HistoryTab({ d }) {
       {d.tips10y && d.tips10y.length > 0 && (
         <Sect title="10Y TIPS REAL YIELD" infoKey="TIPS Real Yield History" note="Below 0% = gold very bullish. Above 2% = gold headwind.">
           <ResponsiveContainer width="100%" height={180}>
-            <LineChart data={d.tips10y} margin={{top:4,right:8,left:-20,bottom:0}}>
+            <LineChart data={filterByRange(d.tips10y)} margin={{top:4,right:8,left:-20,bottom:0}}>
               <XAxis dataKey="date" tickFormatter={fmtDate} tick={false} interval={60}/>
               <YAxis tick={{fontSize:9,fill:"var(--t3)"}} tickFormatter={v=>v+"%"}/>
               <Tooltip formatter={v=>[v+"%","Real Yield"]} labelFormatter={fmtDate} contentStyle={cs}/>
@@ -1008,7 +1031,7 @@ function HistoryTab({ d }) {
       {d.cpi && d.cpi.length > 0 && (
         <Sect title="CPI INFLATION MoM" infoKey="CPI Inflation History" note="Fed target = 0.17% MoM (2% annualized). Dashed = target.">
           <ResponsiveContainer width="100%" height={180}>
-            <LineChart data={d.cpi} margin={{top:4,right:8,left:-20,bottom:0}}>
+            <LineChart data={filterByRange(d.cpi)} margin={{top:4,right:8,left:-20,bottom:0}}>
               <XAxis dataKey="date" tickFormatter={fmtDate} tick={false} interval={6}/>
               <YAxis tick={{fontSize:9,fill:"var(--t3)"}} tickFormatter={v=>v+"%"}/>
               <Tooltip formatter={(v,n)=>[v+"%",n]} labelFormatter={fmtDate} contentStyle={cs}/>
@@ -1023,7 +1046,7 @@ function HistoryTab({ d }) {
       {d.fedBalance && d.fedBalance.length > 0 && (
         <Sect title="FED BALANCE SHEET TOTAL ASSETS" infoKey="Fed Balance Sheet History" note="QT ended Dec 2025. Now in reserve management.">
           <ResponsiveContainer width="100%" height={180}>
-            <LineChart data={d.fedBalance} margin={{top:4,right:8,left:-20,bottom:0}}>
+            <LineChart data={filterByRange(d.fedBalance)} margin={{top:4,right:8,left:-20,bottom:0}}>
               <XAxis dataKey="date" tickFormatter={fmtDate} tick={false} interval={60}/>
               <YAxis tick={{fontSize:9,fill:"var(--t3)"}} tickFormatter={v=>(v/1e6).toFixed(1)+"T"}/>
               <Tooltip formatter={v=>["$"+(v/1e6).toFixed(2)+"T","Assets"]} labelFormatter={fmtDate} contentStyle={cs}/>
@@ -1035,7 +1058,7 @@ function HistoryTab({ d }) {
       {d.ticHistory && d.ticHistory.length > 0 && (
         <Sect title="TIC OFFICIAL BUYERS — Sovereign & Central Bank" infoKey="TIC Official Buyers" note="Japan, China, Taiwan, India — price-insensitive official holders. China down 50% from 2013 peak.">
           <ResponsiveContainer width="100%" height={200}>
-            <LineChart data={d.ticHistory} margin={{top:4,right:8,left:-10,bottom:0}}>
+            <LineChart data={filterByRange(d.ticHistory)} margin={{top:4,right:8,left:-10,bottom:0}}>
               <XAxis dataKey="date" tick={false}/>
               <YAxis tick={{fontSize:9,fill:"var(--t3)"}} tickFormatter={v=>v+"B"}/>
               <Tooltip formatter={(v,n)=>[v ? "$"+v.toFixed(0)+"B" : "N/A", n]} labelFormatter={s=>s} contentStyle={{background:"var(--s1)",border:"1px solid var(--b2)",fontSize:"11px"}}/>
@@ -1056,7 +1079,7 @@ function HistoryTab({ d }) {
       {d.ticHistory && d.ticHistory.length > 0 && (
         <Sect title="TIC FINANCIAL CENTERS — Private Investor Demand" infoKey="TIC Financial Centers" note="UK, Cayman, Belgium, Luxembourg, France, Ireland, Switzerland — hedge funds and asset managers replacing central banks.">
           <ResponsiveContainer width="100%" height={200}>
-            <LineChart data={d.ticHistory} margin={{top:4,right:8,left:-10,bottom:0}}>
+            <LineChart data={filterByRange(d.ticHistory)} margin={{top:4,right:8,left:-10,bottom:0}}>
               <XAxis dataKey="date" tick={false}/>
               <YAxis tick={{fontSize:9,fill:"var(--t3)"}} tickFormatter={v=>v+"B"}/>
               <Tooltip formatter={(v,n)=>[v ? "$"+v.toFixed(0)+"B" : "N/A", n]} labelFormatter={s=>s} contentStyle={{background:"var(--s1)",border:"1px solid var(--b2)",fontSize:"11px"}}/>
