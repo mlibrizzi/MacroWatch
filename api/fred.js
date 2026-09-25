@@ -248,16 +248,14 @@ return res.status(200).json({
       latest: nfpChange, prior: nfpChangePrior,
       date: payems.date, priorDate: payems.priorDate,
       unit: 'thousands', delay: 'Monthly — released first Friday of following month (BLS via FRED)',
-      source: 'Bureau of Labor Statistics',
-      note: 'Prior figure reflects revision from -92k to -133k'
+      source: 'Bureau of Labor Statistics'
     },
     claims: {
       name: 'Initial Jobless Claims', fullName: 'Initial Unemployment Insurance Claims',
       latest: claims.latest, prior: claims.prior,
       date: claims.date, priorDate: claims.priorDate,
       unit: 'persons', delay: 'Weekly — released every Thursday 8:30am ET (DOL via FRED)',
-      source: 'Department of Labor',
-      note: '189k is historically low — lowest in decades'
+      source: 'Department of Labor'
     },
     contClaims: {
       name: 'Continuing Claims', fullName: 'Continuing Unemployment Insurance Claims',
@@ -280,8 +278,7 @@ return res.status(200).json({
       latest: gdp.latest, prior: gdp.prior,
       date: gdp.date, priorDate: gdp.priorDate,
       unit: '%', delay: 'Quarterly — advance estimate ~30 days after quarter end (BEA via FRED)',
-      source: 'Bureau of Economic Analysis',
-      note: 'Q1 2026 advance estimate: +2.0% annualized'
+      source: 'Bureau of Economic Analysis'
     },
     retail: {
       name: 'Retail Sales', fullName: 'Advance Retail Sales',
@@ -289,8 +286,7 @@ return res.status(200).json({
       momChange: momPct(retail.latest, retail.prior),
       date: retail.date, priorDate: retail.priorDate,
       unit: 'billions USD', delay: 'Monthly — released ~2 weeks after month end (Census via FRED)',
-      source: 'US Census Bureau',
-      note: 'March surge +1.7% MoM driven by +15.5% gasoline station receipts (energy shock)'
+      source: 'US Census Bureau'
     },
     buffett: {
       name: 'Buffett Indicator',
@@ -308,7 +304,7 @@ return res.status(200).json({
         : will5000.latest > 100 ? 'FAIR'
         : 'UNDERVALUED'
         : null,
-      note: 'World Bank mkt cap/GDP: 194.9% (2024). PTJ uses broader measure ~252%. Crash precedents: 2000=175%, 2021=220%.',
+      note: 'Historical crash precedents by this measure: 2000 dot-com peak ≈175%, 2021 peak ≈220%. Ratio above updates live each release.',
       delay: 'Quarterly — Wilshire 5000 daily, GDP quarterly (FRED)',
       source: 'Wilshire Associates + BEA via FRED'
     },
