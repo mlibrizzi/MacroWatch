@@ -4,7 +4,7 @@ export default async function handler(req, res) {
 
   try {
     const base = 'https://api.fiscaldata.treasury.gov/services/api/fiscal_service/v1/accounting/od/auctions_query';
-    const fields = 'security_type,security_term,auction_date,offering_amt,bid_to_cover_ratio,indirect_bidder_accepted,direct_bidder_accepted,primary_dealer_accepted,total_accepted,total_tendered,high_yield,avg_med_yield,low_yield,reopening,announcemt_date';
+    const fields = 'security_type,security_term,auction_date,offering_amt,bid_to_cover_ratio,indirect_bidder_accepted,direct_bidder_accepted,primary_dealer_accepted,total_accepted,total_tendered,high_yield,avg_med_yield,low_yield,high_investment_rate,avg_med_investment_rate,high_discnt_rate,avg_med_discnt_rate,reopening,announcemt_date';
     const filter = 'security_type:in:(Note,Bond,Bill),auction_date:gte:2026-02-26,auction_date:lte:2026-08-26';
     const sort = '-auction_date';
     const url = `${base}?fields=${fields}&filter=${filter}&sort=${sort}&page%5Bsize%5D=100`;
@@ -24,7 +24,7 @@ export default async function handler(req, res) {
 
     const completedAuctions = auctions.filter(a =>
       a.bid_to_cover_ratio && a.bid_to_cover_ratio !== 'null' &&
-      (a.security_type === 'Note' || a.security_type === 'Bond')
+      (a.security_type === 'Note' || a.security_type === 'Bond' || a.security_type === 'Bill')
     );
 
     const upcomingAuctions = auctions.filter(a =>
@@ -50,8 +50,13 @@ export default async function handler(req, res) {
       const dealerAcc = fmt(a.primary_dealer_accepted);
       const directAcc = fmt(a.direct_bidder_accepted);
       const btc = fmt(a.bid_to_cover_ratio);
-      const highYield = fmt(a.high_yield);
-      const avgMedYield = fmt(a.avg_med_yield);
+      // Bills don't report high_yield/avg_med_yield — Treasury quotes them as a discount rate
+      // (high_discnt_rate) plus a coupon-equivalent investment rate (high_investment_rate), the
+      // latter being directly comparable to Notes/Bonds' high_yield.
+      const isBill = a.security_type === 'Bill';
+      const highYield = isBill ? fmt(a.high_investment_rate) : fmt(a.high_yield);
+      const avgMedYield = isBill ? fmt(a.avg_med_investment_rate) : fmt(a.avg_med_yield);
+      const highDiscountRate = isBill ? fmt(a.high_discnt_rate) : null;
       const offeringAmt = fmt(a.offering_amt);
 
       const indirectPct = pct(a.indirect_bidder_accepted, a.total_accepted);
@@ -91,6 +96,8 @@ export default async function handler(req, res) {
         dealer_avg: null,
         high_yield: highYield,
         avg_med_yield: avgMedYield,
+        high_discount_rate: highDiscountRate,
+        rate_type: isBill ? 'investment_rate (coupon-equivalent)' : 'high_yield',
         tail_bp: tailBp,
         tail_avg_bp: null,
         status,
@@ -102,18 +109,17 @@ export default async function handler(req, res) {
       if (recent.length >= 6) break;
     }
 
-    const getMaturityRank = (term) => {
-      if (term.includes('30')) return 1;
-      if (term.includes('20')) return 2;
-      if (term.includes('10')) return 3;
-      if (term.includes('7')) return 4;
-      if (term.includes('5')) return 5;
-      if (term.includes('3')) return 6;
-      if (term.includes('2')) return 7;
-      if (term.includes('1')) return 8;
-      return 9;
+    // Parses "13-Week Bill" / "2-Year Note" / "30-Year Bond" into years, so short bill terms
+    // (which contain digits like "1" or "3" that used to collide with the old substring-match
+    // ranker) sort correctly alongside Notes and Bonds.
+    const getMaturityYears = (term) => {
+      const weekMatch = term.match(/(\d+)-Week/);
+      if (weekMatch) return parseInt(weekMatch[1], 10) / 52;
+      const yearMatch = term.match(/(\d+)-Year/);
+      if (yearMatch) return parseInt(yearMatch[1], 10);
+      return 0;
     };
-    recent.sort((a, b) => getMaturityRank(a.term) - getMaturityRank(b.term));
+    recent.sort((a, b) => getMaturityYears(b.term) - getMaturityYears(a.term));
 
     const upcoming = upcomingAuctions
       .sort((a, b) => a.auction_date.localeCompare(b.auction_date))
