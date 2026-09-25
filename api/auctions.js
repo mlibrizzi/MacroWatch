@@ -52,11 +52,19 @@ export default async function handler(req, res) {
       const btc = fmt(a.bid_to_cover_ratio);
       // Bills don't report high_yield/avg_med_yield — Treasury quotes them as a discount rate
       // (high_discnt_rate) plus a coupon-equivalent investment rate (high_investment_rate), the
-      // latter being directly comparable to Notes/Bonds' high_yield.
+      // latter being directly comparable to Notes/Bonds' high_yield. Treasury doesn't always
+      // populate the investment-rate pair for a given Bill auction even after it's settled, so
+      // fall back to the discount-rate pair when needed — same high-minus-median bp math, just a
+      // different rate basis — rather than silently dropping the auction from tail-based views.
       const isBill = a.security_type === 'Bill';
-      const highYield = isBill ? fmt(a.high_investment_rate) : fmt(a.high_yield);
-      const avgMedYield = isBill ? fmt(a.avg_med_investment_rate) : fmt(a.avg_med_yield);
-      const highDiscountRate = isBill ? fmt(a.high_discnt_rate) : null;
+      const invHigh = fmt(a.high_investment_rate);
+      const invAvgMed = fmt(a.avg_med_investment_rate);
+      const discHigh = fmt(a.high_discnt_rate);
+      const discAvgMed = fmt(a.avg_med_discnt_rate);
+      const usedDiscountFallback = isBill && (invHigh == null || invAvgMed == null) && discHigh != null && discAvgMed != null;
+      const highYield = isBill ? (invHigh ?? discHigh) : fmt(a.high_yield);
+      const avgMedYield = isBill ? (invAvgMed ?? discAvgMed) : fmt(a.avg_med_yield);
+      const highDiscountRate = isBill ? discHigh : null;
       const offeringAmt = fmt(a.offering_amt);
 
       const indirectPct = pct(a.indirect_bidder_accepted, a.total_accepted);
@@ -97,7 +105,9 @@ export default async function handler(req, res) {
         high_yield: highYield,
         avg_med_yield: avgMedYield,
         high_discount_rate: highDiscountRate,
-        rate_type: isBill ? 'investment_rate (coupon-equivalent)' : 'high_yield',
+        rate_type: isBill
+          ? (usedDiscountFallback ? 'discount_rate (investment_rate unavailable)' : 'investment_rate (coupon-equivalent)')
+          : 'high_yield',
         tail_bp: tailBp,
         tail_avg_bp: null,
         status,
