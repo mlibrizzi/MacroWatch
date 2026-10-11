@@ -27,9 +27,9 @@ const NOMINAL_TENORS = ['2-Year', '3-Year', '5-Year', '7-Year', '10-Year', '20-Y
 const MATURITY_ORDER = ['30-Year', '20-Year', '10-Year', '7-Year', '5-Year', '3-Year', '2-Year'];
 
 const AUCTION_PATTERNS = {
-  '4-Week': 'Weekly every Thu', '6-Week': 'Weekly every Thu', '8-Week': 'Weekly every Thu',
+  '4-Week': 'Weekly every Thu', '8-Week': 'Weekly every Thu',
   '13-Week': 'Weekly every Mon', '17-Week': 'Weekly every Wed', '26-Week': 'Weekly every Mon',
-  '52-Week': 'Every 4 weeks', '2-Year': 'Monthly, late month', '3-Year': 'Monthly, 2nd week',
+  '52-Week': 'Every 4 weeks', '6-Week': 'Weekly every Tue', '2-Year': 'Monthly, late month', '3-Year': 'Monthly, 2nd week',
   '5-Year': 'Monthly, late month', '7-Year': 'Monthly, late month', '10-Year': 'Monthly, 2nd week',
   '20-Year': 'Monthly, 3rd week', '30-Year': 'Monthly, 2nd week',
 };
@@ -59,7 +59,8 @@ function labelOf(a) {
     : kind === 'FRN' ? `${tenor} FRN`
     : kind === 'Bill' ? `${a.security_term} Bill`
     : `${tenor} ${a.security_type}`;
-  return a.reopening === 'Yes' ? `${base} (reopening)` : base;
+  // Bills are routinely reopenings of an earlier issue; the tag only matters for coupons.
+  return (a.reopening === 'Yes' && kind !== 'Bill') ? `${base} (reopening)` : base;
 }
 
 // Demand verdict from bid-to-cover and dealer take-down (same rules as before,
@@ -179,7 +180,9 @@ export default async function handler(req, res) {
       .slice(0, 12)
       .map(a => {
         const term = labelOf(a);
-        const key = Object.keys(AUCTION_PATTERNS).find(k => (a.original_security_term || a.security_term) === k);
+        // Bills are scheduled by the term being sold now; coupons by their benchmark tenor.
+        const tenor = a.security_type === 'Bill' ? a.security_term : (a.original_security_term || a.security_term);
+        const key = Object.keys(AUCTION_PATTERNS).find(k => tenor === k);
         return {
           term,
           date: a.auction_date,
