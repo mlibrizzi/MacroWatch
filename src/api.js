@@ -7,23 +7,14 @@ Provide realistic current estimates based on your training knowledge. Be precise
 If a value is genuinely unknown, use null.`;
 
 export async function callClaude(prompt, systemOverride) {
-  const apiKey = import.meta.env.VITE_ANTHROPIC_API_KEY;
-
-  if (!apiKey) {
-    throw new Error('VITE_ANTHROPIC_API_KEY not set');
-  }
-
+  // The API key lives only on the server (api/claude.js). Never read it here:
+  // anything referenced via import.meta.env.VITE_* is baked into the public JS bundle.
   const res = await fetch('/api/claude', {
     method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      'anthropic-version': '2023-06-01',
-    },
+    headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({
-      model: 'claude-haiku-4-5-20251001',
-      max_tokens: 4000,
       system: systemOverride || JSON_SYSTEM,
-      messages: [{ role: 'user', content: prompt }],
+      prompt,
     }),
   });
 
