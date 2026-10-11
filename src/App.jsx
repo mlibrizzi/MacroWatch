@@ -255,9 +255,9 @@ const INFO_DEFS = {
     why: `Foreign demand determines US borrowing costs. China reduced holdings from .3T (2013) to -zsh.69T (2026). Total is at record but private buyers are replacing stable central banks — making the market more volatile.`
   },
   'Auction Tail': {
-    what: `The difference between the highest accepted yield in a Treasury auction and the median yield — measures how desperate the auction was to attract buyers.`,
-    how: `MacroWatch calculates: (high_yield - median_yield) x 100 = basis points. True tail uses when-issued yield as benchmark (requires Bloomberg). Our proxy is a close approximation used by independent analysts.`,
-    why: `0-1bp = healthy. 1-3bp = modest stress. Above 3bp = weak demand. Above 5bp = alarm. Recent auctions showing 5-6bp tails = bond market demanding higher yields. Key stress indicator for the .7T refinancing wall.`
+    what: `A true auction tail is the auction's high yield minus the when-issued yield trading just before the 1pm deadline. A positive tail means buyers demanded more yield than the market expected.`,
+    how: `When-issued yields are not in Treasury's free data, so MacroWatch does not show a tail yet (pending vendor access). The auction cards show the high-median spread instead: high yield minus median yield, which measures how spread out the winning bids were.`,
+    why: `The high-median spread is normally a few basis points for every auction, so it is not a demand alarm on its own. Compare it with the same tenor's recent average instead.`
   },
   'Basis Trade': {
     what: `A highly leveraged arbitrage trade by hedge funds that exploits the price difference between cash Treasury bonds and Treasury futures contracts.`,
@@ -380,10 +380,9 @@ function AlertBanner({ daily, auctions }) {
 
   // Add auction alerts
   if (auctions?.recent?.length > 0) {
+    // recent[] is newest first. No tail alert until true when-issued data is available.
     const latest = auctions.recent[0];
-    if (latest?.tail_bp > 5) alerts.push({ key: 'auction_tail', label: 'Auction Tail', severity: 'critical', msg: () => `Auction tail ${latest.tail_bp?.toFixed(1)}bp — demand collapsing, above 5bp alarm` });
-    else if (latest?.tail_bp > 3) alerts.push({ key: 'auction_tail_warn', label: 'Auction Tail', severity: 'warning', msg: () => `Auction tail ${latest.tail_bp?.toFixed(1)}bp — weak demand, watch closely` });
-    if (latest?.bid_to_cover < 2.3) alerts.push({ key: 'auction_btc', label: 'Auction BTC', severity: 'warning', msg: () => `BTC ${latest.bid_to_cover?.toFixed(2)}x — below 2.3x weak demand threshold` });
+    if (latest?.bid_to_cover < 2.3) alerts.push({ key: 'auction_btc', label: 'Auction BTC', severity: 'warning', msg: () => `${latest.term} BTC ${latest.bid_to_cover?.toFixed(2)}x — below 2.3x weak demand threshold` });
   }
 
   if (alerts.length === 0) return null;
@@ -572,13 +571,13 @@ function DailyTab({ d, auctions }) {
 const BTC_THRESHOLDS  = { green: 2.5,  yellow: 2.3  };
 const IND_THRESHOLDS  = { green: 68,   yellow: 62   };
 const DLR_THRESHOLDS  = { green: 14,   yellow: 18   };
-const TAIL_THRESHOLDS = { green: 0.5,  yellow: 1.0  };
+const TENOR_ORDER = ['30-Year', '20-Year', '10-Year', '7-Year', '5-Year', '3-Year', '2-Year'];
+const shortTenor = t => (t || '').replace('-Year', 'Y');
 
 const METRIC_DEFS = {
   'BID/CVR':  { full: 'Bid-to-Cover Ratio', desc: 'Total bids received ÷ amount sold. Measures demand.', green: '> 2.50x', yellow: '2.30–2.50x', red: '< 2.30x' },
   'INDIRECT': { full: 'Indirect Bidders %', desc: 'Foreign central banks & institutions buying via dealers. Key foreign demand signal.', green: '> 68%', yellow: '62–68%', red: '< 62%' },
   'DEALER':   { full: 'Primary Dealer %', desc: 'Amount dealers forced to absorb. Higher = weaker real demand.', green: '< 14%', yellow: '14–18%', red: '> 18%' },
-  'TAIL':     { full: 'Auction Tail (bp)', desc: 'Yield above pre-auction trading level. Wider = auction came weaker than expected.', green: '< 0.5bp', yellow: '0.5–1.0bp', red: '> 1.0bp' },
 };
 
 function zoneColor(val, { green, yellow }, invert = false) {
@@ -623,11 +622,9 @@ function MetricDef({ label }) {
 function AuctionChart({ data, label, field, thresholds, invert, format }) {
   if (!data?.length) return null;
   const pts = data
-    .map(a => ({
-      name: a.term?.replace('-Year Note','Y').replace('-Year Bond','Y').replace(' Note','').replace(' Bond','').trim(),
-      val: a[field],
-      date: a.date
-    }))
+    .slice()
+    .sort((a, b) => TENOR_ORDER.indexOf(a.tenor) - TENOR_ORDER.indexOf(b.tenor))
+    .map(a => ({ name: shortTenor(a.tenor), val: a[field], date: a.date }))
     .filter(p => p.val != null);
 
   return (
@@ -641,6 +638,7 @@ function AuctionChart({ data, label, field, thresholds, invert, format }) {
             <Tooltip
               contentStyle={{ background: '#0b1018', border: '1px solid #1a2535', borderRadius: 4, fontFamily: 'IBM Plex Mono', fontSize: 10 }}
               formatter={v => [format ? format(v) : v, label]}
+              labelFormatter={(name, p) => `${name} · ${p?.[0]?.payload?.date ?? ''}`}
             />
             {thresholds.green  != null && <ReferenceLine y={thresholds.green}  stroke="#00e5c0" strokeDasharray="4 2" strokeWidth={1} />}
             {thresholds.yellow != null && <ReferenceLine y={thresholds.yellow} stroke="#ffd060" strokeDasharray="4 2" strokeWidth={1} />}
@@ -654,6 +652,49 @@ function AuctionChart({ data, label, field, thresholds, invert, format }) {
         <span style={{ fontFamily: 'var(--mono)', fontSize: 8, color: '#00e5c0' }}>🟢 {METRIC_DEFS[label]?.green}</span>
         <span style={{ fontFamily: 'var(--mono)', fontSize: 8, color: '#ffd060' }}>🟡 {METRIC_DEFS[label]?.yellow}</span>
         <span style={{ fontFamily: 'var(--mono)', fontSize: 8, color: '#ff3e5a' }}>🔴 {METRIC_DEFS[label]?.red}</span>
+      </div>
+    </div>
+  );
+}
+
+/* Same-tenor trend: high yield across each tenor's recent auctions */
+function YieldTrend({ history }) {
+  const tenors = TENOR_ORDER.filter(t => history?.[t]?.length > 1);
+  if (!tenors.length) return null;
+  return (
+    <div className="sec">
+      <div className="sec-hdr"><div className="sec-ttl">⬡ HIGH YIELD — LAST {Math.max(...tenors.map(t => history[t].length))} AUCTIONS PER TENOR</div></div>
+      <div className="card">
+        {tenors.map(t => {
+          const h = history[t];
+          const first = h[0], last = h[h.length - 1];
+          const chg = (last.high_yield != null && first.high_yield != null) ? Math.round((last.high_yield - first.high_yield) * 100) : null;
+          return (
+            <div key={t} style={{ display: 'grid', gridTemplateColumns: '34px 1fr 62px 58px', alignItems: 'center', gap: 8, padding: '4px 0', borderBottom: '1px solid var(--b1)' }}>
+              <div style={{ fontFamily: 'var(--mono)', fontSize: 10, color: 'var(--t2)' }}>{shortTenor(t)}</div>
+              <div style={{ height: 28 }}>
+                <ResponsiveContainer width="100%" height="100%">
+                  <LineChart data={h} margin={{ top: 3, right: 3, left: 3, bottom: 3 }}>
+                    <YAxis hide domain={['dataMin', 'dataMax']} />
+                    <Tooltip
+                      contentStyle={{ background: '#0b1018', border: '1px solid #1a2535', borderRadius: 4, fontFamily: 'IBM Plex Mono', fontSize: 10 }}
+                      formatter={v => [`${v?.toFixed(3)}%`, 'High yield']}
+                      labelFormatter={(_, p) => p?.[0]?.payload?.date ?? ''}
+                    />
+                    <Line type="linear" dataKey="high_yield" stroke="var(--acc2)" strokeWidth={1.5} dot={{ r: 1.5 }} isAnimationActive={false} />
+                  </LineChart>
+                </ResponsiveContainer>
+              </div>
+              <div style={{ fontFamily: 'var(--mono)', fontSize: 11, textAlign: 'right' }}>{last.high_yield?.toFixed(3)}%</div>
+              <div style={{ fontFamily: 'var(--mono)', fontSize: 10, textAlign: 'right', color: chg > 0 ? 'var(--amber)' : 'var(--t2)' }}>
+                {chg != null ? `${chg > 0 ? '+' : ''}${chg}bp` : ''}
+              </div>
+            </div>
+          );
+        })}
+        <div style={{ fontSize: 10, color: 'var(--t3)', marginTop: 6, lineHeight: 1.5 }}>
+          Change is from the oldest to the newest auction shown for each tenor{tenors.length ? ` (since ${history[tenors[0]][0].date} for ${shortTenor(tenors[0])})` : ''}. Hover a line for each auction's date.
+        </div>
       </div>
     </div>
   );
@@ -686,17 +727,23 @@ function AuctionsTab({ d }) {
       {/* TREND CHARTS */}
       <div className="sec">
         <div className="sec-hdr">
-          <div className="sec-ttl">⬡ DEMAND TREND — TAP HEADING FOR DEFINITION</div>
+          <div className="sec-ttl">⬡ DEMAND BY TENOR — LATEST AUCTION OF EACH</div>
         </div>
+        {d.range && (
+          <div style={{ fontFamily: 'var(--mono)', fontSize: 8, color: 'var(--t3)', marginBottom: 6 }}>
+            Auctions {d.range.from} to {d.range.to} · nominal coupons only
+          </div>
+        )}
         <AuctionChart data={d.recent} label="BID/CVR"  field="bid_to_cover" thresholds={BTC_THRESHOLDS}  format={v => `${v?.toFixed(2)}x`} />
         <AuctionChart data={d.recent} label="INDIRECT" field="indirect_pct" thresholds={IND_THRESHOLDS}  format={v => `${v?.toFixed(1)}%`} />
         <AuctionChart data={d.recent} label="DEALER"   field="dealer_pct"   thresholds={DLR_THRESHOLDS}  invert format={v => `${v?.toFixed(1)}%`} />
-        <AuctionChart data={d.recent} label="TAIL"     field="tail_bp"      thresholds={TAIL_THRESHOLDS} invert format={v => `${v?.toFixed(1)}bp`} />
       </div>
+
+      <YieldTrend history={d.history} />
 
       {/* RECENT DETAIL */}
       <div className="sec">
-        <div className="sec-hdr"><div className="sec-ttl">⬡ RECENT RESULTS</div></div>
+        <div className="sec-hdr"><div className="sec-ttl">⬡ RECENT RESULTS — NEWEST FIRST</div></div>
         {d.recent?.map((a, i) => (
           <div className="card" key={i}>
             <div className="row" style={{ marginBottom: 8 }}>
@@ -717,7 +764,7 @@ function AuctionsTab({ d }) {
                 ['BID/CVR',  a.bid_to_cover != null ? `${a.bid_to_cover.toFixed(2)}x` : 'N/A', zoneColor(a.bid_to_cover, BTC_THRESHOLDS),        a.btc_6mo_avg != null ? `avg ${a.btc_6mo_avg.toFixed(2)}x` : ''],
                 ['INDIRECT', a.indirect_pct != null ? `${a.indirect_pct.toFixed(1)}%` : 'N/A', zoneColor(a.indirect_pct, IND_THRESHOLDS),        a.indirect_avg != null ? `avg ${a.indirect_avg.toFixed(1)}%` : ''],
                 ['DEALER',   a.dealer_pct != null ? `${a.dealer_pct.toFixed(1)}%` : 'N/A',   zoneColor(a.dealer_pct,   DLR_THRESHOLDS,  true), a.dealer_avg != null ? `avg ${a.dealer_avg.toFixed(1)}%` : ''],
-                ['TAIL',     a.tail_bp != null ? `${a.tail_bp.toFixed(1)}bp` : 'N/A',     zoneColor(a.tail_bp,      TAIL_THRESHOLDS, true), a.tail_avg_bp != null ? `avg ${a.tail_avg_bp.toFixed(1)}bp` : ''],
+                ['HI–MED',   a.spread_bp != null ? `${a.spread_bp.toFixed(1)}bp` : 'N/A', 'var(--t1)', a.spread_avg_bp != null ? `avg ${a.spread_avg_bp.toFixed(1)}bp` : ''],
               ].map(([lbl, val, color, avg]) => (
                 <div key={lbl} style={{ textAlign: 'center', background: 'var(--s2)', borderRadius: 4, padding: '6px 4px' }}>
                   <div style={{ fontFamily: 'var(--mono)', fontSize: 7, color: 'var(--t3)', marginBottom: 3, letterSpacing: 1 }}>{lbl}</div>
@@ -729,10 +776,40 @@ function AuctionsTab({ d }) {
             {a.note && <div style={{ marginTop: 8, fontSize: 10, color: 'var(--t3)', lineHeight: 1.5 }}>{a.note}</div>}
             <div style={{ marginTop: 6, fontFamily: 'var(--mono)', fontSize: 8, color: 'var(--t3)' }}>
               {a.high_yield ? `High yield: ${a.high_yield.toFixed(3)}%` : ''}
+              {a.prior_count ? ` · averages: prior ${a.prior_count} ${shortTenor(a.tenor)} auctions` : ''}
             </div>
           </div>
         ))}
+        <div style={{ fontSize: 10, color: 'var(--t3)', lineHeight: 1.5 }}>
+          HI–MED is high yield minus median yield, a measure of bid dispersion. It is not an auction tail, which needs when-issued data MacroWatch does not have yet.
+        </div>
       </div>
+
+      {/* TIPS & FRN — not scored on nominal thresholds */}
+      {d.other?.length > 0 && (
+        <div className="sec">
+          <div className="sec-hdr"><div className="sec-ttl">⬡ TIPS & FLOATING RATE NOTES</div></div>
+          {d.other.map((a, i) => (
+            <div className="card" key={i}>
+              <div className="row">
+                <div>
+                  <div className="lbl">{a.term}</div>
+                  <div className="sub">{a.date} · ${a.size_bn}B offering</div>
+                </div>
+                <div style={{ fontFamily: 'var(--mono)', fontSize: 11, textAlign: 'right' }}>
+                  {a.bid_to_cover?.toFixed(2)}x BTC
+                  <div style={{ fontSize: 9, color: 'var(--t3)' }}>
+                    {a.kind === 'TIPS' && a.high_yield != null ? `real yield ${a.high_yield.toFixed(3)}%` : a.kind === 'FRN' ? 'priced on discount margin' : ''}
+                  </div>
+                </div>
+              </div>
+            </div>
+          ))}
+          <div style={{ fontSize: 10, color: 'var(--t3)', lineHeight: 1.5 }}>
+            TIPS price on real yield and FRNs on a spread over T-bills, so they are not scored against the nominal-coupon thresholds above.
+          </div>
+        </div>
+      )}
 
       {/* UPCOMING */}
       {d.upcoming?.length > 0 && (
